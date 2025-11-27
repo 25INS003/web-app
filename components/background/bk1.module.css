@@ -1,0 +1,165 @@
+.wrapper {
+    position: fixed;
+    inset: 0;
+    z-index:-1;
+    width: 100dvw;
+    height: 100vh;
+    overflow: hidden;
+}
+.wrapper::before{
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    background: var(--background);
+    filter: blur(60px);
+    opacity: 0.45;
+}
+.container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -11;
+    width: 100dvw;
+    height: 100dvh;
+    overflow: hidden;
+
+    /* Darker base with subtle gradient */
+    background: radial-gradient(circle,
+            rgba(0, 0, 0, 0.85),
+            rgba(20, 20, 20, 0.95));
+}
+
+.container::before,
+.container::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200%;
+    height: 200%;
+
+    /* Dark theme – richer jewel tones instead of pastel */
+    background: conic-gradient(from 0deg,
+            #ff4d6d,
+            #ff914d,
+            #ffd93d,
+            #7dff8c,
+            #4ddfff,
+            #8c5bff,
+            #ff914d,
+            #ff4d6d);
+
+    transform: translate(-50%, -50%);
+    animation: rotate 11s linear infinite;
+
+    filter: blur(60px);
+    opacity: 0.45;
+    /* Softer for dark mode */
+}
+
+/* Secondary rotating layer for depth */
+.container::after {
+    width: 180%;
+    height: 180%;
+    animation: rotate-reverse 18s linear infinite;
+    opacity: 0.25;
+}
+
+/* Rotating animations */
+@keyframes rotate {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes rotate-reverse {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(-360deg);
+    }
+}
+
+
+
+.ctr {
+    position: fixed;
+    top: 0;
+    z-index: -11;
+    left: 0;
+    width: 100dvw;
+    height: 100dvh;
+    overflow: hidden;
+    background: radial-gradient(circle,
+            rgba(255, 255, 255, 0.2),
+            rgba(0, 0, 0, 0.1));
+}
+
+.ctr::before,
+.ctr::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg,
+            #ff9aa2,
+            /* Soft pink */
+            #ffb7b2,
+            /* Light peach */
+            #ffdac1,
+            /* Pastel yellow */
+            #e2f0cb,
+            /* Mint green */
+            #a2e4ff,
+            /* Baby blue */
+            #c9afff,
+            /* Lavender */
+            #ffb7b2,
+            #ff9aa2);
+    transform: translate(-50%, -50%);
+    animation: rotate 8s linear infinite;
+    filter: blur(50px);
+    /* Create a soft glowing effect */
+    opacity: 0.8;
+}
+
+/* Secondary rotating layer for depth */
+.ctr::after {
+    width: 180%;
+    height: 180%;
+    animation: rotate-reverse 10s linear infinite;
+    opacity: 0.6;
+}
+
+/* Rotating animations */
+@keyframes rotate {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes rotate-reverse {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(-360deg);
+    }
+}
