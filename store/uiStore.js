@@ -6,14 +6,17 @@ import { create } from "zustand";
 
 export const useUIStore = create((set, get) => ({
   // Initial state
-  sidebarOpen: true,
+  isSidebarOpen: true, // Default state
   theme: "light",
   isMobile: false,
   scrollY: 0,
   isTop: true,
 
   // Actions
-  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+
+  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+  
+  closeSidebar: () => set({ isSidebarOpen: false }),
 
   setTheme: (theme) => set({ theme }),
 
@@ -57,9 +60,9 @@ export const useUIStore = create((set, get) => ({
 
 // Custom hooks for specific state slices
 export const useSidebar = () => {
-  const sidebarOpen = useUIStore((state) => state.sidebarOpen);
+  const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
-  return { sidebarOpen, toggleSidebar };
+  return { isSidebarOpen, toggleSidebar };
 };
 
 export const useTheme = () => {

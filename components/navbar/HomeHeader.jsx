@@ -1,4 +1,3 @@
-// Header.tsx
 'use client';
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,7 +5,7 @@ import { useIsMobile, useScroll } from "@/store/uiStore";
 import Image from "next/image";
 
 
-const Header = () => {
+const HomeHeader = () => {
     const { isMobile } = useIsMobile();
     const { isTop } = useScroll();
     const [showNav, setShowNav] = useState(true);
@@ -148,4 +147,4 @@ const Header = () => {
     );
 };
 
-export default Header;
+export default HomeHeader;
