@@ -29,7 +29,7 @@ const HeroSection = () => (
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
             <Button asChild size="lg" className="gap-2 text-lg px-8 py-6 rounded-full">
-                <Link href="/page/dashboard">
+                <Link href="/dashboard">
                     Go to Dashboard <FiArrowRight className="ml-1" />
                 </Link>
             </Button>

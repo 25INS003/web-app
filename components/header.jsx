@@ -2,6 +2,7 @@
 "use client";
 
 import { useLogout } from "@/hooks/useLogout";
+import ThemeToggle from "@/components/ui/theme-toggle";
 
 export default function Header() {
     const { logout, loading } = useLogout();
@@ -25,6 +26,7 @@ export default function Header() {
                     </div>
 
                     <div className="flex items-center space-x-4">
+                        <ThemeToggle />
                         <button
                             onClick={handleLogout}
                             disabled={loading}

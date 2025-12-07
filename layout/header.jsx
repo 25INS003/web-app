@@ -1,7 +1,7 @@
 // src/components/Header.tsx
 "use client";
 
-import AdminHeader from "@/components/navbar/AdminHeader";
+import AdminHeader from "@/components/navbar/LayoutHeader";
 import { useSidebar } from "@/store/uiStore";
 
 

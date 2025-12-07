@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner"
 import { UIProvider } from "@/store/uiStore";
+import { ThemeProvider } from "next-themes";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -20,14 +21,16 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <UIProvider>
-          {children}
-          <Toaster position="bottom-right" richColors />
-        </UIProvider>
+        <ThemeProvider attribute="class" defaultTheme="system">
+          <UIProvider>
+            {children}
+            <Toaster position="bottom-right" richColors />
+          </UIProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
