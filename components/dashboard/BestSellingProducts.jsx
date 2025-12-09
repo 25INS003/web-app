@@ -5,9 +5,7 @@ import { useTheme } from "@/store/themeStore";
 
 export default function BestSellingProducts() {
   const { isDark } = useTheme();
-  
-  // TODO: Replace with API call
-  // Example: const { data: products } = useSWR('/api/dashboard/products', fetcher);
+
   const products = [
     { name: "product_01", sales: 2450, trend: "+15%", isBest: false },
     { name: "product_02", sales: 1820, trend: "+18%", isBest: true },

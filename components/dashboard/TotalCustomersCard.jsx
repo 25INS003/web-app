@@ -6,8 +6,6 @@ import { useTheme } from "@/store/themeStore";
 export default function TotalCustomersCard() {
   const { isDark } = useTheme();
   
-  // TODO: Replace with API call
-  // Example: const { data } = useSWR('/api/dashboard/customers', fetcher);
   const customerData = {
     total: 8549,
     percentage: 23,

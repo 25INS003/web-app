@@ -6,8 +6,6 @@ import { useTheme } from "@/store/themeStore";
 export default function SalesPerformanceChart() {
   const { isDark } = useTheme();
   
-  // TODO: Replace with API call
-  // Example: const { data: salesData } = useSWR('/api/dashboard/sales', fetcher);
   const salesData = [
     { month: "Jan", value: 6200 },
     { month: "Feb", value: 1800 },

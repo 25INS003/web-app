@@ -6,8 +6,6 @@ import { useTheme } from "@/store/themeStore";
 export default function AvgOrderValueCard() {
   const { isDark } = useTheme();
   
-  // TODO: Replace with API call
-  // Example: const { data } = useSWR('/api/dashboard/order-value', fetcher);
   const orderData = {
     avgValue: 156.80,
     percentage: 5.4,

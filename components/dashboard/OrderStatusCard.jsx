@@ -6,8 +6,6 @@ import { useTheme } from "@/store/themeStore";
 export default function OrderStatusCard() {
   const { isDark } = useTheme();
   
-  // TODO: Replace with API call
-  // Example: const { data: orderStatusData } = useSWR('/api/dashboard/orders', fetcher);
   const orderStatusData = [
     { name: "Completed", value: 65, color: "#10b981" },
     { name: "Pending", value: 25, color: "#f59e0b" },
