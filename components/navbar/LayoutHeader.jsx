@@ -1,15 +1,17 @@
 import { Bell, Search, Plus } from "lucide-react";
+import ThemeToggle from "@/components/ui/theme-toggle";
+import ProfileDropdown from "@/components/profile-dropdown";
 
 export default function AdminHeader() {
     return (
-        <div className="h-full w-full flex items-center justify-between border-b bg-white px-6">
+        <div className="h-full w-full flex items-center justify-between border-b bg-slate-50 dark:bg-slate-900 px-6">
             {/* left content */}
-            <div className="flex items-center rounded-md bg-slate-100 px-3 py-2 w-96">
+            <div className="flex items-center rounded-md bg-slate-100 dark:bg-slate-800 px-3 py-2 w-96">
                 <Search className="text-slate-400" size={20} />
                 <input
                     type="text"
                     placeholder="Search orders, products, or customers..."
-                    className="ml-2 w-full bg-transparent outline-none text-sm"
+                    className="ml-2 w-full bg-transparent outline-none text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400"
                 />
             </div>
 
@@ -27,10 +29,11 @@ export default function AdminHeader() {
                     <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
                 </button>
 
-                {/* Profile Avatar */}
-                <div className="h-8 w-8 rounded-full bg-slate-300 overflow-hidden cursor-pointer">
-                    <img src="https://i.pravatar.cc/150" alt="Profile" />
-                </div>
+                {/* Theme Toggle */}
+                <ThemeToggle />
+
+                {/* User menu */}
+                <ProfileDropdown />
             </div>
         </div>
     )
