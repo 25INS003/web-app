@@ -13,7 +13,7 @@ const Sidebar = () => {
         { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
         { name: "Orders", icon: ShoppingBag, href: "/orders" },
         { name: "Products", icon: Package, href: "/products" },
-        { name: "Customers", icon: Users, href: "/customers" },
+        { name: "My Shop", icon: Users, href: "/shop" },
         { name: "Settings", icon: Settings, href: "/settings" },
     ];
 
