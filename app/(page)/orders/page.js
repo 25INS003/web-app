@@ -27,7 +27,7 @@ import { useOrdersStore } from '@/store/ordersStore';
  * Reusable Stat Card component (Unchanged)
  */
 const StatCard = ({ title, value, icon: Icon, description, iconBgColor, trend, change, loading = false }) => (
-    <Card className="group hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-card dark:bg-card border-border dark:border-border relative overflow-hidden">
+    <Card className="group hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-white dark:bg-slate-800/60 border-border dark:border-border relative overflow-hidden">
         {/* Cleaned up gradient and used Tailwind/shadcn tokens */}
         <div className={`absolute top-0 left-0 w-1 h-full ${iconBgColor.replace('bg-', 'bg-gradient-to-b from-')}`} />
 
@@ -332,8 +332,8 @@ const OrdersDashboard = () => {
                     change="1.1%"
                 />
             </div>
-            <Tabs className="my-5" value={activeTab} onValueChange={(value) => setFilters({ status: value })}>
-                <TabsList>
+            <Tabs className="my-5 " value={activeTab} onValueChange={(value) => setFilters({ status: value })}>
+                <TabsList className="bg-white dark:bg-slate-800/60">
                     <TabsTrigger value={undefined}>All Orders</TabsTrigger>
                     <TabsTrigger value="pending">Pending</TabsTrigger>
                     <TabsTrigger value="confirm">Active</TabsTrigger>
@@ -364,7 +364,7 @@ const OrdersDashboard = () => {
 
             {/* Summary Footer */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-card dark:bg-card border-border">
+                <Card className="bg-white dark:bg-slate-800/60 border-border">
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                             <div>
@@ -377,7 +377,7 @@ const OrdersDashboard = () => {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-card dark:bg-card border-border">
+                <Card className="bg-white dark:bg-slate-800/60 border-border">
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                             <div>
@@ -391,7 +391,7 @@ const OrdersDashboard = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-card dark:bg-card border-border">
+                <Card className="bg-white dark:bg-slate-800/60 border-border">
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                             <div>

@@ -118,7 +118,7 @@ const OrderTable = ({
         return (
             <TableHead 
                 key={index} 
-                className={`${column.className || ''} cursor-pointer hover:bg-muted text-${column.align}`} 
+                className={`${column.className || ''} cursor-pointer hover:bg-slute-900/50 text-${column.align}`} 
                 onClick={() => handleSort(column.key)}
             >
                 <div className={`flex items-center group ${column.align === 'right' ? 'justify-end' : ''}`}>
@@ -222,7 +222,7 @@ const OrderTable = ({
 
     if (totalOrders === 0 && (filters.search || filters.minAmount || filters.maxAmount || filters.dateRange)) {
          return (
-             <Card className="border shadow-sm bg-card">
+             <Card className="border bg-white dark:bg-slate-800/60 shadow-sm bg-card">
                  <CardContent className="p-6 text-center">
                      <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
                      <p className="text-lg font-semibold">No orders found</p>
@@ -244,11 +244,11 @@ const OrderTable = ({
     return (
         <div>
             {/* --- Order Data Table Card --- */}
-            <Card className="border shadow-sm bg-card overflow-hidden">
+            <Card className="border bg-white dark:bg-slate-800/60 shadow-sm bg-card overflow-hidden">
                 <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted/50">
+                            <TableRow className="dark:bg-slate-800 ">
                                 {tableColumns.map((column, index) => renderSortableHeader(column, index))}
                             </TableRow>
                         </TableHeader>
@@ -258,7 +258,7 @@ const OrderTable = ({
                                     <TableRow key={order.order_id} className="hover:bg-muted/30 transition-colors" >
                                         {/* Order ID */}
                                         <TableCell className="font-medium font-mono">
-                                            <div className="inline-flex items-center px-2 py-1 rounded-md bg-muted/50 text-sm">
+                                            <div className="inline-flex items-center px-2 py-1 rounded-md dark:bg-slate-800  text-sm">
                                                 {order.order_id}
                                             </div>
                                         </TableCell>

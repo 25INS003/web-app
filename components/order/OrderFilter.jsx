@@ -252,7 +252,7 @@ export default function OrderFilter({
 
     return (
         // Use bg-card for theme consistency
-        <Card className="bg-card border dark:border-border shadow-sm">
+        <Card className="bg-white dark:bg-slate-800/60 border dark:border-border shadow-sm">
             <CardContent className="p-6">
                 <div className="space-y-6">
                     {/* --- 1. Search Bar and Main Action Buttons --- */}
@@ -377,7 +377,7 @@ export default function OrderFilter({
 
                                 {/* Status Filter Badge */}
                                 {activeFilters.status && activeFilters.status !== 'all' && (
-                                    <Badge variant="secondary" className="gap-1">
+                                    <Badge variant="secondary" className="gap-1 bg-white dark:bg-slate-800">
                                         Status: {activeFilters.status}
                                         <X className="h-3 w-3 cursor-pointer ml-1" onClick={() => removeActiveFilter("status")} />
                                     </Badge>
@@ -385,7 +385,7 @@ export default function OrderFilter({
 
                                 {/* Date Range Filter Badge */}
                                 {activeFilters.dateRange && (
-                                    <Badge variant="secondary" className="gap-1">
+                                    <Badge variant="secondary" className="gap-1 bg-white dark:bg-slate-800">
                                         Date: {getDateRangeLabel(activeFilters.dateRange)}
                                         <X className="h-3 w-3 cursor-pointer ml-1" onClick={() => removeActiveFilter("dateRange")} />
                                     </Badge>
@@ -393,7 +393,7 @@ export default function OrderFilter({
 
                                 {/* Search Filter Badge */}
                                 {activeFilters.search && (
-                                    <Badge variant="secondary" className="gap-1">
+                                    <Badge variant="secondary" className="gap-1 bg-white dark:bg-slate-800">
                                         Search: "{activeFilters.search}"
                                         <X className="h-3 w-3 cursor-pointer ml-1" onClick={() => removeActiveFilter("search")} />
                                     </Badge>
@@ -401,7 +401,7 @@ export default function OrderFilter({
 
                                 {/* Minimum Amount Filter Badge (Corrected from minPrice) */}
                                 {activeFilters.minAmount && (
-                                    <Badge variant="secondary" className="gap-1">
+                                    <Badge variant="secondary" className="gap-1 bg-white dark:bg-slate-800">
                                         Min Amount: ${Number(activeFilters.minAmount).toFixed(2)}
                                         <X className="h-3 w-3 cursor-pointer ml-1" onClick={() => removeActiveFilter("minAmount")} />
                                     </Badge>
@@ -409,7 +409,7 @@ export default function OrderFilter({
 
                                 {/* Maximum Amount Filter Badge (Corrected from maxPrice) */}
                                 {activeFilters.maxAmount && (
-                                    <Badge variant="secondary" className="gap-1">
+                                    <Badge variant="secondary" className="gap-1 bg-white dark:bg-slate-800">
                                         Max Amount: ${Number(activeFilters.maxAmount).toFixed(2)}
                                         <X className="h-3 w-3 cursor-pointer ml-1" onClick={() => removeActiveFilter("maxAmount")} />
                                     </Badge>
