@@ -1,10 +1,8 @@
 "use client";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useTheme } from "@/store/themeStore";
 
 export default function SalesPerformanceChart() {
-  const { isDark } = useTheme();
   
   const salesData = [
     { month: "Jan", value: 6200 },
@@ -24,25 +22,21 @@ export default function SalesPerformanceChart() {
   const totalRevenue = salesData.reduce((sum, item) => sum + item.value, 0);
   
   return (
-    <div className={`${
-      isDark 
-        ? 'bg-gradient-to-br from-gray-900 to-gray-950 border-blue-900/30' 
-        : 'bg-white border-gray-200'
-    } border rounded-2xl p-4 shadow-sm transition-colors duration-300`}>
+    <div className="border rounded-2xl p-4 shadow-sm transition-colors duration-300 bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-950 border-gray-200 dark:border-blue-900/30">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
             Sales Performance
           </h2>
-          <p className={`${isDark ? 'text-gray-500' : 'text-gray-600'} text-xs`}>
+          <p className="text-gray-600 dark:text-gray-500 text-xs">
             Monthly sales trend for 2024
           </p>
         </div>
         <div className="text-right">
-          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>
+          <p className="text-xs text-gray-600 dark:text-gray-500">
             Total Revenue
           </p>
-          <p className={`text-xl font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+          <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
             ₹{totalRevenue.toLocaleString()}
           </p>
         </div>
@@ -58,24 +52,24 @@ export default function SalesPerformanceChart() {
             </defs>
             <CartesianGrid 
               strokeDasharray="3 3" 
-              stroke={isDark ? "#1e293b" : "#e2e8f0"} 
+              stroke="#64748b" 
               opacity={0.3} 
             />
             <XAxis 
               dataKey="month" 
-              stroke={isDark ? "#475569" : "#94a3b8"}
+              stroke="#64748b"
               style={{ fontSize: '11px' }}
             />
             <YAxis 
-              stroke={isDark ? "#475569" : "#94a3b8"}
+              stroke="#64748b"
               style={{ fontSize: '11px' }}
             />
             <Tooltip 
               contentStyle={{ 
-                backgroundColor: isDark ? '#0f172a' : '#ffffff', 
-                border: `1px solid ${isDark ? '#1e40af' : '#e2e8f0'}`,
+                backgroundColor: '#f8fafc', 
+                border: '1px solid #e2e8f0',
                 borderRadius: '12px',
-                color: isDark ? '#fff' : '#000'
+                color: '#000'
               }}
             />
             <Line 

@@ -1,7 +1,5 @@
 "use client";
 
-import { useTheme } from "@/store/themeStore";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 import TotalProfitCard from "@/components/dashboard/TotalProfitCard";
 import BestSellingProducts from "@/components/dashboard/BestSellingProducts";
 import SalesPerformanceChart from "@/components/dashboard/SalesPerformanceChart";
@@ -10,22 +8,18 @@ import TotalCustomersCard from "@/components/dashboard/TotalCustomersCard";
 import AvgOrderValueCard from "@/components/dashboard/AvgOrderValueCard";
 
 export default function DashboardPage() {
-  const { isDark } = useTheme();
-  
   return (
-    <div className={`h-[calc(100vh-4rem)] overflow-hidden ${isDark ? 'bg-black' : 'bg-gray-50'} p-4 transition-colors duration-300`}>
+    <div className="h-[calc(100vh-4rem)] overflow-hidden p-4 transition-colors duration-300">
       {/* Header with Theme Toggle */}
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
             Dashboard
           </h1>
-          <p className={`${isDark ? 'text-gray-500' : 'text-gray-600'} text-sm`}>
+          <p className="text-slate-600 dark:text-gray-400 text-sm">
             Welcome to your sales overview
           </p>
         </div>
-        
-        <ThemeToggle />
       </div>
 
       {/* Row 1: Profit + Top Products */}

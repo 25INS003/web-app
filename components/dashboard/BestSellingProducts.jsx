@@ -1,10 +1,8 @@
 "use client";
 
 import { Package } from "lucide-react";
-import { useTheme } from "@/store/themeStore";
 
 export default function BestSellingProducts() {
-  const { isDark } = useTheme();
 
   const products = [
     { name: "product_01", sales: 2450, trend: "+15%", isBest: false },
@@ -14,16 +12,12 @@ export default function BestSellingProducts() {
   ];
   
   return (
-    <div className={`${
-      isDark 
-        ? 'bg-gradient-to-br from-gray-900 to-gray-950 border-blue-900/30' 
-        : 'bg-white border-gray-200'
-    } border rounded-2xl p-5 shadow-sm transition-colors duration-300`}>
+    <div className="border rounded-2xl p-5 shadow-sm transition-colors duration-300 bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-950 border-gray-200 dark:border-blue-900/30">
       <div className="flex items-center justify-between mb-3">
-        <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-semibold`}>
+        <h3 className="text-gray-900 dark:text-white font-semibold">
           Best Selling Products
         </h3>
-        <span className={`text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+        <span className="text-xs text-blue-600 dark:text-blue-400">
           Top Performers
         </span>
       </div>
@@ -33,19 +27,15 @@ export default function BestSellingProducts() {
             key={idx}
             className={`p-3 rounded-xl transition-all ${
               product.isBest 
-                ? isDark 
-                  ? 'bg-blue-500/20 border-2 border-blue-500' 
-                  : 'bg-blue-50 border-2 border-blue-500'
-                : isDark
-                  ? 'bg-gray-800/50 border border-gray-700/50'
-                  : 'bg-gray-50 border border-gray-200'
+                ? 'bg-blue-50 dark:bg-blue-500/20 border-2 border-blue-500' 
+                : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50'
             }`}
           >
             <div className="flex items-center gap-2 mb-2">
               <Package className={`w-4 h-4 ${
                 product.isBest 
                   ? 'text-blue-600' 
-                  : isDark ? 'text-gray-400' : 'text-gray-500'
+                  : 'text-gray-500 dark:text-gray-400'
               }`} />
               {product.isBest && (
                 <span className="text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded">
@@ -54,17 +44,17 @@ export default function BestSellingProducts() {
               )}
             </div>
             <p className={`text-sm font-semibold mb-1 ${
-              isDark ? (product.isBest ? 'text-white' : 'text-gray-300') : 'text-gray-900'
+              product.isBest ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-gray-300'
             }`}>
               {product.name}
             </p>
-            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>
+            <p className="text-xs text-gray-600 dark:text-gray-500">
               {product.sales} units
             </p>
             <p className={`text-xs font-medium mt-1 ${
               product.isBest 
                 ? 'text-blue-600' 
-                : isDark ? 'text-gray-500' : 'text-gray-600'
+                : 'text-gray-600 dark:text-gray-500'
             }`}>
               {product.trend}
             </p>

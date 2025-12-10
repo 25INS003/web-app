@@ -1,10 +1,8 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { useTheme } from "@/store/themeStore";
 
 export default function OrderStatusCard() {
-  const { isDark } = useTheme();
   
   const orderStatusData = [
     { name: "Completed", value: 65, color: "#10b981" },
@@ -13,12 +11,8 @@ export default function OrderStatusCard() {
   ];
   
   return (
-    <div className={`${
-      isDark 
-        ? 'bg-gradient-to-br from-gray-900 to-gray-950 border-blue-900/30' 
-        : 'bg-white border-gray-200'
-    } border rounded-2xl p-5 shadow-sm transition-colors duration-300`}>
-      <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-semibold mb-3 text-sm`}>
+    <div className="border rounded-2xl p-5 shadow-sm transition-colors duration-300 bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-950 border-gray-200 dark:border-blue-900/30">
+      <h3 className="text-gray-900 dark:text-white font-semibold mb-3 text-sm">
         Order Status
       </h3>
       <div className="flex items-center justify-between">
@@ -46,11 +40,11 @@ export default function OrderStatusCard() {
             <div key={idx} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
-                <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                <span className="text-xs text-gray-600 dark:text-gray-400">
                   {item.name}
                 </span>
               </div>
-              <span className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <span className="text-xs font-semibold text-gray-900 dark:text-white">
                 {item.value}%
               </span>
             </div>
