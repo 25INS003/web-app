@@ -25,7 +25,7 @@ export default function ProfileDropdown({ className = "" }) {
 
   const handleLogout = async () => {
     await logout();
-    // logout hook handles redirect
+    
   };
 
   return (
@@ -45,30 +45,38 @@ export default function ProfileDropdown({ className = "" }) {
       {open && (
         <div className="absolute right-0 mt-2 w-48 rounded-md bg-white dark:bg-slate-800 border shadow-lg z-20 overflow-hidden">
           <div className="py-1">
-            <Link href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">
+            <Link 
+              
+              href="/dashboard/profile" 
+              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+              onClick={() => setOpen(false)}
+            >
               <User className="w-4 h-4" />
               <span>Profile</span>
             </Link>
 
-            <Link href="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">
+            <Link 
+             
+              href="/dashboard/settings" 
+              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+              onClick={() => setOpen(false)}
+            >
               <Settings className="w-4 h-4" />
               <span>Settings</span>
             </Link>
 
             <div className="w-full px-1 ">
-<button
-              onClick={handleLogout}
-              disabled={loading}
-              className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-white
-                        rounded-md font-bold
-                        dark:text-white hover:bg-red-700 bg-destructive disabled:opacity-50"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
+              <button
+                onClick={handleLogout}
+                disabled={loading}
+                className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-white
+                          rounded-md font-bold
+                          dark:text-white hover:bg-red-700 bg-destructive disabled:opacity-50"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
             </div>
-
-            
           </div>
         </div>
       )}
