@@ -270,28 +270,31 @@ const OrdersDashboard = () => {
 
     return (
         <div className="p-4 md:p-6 lg:p-8">
-            <h1 className="text-3xl font-bold tracking-tight mb-6">Order Dashboard</h1>
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-3xl font-bold tracking-tight mb-6">Order Dashboard</h1>
 
-            {/* Header with Actions */}
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex gap-3">
-                    <Button variant="outline" className="flex items-center gap-2" onClick={handleRefresh} disabled={isRefreshing}>
-                        <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        Refresh
-                    </Button>
-                    <Button
-                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
-                        onClick={handleProcessNewOrders}
-                        disabled={stats.pendingCount === 0}
-                    >
-                        <CheckCircle className="w-4 h-4" />
-                        Process Pending ({stats.pendingCount})
-                    </Button>
-                    <Button variant="outline" className="flex items-center gap-2" onClick={handleExportData} >
-                        <Download className="w-4 h-4" /> Export
-                    </Button>
+                {/* Header with Actions */}
+                <div className="flex justify-between items-center mb-6">
+                    <div className="flex gap-3">
+                        <Button variant="outline" className="flex items-center gap-2" onClick={handleRefresh} disabled={isRefreshing}>
+                            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </Button>
+                        <Button
+                            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                            onClick={handleProcessNewOrders}
+                            disabled={stats.pendingCount === 0}
+                        >
+                            <CheckCircle className="w-4 h-4" />
+                            Process Pending ({stats.pendingCount})
+                        </Button>
+                        <Button variant="outline" className="flex items-center gap-2" onClick={handleExportData} >
+                            <Download className="w-4 h-4" /> Export
+                        </Button>
+                    </div>
                 </div>
             </div>
+
 
             {/* Key Metrics Section */}
             <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">
