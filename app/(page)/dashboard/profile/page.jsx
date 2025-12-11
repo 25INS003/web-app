@@ -44,30 +44,26 @@ export default function ShopOwnerProfilePage() {
       setProfile(profileData);
       setLoading(false);
     }, 500);
+
+    // Uncomment and use this for actual API integration:
+    // const fetchProfile = async () => {
+    //   try {
+    //     const token = localStorage.getItem('accessToken');
+    //     const response = await fetch('/api/v1/users/shop-owner/profile', {
+    //       headers: {
+    //         'Authorization': `Bearer ${token}`
+    //       }
+    //     });
+    //     const data = await response.json();
+    //     setProfile(data.data);
+    //     setLoading(false);
+    //   } catch (err) {
+    //     setError(err.message);
+    //     setLoading(false);
+    //   }
+    // };
+    // fetchProfile();
   }, []);
-
-  //Good evening, this side Azhaan, made this comment and the rest below to clarify that remove the above given dummy data and use the access token in the code commented below. Thank you.
-
-  // useEffect(() => {
-  //   const fetchProfile = async () => {
-  //     try {
-  //       const token = localStorage.getItem('accessToken');
-  //       const response = await fetch('/api/v1/users/shop-owner/profile', {
-  //         headers: {
-  //           'Authorization': `Bearer ${token}`
-  //         }
-  //       });
-  //       const data = await response.json();
-  //       setProfile(data.data);
-  //       setLoading(false);
-  //     } catch (err) {
-  //       setError(err.message);
-  //       setLoading(false);
-  //     }
-  //   };
-    
-  //   fetchProfile();
-  // }, []);
 
   const handleEditClick = () => {
     setEditedProfile(JSON.parse(JSON.stringify(profile)));
@@ -132,10 +128,8 @@ export default function ShopOwnerProfilePage() {
   const handleSaveProfile = async () => {
     setSaving(true);
     
-    // Simulate API call
     setTimeout(() => {
-      // use the same access token here also.
-      
+      // Uncomment for actual API integration:
       // try {
       //   const token = localStorage.getItem('accessToken');
       //   const response = await fetch('/api/v1/users/shop-owner/profile', {
@@ -170,37 +164,44 @@ export default function ShopOwnerProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading profile...</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-gray-600 dark:text-gray-400">Loading profile...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-red-600">Error: {error}</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-red-600 dark:text-red-400">Error: {error}</div>
       </div>
     );
   }
 
+  const accountNumber = profile.shop_owner?.bank_account_number;
+  const maskedAccount = accountNumber 
+    ? accountNumber.slice(0, -4).replace(/./g, '•') + accountNumber.slice(-4)
+    : 'Not provided';
+
   return (
-    <div className="min-h-screen bg-gray-50 py-6 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 px-4 transition-colors">
       <div className="max-w-5xl mx-auto">
-        {/* Back Button */}
-        <button
-          onClick={() => window.history.back()}
-          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
-        </button>
+        {/* Top Bar with Back Button */}
+        <div className="mb-6 flex items-center justify-between">
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </button>
+        </div>
 
         {/* Header Card */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-6">
-              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
                 {profile.profile_image ? (
                   <img 
                     src={profile.profile_image} 
@@ -208,28 +209,28 @@ export default function ShopOwnerProfilePage() {
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <User className="w-12 h-12 text-gray-400" />
+                  <User className="w-12 h-12 text-gray-400 dark:text-gray-500" />
                 )}
               </div>
               
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-2xl font-semibold text-gray-900">
+                  <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                     {profile.first_name} {profile.last_name}
                   </h1>
                   {profile.is_verified && (
-                    <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
+                    <span className="px-2 py-1 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full">
                       Verified
                     </span>
                   )}
                   {profile.shop_owner?.is_approved && (
-                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
+                    <span className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full">
                       Approved
                     </span>
                   )}
                 </div>
-                <p className="text-gray-600 mb-1">Shop Owner</p>
-                <p className="text-sm text-gray-500">
+                <p className="text-gray-600 dark:text-gray-400 mb-1">Shop Owner</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500">
                   Member since {formatDate(profile.createdAt)}
                 </p>
               </div>
@@ -237,7 +238,7 @@ export default function ShopOwnerProfilePage() {
 
             <button 
               onClick={handleEditClick}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center gap-2"
             >
               <Edit className="w-4 h-4" />
               Edit Profile
@@ -246,89 +247,88 @@ export default function ShopOwnerProfilePage() {
         </div>
 
         {/* Business Information */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Building2 className="w-5 h-5" />
             Business Information
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-sm text-gray-500 block mb-1">Business Name</label>
-              <p className="text-gray-900 font-medium">{profile.shop_owner?.business_name}</p>
+              <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Business Name</label>
+              <p className="text-gray-900 dark:text-gray-100 font-medium">{profile.shop_owner?.business_name}</p>
             </div>
             
             <div>
-              <label className="text-sm text-gray-500 block mb-1">GST Number</label>
-              <p className="text-gray-900 font-medium">{profile.shop_owner?.gst_number || 'Not provided'}</p>
+              <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">GST Number</label>
+              <p className="text-gray-900 dark:text-gray-100 font-medium">{profile.shop_owner?.gst_number || 'Not provided'}</p>
             </div>
             
             <div className="md:col-span-2">
-              <label className="text-sm text-gray-500 flex items-center gap-1 mb-1">
+              <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
                 <MapPin className="w-4 h-4" />
                 Business Address
               </label>
-              <p className="text-gray-900">
+              <p className="text-gray-900 dark:text-gray-100">
                 {profile.shop_owner?.business_address_line1}
                 {profile.shop_owner?.business_address_line2 && `, ${profile.shop_owner.business_address_line2}`}
               </p>
-              <p className="text-gray-900">
+              <p className="text-gray-900 dark:text-gray-100">
                 {profile.shop_owner?.business_address_district}, {profile.shop_owner?.business_address_state} - {profile.shop_owner?.business_address_pincode}
               </p>
             </div>
             
             <div>
-              <label className="text-sm text-gray-500 flex items-center gap-1 mb-1">
+              <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
                 <Calendar className="w-4 h-4" />
                 Business Since
               </label>
-              <p className="text-gray-900">{formatDate(profile.shop_owner?.business_since)}</p>
+              <p className="text-gray-900 dark:text-gray-100">{formatDate(profile.shop_owner?.business_since)}</p>
             </div>
           </div>
         </div>
 
         {/* Contact Information */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Contact Information</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-sm text-gray-500 flex items-center gap-1 mb-1">
+              <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
                 <Mail className="w-4 h-4" />
                 Email
               </label>
-              <p className="text-gray-900">{profile.email}</p>
+              <p className="text-gray-900 dark:text-gray-100">{profile.email}</p>
             </div>
             
             <div>
-              <label className="text-sm text-gray-500 flex items-center gap-1 mb-1">
+              <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
                 <Phone className="w-4 h-4" />
                 Phone
               </label>
-              <p className="text-gray-900">{profile.phone}</p>
+              <p className="text-gray-900 dark:text-gray-100">{profile.phone}</p>
             </div>
           </div>
         </div>
 
         {/* Banking Information */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <CreditCard className="w-5 h-5" />
             Banking Information
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-sm text-gray-500 block mb-1">Account Number</label>
-              <p className="text-gray-900 font-mono">
-                {profile.shop_owner?.bank_account_number.slice(0, -4).replace(/./g, '•')}
-                {profile.shop_owner?.bank_account_number.slice(-4)}
+              <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Account Number</label>
+              <p className="text-gray-900 dark:text-gray-100 font-mono">
+                {maskedAccount}
               </p>
             </div>
             
             <div>
-              <label className="text-sm text-gray-500 block mb-1">IFSC Code</label>
-              <p className="text-gray-900 font-mono">{profile.shop_owner?.ifsc_code}</p>
+              <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">IFSC Code</label>
+              <p className="text-gray-900 dark:text-gray-100 font-mono">{profile.shop_owner?.ifsc_code || 'Not provided'}</p>
             </div>
           </div>
         </div>
@@ -337,37 +337,39 @@ export default function ShopOwnerProfilePage() {
       {/* Edit Modal */}
       {isEditMode && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-semibold text-gray-900">Edit Profile</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col transition-colors">
+            {/* Modal Header */}
+            <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Edit Profile</h2>
               <button
                 onClick={handleCancelEdit}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            {/* Modal Content - Now scrollable */}
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
               {/* Profile Photo Section */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Photo</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Profile Photo</h3>
                 <div className="flex items-start gap-6">
                   <div className="relative">
-                    <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                    <div className="w-32 h-32 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
                       {previewImage ? (
                         <img 
                           src={previewImage} 
                           alt="Preview" 
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover rounded-full"
                         />
                       ) : (
-                        <User className="w-16 h-16 text-gray-400" />
+                        <User className="w-16 h-16 text-gray-400 dark:text-gray-500" />
                       )}
                     </div>
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors shadow-lg"
+                      className="absolute bottom-0 right-0 bg-blue-600 dark:bg-blue-700 text-white p-2 rounded-full hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-lg"
                     >
                       <Camera className="w-4 h-4" />
                     </button>
@@ -384,7 +386,7 @@ export default function ShopOwnerProfilePage() {
                     <div className="space-y-3">
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                       >
                         <Upload className="w-4 h-4" />
                         Upload Photo
@@ -392,13 +394,13 @@ export default function ShopOwnerProfilePage() {
                       {previewImage && (
                         <button
                           onClick={handleRemoveImage}
-                          className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="flex items-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                         >
                           <X className="w-4 h-4" />
                           Remove Photo
                         </button>
                       )}
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Recommended: Square image, at least 400x400px
                         <br />
                         Maximum file size: 5MB
@@ -410,50 +412,50 @@ export default function ShopOwnerProfilePage() {
 
               {/* Personal Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Personal Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       First Name
                     </label>
                     <input
                       type="text"
                       value={editedProfile?.first_name || ''}
                       onChange={(e) => handleInputChange('first_name', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Last Name
                     </label>
                     <input
                       type="text"
                       value={editedProfile?.last_name || ''}
                       onChange={(e) => handleInputChange('last_name', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Email
                     </label>
                     <input
                       type="email"
                       value={editedProfile?.email || ''}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Phone
                     </label>
                     <input
                       type="tel"
                       value={editedProfile?.phone || ''}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -461,83 +463,83 @@ export default function ShopOwnerProfilePage() {
 
               {/* Business Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Business Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Business Name
                     </label>
                     <input
                       type="text"
                       value={editedProfile?.shop_owner?.business_name || ''}
                       onChange={(e) => handleInputChange('business_name', e.target.value, true)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       GST Number
                     </label>
                     <input
                       type="text"
                       value={editedProfile?.shop_owner?.gst_number || ''}
                       onChange={(e) => handleInputChange('gst_number', e.target.value, true)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Address Line 1
                     </label>
                     <input
                       type="text"
                       value={editedProfile?.shop_owner?.business_address_line1 || ''}
                       onChange={(e) => handleInputChange('business_address_line1', e.target.value, true)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Address Line 2
                     </label>
                     <input
                       type="text"
                       value={editedProfile?.shop_owner?.business_address_line2 || ''}
                       onChange={(e) => handleInputChange('business_address_line2', e.target.value, true)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       State
                     </label>
                     <input
                       type="text"
                       value={editedProfile?.shop_owner?.business_address_state || ''}
                       onChange={(e) => handleInputChange('business_address_state', e.target.value, true)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       District
                     </label>
                     <input
                       type="text"
                       value={editedProfile?.shop_owner?.business_address_district || ''}
                       onChange={(e) => handleInputChange('business_address_district', e.target.value, true)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Pincode
                     </label>
                     <input
                       type="text"
                       value={editedProfile?.shop_owner?.business_address_pincode || ''}
                       onChange={(e) => handleInputChange('business_address_pincode', e.target.value, true)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -545,40 +547,40 @@ export default function ShopOwnerProfilePage() {
 
               {/* Banking Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Banking Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Banking Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Bank Account Number
                     </label>
                     <input
                       type="text"
                       value={editedProfile?.shop_owner?.bank_account_number || ''}
                       onChange={(e) => handleInputChange('bank_account_number', e.target.value, true)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       IFSC Code
                     </label>
                     <input
                       type="text"
                       value={editedProfile?.shop_owner?.ifsc_code || ''}
                       onChange={(e) => handleInputChange('ifsc_code', e.target.value, true)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-6 flex items-center justify-end gap-3">
+            {/* Action Buttons (Modal Footer) */}
+            <div className="flex-shrink-0 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-6 flex items-center justify-end gap-3">
               <button
                 onClick={handleCancelEdit}
                 disabled={saving}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
