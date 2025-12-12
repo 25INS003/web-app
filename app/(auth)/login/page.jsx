@@ -203,8 +203,8 @@ export default function LoginPage() {
                             </div>
 
                             {/* Remember Me & Forgot Password */}
-                            {/* <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
+                            <div className="flex items-center justify-between">
+                                {/* <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="rememberMe"
                                         checked={rememberMe}
@@ -217,14 +217,14 @@ export default function LoginPage() {
                                     >
                                         Remember me
                                     </Label>
-                                </div>
+                                </div> */}
                                 <Link
                                     href="/forgot-password"
                                     className="text-sm text-blue-600 hover:text-blue-500 hover:underline transition-colors"
                                 >
                                     Forgot password?
                                 </Link>
-                            </div> */}
+                            </div>
 
                             {/* Submit Button */}
                             <Button
