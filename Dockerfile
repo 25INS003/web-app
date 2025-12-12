@@ -14,6 +14,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 # Copy all source code
 COPY . .
+COPY .env ./
 
 # Run the Next.js build command
 RUN npm run build
