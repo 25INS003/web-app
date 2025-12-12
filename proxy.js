@@ -27,7 +27,7 @@ export function proxy(request) {
       pathname.startsWith(path)
   );
 
-  console.log(`Checking: ${pathname} | Token: ${token ? "YES" : "NO"} | Public? ${isPublicPath}`);
+  // console.log(`Checking: ${pathname} | Token: ${token ? "YES" : "NO"} | Public? ${isPublicPath} | Role: ${userRole || "NONE"}`);
 
   // 2. PROTECT ROUTES
   // If no token, and it's NOT a public path, Redirect to login
