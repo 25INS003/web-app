@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import SelectShop from "@/components/Dropdowns/selectShop";
 
-// --- Icons (Lucide React) ---
 import {
     Store,
     MapPin,
@@ -16,7 +16,7 @@ import {
     Building2,
     User,
     Settings,
-    Image as ImageIcon,
+    ImageIcon,
     Upload,
     X,
     CheckCircle,
@@ -26,26 +26,15 @@ import {
     FileText
 } from "lucide-react";
 
-// --- Shadcn UI Components ---
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 
-// ==========================================
-// Main Page Component
-// ==========================================
 const MyShopPage = () => {
-    // Local State
+    const searchParams = useSearchParams();
     const [selectedShop, setSelectedShop] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -54,37 +43,57 @@ const MyShopPage = () => {
     const [shopImage, setShopImage] = useState(null);
     const [imagePreview, setImagePreview] = useState("");
 
-    // Form handling
     const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
-    // Load shop data when selected
+    // Fetch shop details when selected
+    useEffect(() => {
+        const shopId = searchParams.get('shop');
+        if (shopId && !selectedShop) {
+            fetchShopDetails(shopId);
+        }
+    }, [searchParams]);
+
     useEffect(() => {
         if (selectedShop) {
             setIsLoading(true);
-            // Simulate API call to fetch shop details
-            setTimeout(() => {
-                reset({
-                    name: selectedShop.name || "",
-                    description: selectedShop.description || "",
-                    email: selectedShop.email || "",
-                    phone: selectedShop.phone || "",
-                    address: selectedShop.address || "",
-                    city: selectedShop.city || "",
-                    state: selectedShop.state || "",
-                    pincode: selectedShop.pincode || "",
-                    gst_number: selectedShop.gst_number || "",
-                    opening_time: selectedShop.opening_time || "09:00",
-                    closing_time: selectedShop.closing_time || "21:00",
-                    website: selectedShop.website || "",
-                    category: selectedShop.category || "",
-                });
-                setImagePreview(selectedShop.image || "");
-                setIsLoading(false);
-            }, 500);
+            
+            reset({
+                name: selectedShop.name || "",
+                description: selectedShop.description || "",
+                email: selectedShop.email || "",
+                phone: selectedShop.phone || "",
+                address: selectedShop.address || "",
+                city: selectedShop.city || "",
+                state: selectedShop.state || "",
+                pincode: selectedShop.pincode || "",
+                gst_number: selectedShop.gst_number || "",
+                opening_time: selectedShop.opening_time || "09:00",
+                closing_time: selectedShop.closing_time || "21:00",
+                website: selectedShop.website || "",
+                category: selectedShop.category || "",
+            });
+            setImagePreview(selectedShop.image || "");
+            setIsLoading(false);
         }
     }, [selectedShop, reset]);
 
-    // Handle image upload
+    const fetchShopDetails = async (shopId) => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/shops/${shopId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch shop details');
+            }
+            const data = await response.json();
+            setSelectedShop(data.shop);
+        } catch (error) {
+            console.error("Error fetching shop details:", error);
+            setErrorMessage("Failed to load shop details");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -97,22 +106,36 @@ const MyShopPage = () => {
         }
     };
 
-    // Handle form submission
     const onSubmit = async (data) => {
         setIsSaving(true);
         setSuccessMessage("");
         setErrorMessage("");
 
         try {
-            // Simulate API call to update shop
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            const formData = new FormData();
+            Object.keys(data).forEach(key => {
+                formData.append(key, data[key]);
+            });
             
-            // Here you would make your actual API call
-            // const response = await updateShop(selectedShop._id, data);
-            
+            if (shopImage) {
+                formData.append('image', shopImage);
+            }
+
+            const response = await fetch(`/api/shops/${selectedShop._id}`, {
+                method: 'PUT',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update shop');
+            }
+
+            const result = await response.json();
+            setSelectedShop(result.shop);
             setSuccessMessage("Shop details updated successfully!");
             setTimeout(() => setSuccessMessage(""), 3000);
         } catch (error) {
+            console.error("Error updating shop:", error);
             setErrorMessage("Failed to update shop details. Please try again.");
             setTimeout(() => setErrorMessage(""), 3000);
         } finally {
@@ -120,7 +143,6 @@ const MyShopPage = () => {
         }
     };
 
-    // Render Logic - No Shop Selected
     if (!selectedShop) {
         return (
             <div className="container mx-auto p-4 flex flex-col items-center justify-center min-h-[50vh] space-y-4">
@@ -138,10 +160,8 @@ const MyShopPage = () => {
         );
     }
 
-    // Render Logic - Shop Selected
     return (
         <div className="container mx-auto p-6 space-y-6">
-            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-4">
                     <div className="w-[200px]">
@@ -164,7 +184,6 @@ const MyShopPage = () => {
                 </Badge>
             </div>
 
-            {/* Success/Error Messages */}
             {successMessage && (
                 <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
                     <CheckCircle className="h-5 w-5" />
@@ -178,7 +197,6 @@ const MyShopPage = () => {
                 </div>
             )}
 
-            {/* Main Content */}
             <Tabs defaultValue="general" className="space-y-6">
                 <TabsList className="bg-white dark:bg-slate-800/60 border">
                     <TabsTrigger value="general">
@@ -199,8 +217,7 @@ const MyShopPage = () => {
                     </TabsTrigger>
                 </TabsList>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    {/* General Tab */}
+                <div className="space-y-6">
                     <TabsContent value="general" className="space-y-6">
                         <Card className="bg-white dark:bg-slate-800/60 border-border">
                             <CardHeader>
@@ -210,7 +227,6 @@ const MyShopPage = () => {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                {/* Shop Image */}
                                 <div className="space-y-4">
                                     <label className="text-sm font-medium">Shop Image</label>
                                     <div className="flex items-center gap-6">
@@ -262,7 +278,6 @@ const MyShopPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Shop Name */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium flex items-center gap-2">
                                         <Store className="h-4 w-4" />
@@ -278,7 +293,6 @@ const MyShopPage = () => {
                                     )}
                                 </div>
 
-                                {/* Description */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium flex items-center gap-2">
                                         <FileText className="h-4 w-4" />
@@ -292,7 +306,6 @@ const MyShopPage = () => {
                                     />
                                 </div>
 
-                                {/* Category */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium flex items-center gap-2">
                                         <Tag className="h-4 w-4" />
@@ -316,7 +329,6 @@ const MyShopPage = () => {
                         </Card>
                     </TabsContent>
 
-                    {/* Contact Tab */}
                     <TabsContent value="contact" className="space-y-6">
                         <Card className="bg-white dark:bg-slate-800/60 border-border">
                             <CardHeader>
@@ -327,7 +339,6 @@ const MyShopPage = () => {
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Email */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium flex items-center gap-2">
                                             <Mail className="h-4 w-4" />
@@ -349,7 +360,6 @@ const MyShopPage = () => {
                                         )}
                                     </div>
 
-                                    {/* Phone */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium flex items-center gap-2">
                                             <Phone className="h-4 w-4" />
@@ -371,7 +381,6 @@ const MyShopPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Website */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium flex items-center gap-2">
                                         <Globe className="h-4 w-4" />
@@ -384,7 +393,6 @@ const MyShopPage = () => {
                                     />
                                 </div>
 
-                                {/* Address */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium flex items-center gap-2">
                                         <MapPin className="h-4 w-4" />
@@ -399,7 +407,6 @@ const MyShopPage = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {/* City */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">City</label>
                                         <Input
@@ -409,7 +416,6 @@ const MyShopPage = () => {
                                         />
                                     </div>
 
-                                    {/* State */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">State</label>
                                         <Input
@@ -419,7 +425,6 @@ const MyShopPage = () => {
                                         />
                                     </div>
 
-                                    {/* Pincode */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Pincode</label>
                                         <Input
@@ -441,7 +446,6 @@ const MyShopPage = () => {
                         </Card>
                     </TabsContent>
 
-                    {/* Business Tab */}
                     <TabsContent value="business" className="space-y-6">
                         <Card className="bg-white dark:bg-slate-800/60 border-border">
                             <CardHeader>
@@ -451,7 +455,6 @@ const MyShopPage = () => {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                {/* GST Number */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium flex items-center gap-2">
                                         <FileText className="h-4 w-4" />
@@ -467,7 +470,6 @@ const MyShopPage = () => {
                                     </p>
                                 </div>
 
-                                {/* Shop Owner */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium flex items-center gap-2">
                                         <User className="h-4 w-4" />
@@ -480,7 +482,6 @@ const MyShopPage = () => {
                                     />
                                 </div>
 
-                                {/* Shop ID */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Shop ID</label>
                                     <Input
@@ -493,7 +494,6 @@ const MyShopPage = () => {
                         </Card>
                     </TabsContent>
 
-                    {/* Hours Tab */}
                     <TabsContent value="hours" className="space-y-6">
                         <Card className="bg-white dark:bg-slate-800/60 border-border">
                             <CardHeader>
@@ -504,7 +504,6 @@ const MyShopPage = () => {
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Opening Time */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium flex items-center gap-2">
                                             <Clock className="h-4 w-4" />
@@ -517,7 +516,6 @@ const MyShopPage = () => {
                                         />
                                     </div>
 
-                                    {/* Closing Time */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium flex items-center gap-2">
                                             <Clock className="h-4 w-4" />
@@ -540,7 +538,6 @@ const MyShopPage = () => {
                         </Card>
                     </TabsContent>
 
-                    {/* Save Button */}
                     <div className="flex justify-end gap-3">
                         <Button
                             type="button"
@@ -551,7 +548,7 @@ const MyShopPage = () => {
                             Reset
                         </Button>
                         <Button
-                            type="submit"
+                            onClick={handleSubmit(onSubmit)}
                             disabled={isSaving || isLoading}
                             className="min-w-[120px]"
                         >
@@ -568,10 +565,9 @@ const MyShopPage = () => {
                             )}
                         </Button>
                     </div>
-                </form>
+                </div>
             </Tabs>
 
-            {/* Shop Statistics Card */}
             <Card className="bg-white dark:bg-slate-800/60 border-border">
                 <CardHeader>
                     <CardTitle>Shop Statistics</CardTitle>
@@ -580,15 +576,15 @@ const MyShopPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="p-4 bg-blue-50 rounded-lg">
                             <p className="text-sm text-muted-foreground">Total Products</p>
-                            <p className="text-2xl font-bold">124</p>
+                            <p className="text-2xl font-bold">{selectedShop.total_products || 0}</p>
                         </div>
                         <div className="p-4 bg-green-50 rounded-lg">
                             <p className="text-sm text-muted-foreground">Total Orders</p>
-                            <p className="text-2xl font-bold">1,245</p>
+                            <p className="text-2xl font-bold">{selectedShop.total_orders || 0}</p>
                         </div>
                         <div className="p-4 bg-purple-50 rounded-lg">
                             <p className="text-sm text-muted-foreground">Active Customers</p>
-                            <p className="text-2xl font-bold">456</p>
+                            <p className="text-2xl font-bold">{selectedShop.active_customers || 0}</p>
                         </div>
                     </div>
                 </CardContent>

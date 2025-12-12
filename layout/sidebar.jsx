@@ -2,17 +2,19 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, Users, Settings, Package, ChevronLeft, Menu } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Users, Settings, Package, ChevronLeft, Menu, Building2 } from "lucide-react";
 import { useSidebar } from "@/store/uiStore";
-
+import { usePathname } from "next/navigation";
 
 const Sidebar = () => {
     const { isSidebarOpen, toggleSidebar } = useSidebar();
+    const pathname = usePathname();
 
     const menuItems = [
         { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
         { name: "Orders", icon: ShoppingBag, href: "/orders" },
         { name: "Products", icon: Package, href: "/products" },
+        { name: "Manage Shops", icon: Building2, href: "/shops" },
         { name: "My Shop", icon: Users, href: "/myshop" },
         { name: "Settings", icon: Settings, href: "/settings" },
     ];
@@ -33,28 +35,32 @@ const Sidebar = () => {
 
             {/* Navigation Links */}
             <nav className="mt-4 flex flex-col gap-2 px-2">
-                {menuItems.map((item) => (
-                    <Link
-                        key={item.name}
-                        href={item.href}
-                        className={`flex items-center rounded-md p-3 text-slate-300 
-                                    hover:bg-slate-800 hover:text-white 
-                                    dark:hover:bg-slate-700 dark:hover:text-white transition-colors group
+                {menuItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                        <Link
+                            key={item.name}
+                            href={item.href}
+                            className={`flex items-center rounded-md p-3 transition-colors group
+                                    ${isActive 
+                                        ? "bg-blue-600 text-white" 
+                                        : "text-slate-300 hover:bg-slate-800 hover:text-white dark:hover:bg-slate-700 dark:hover:text-white"
+                                    }
                                     ${isSidebarOpen 
-                                            ? "p-3 gap-4 justify-start"        
-                                            : "p-3 gap-0 justify-center"       
-                                        }
-                                    `}
+                                        ? "p-3 gap-4 justify-start"        
+                                        : "p-3 gap-0 justify-center"       
+                                    }
+                                `}
                         >
-                        <item.icon size={22} />
-                        {isSidebarOpen &&
-                        <span className={`whitespace-nowrap overflow-hidden text-ellipsis`}>
-                            {item.name}
-                        </span>
-                        }
-                        
-                    </Link>
-                ))}
+                            <item.icon size={22} />
+                            {isSidebarOpen &&
+                                <span className={`whitespace-nowrap overflow-hidden text-ellipsis`}>
+                                    {item.name}
+                                </span>
+                            }
+                        </Link>
+                    );
+                })}
             </nav>
         </aside>
     );
