@@ -5,6 +5,7 @@ import { create } from "zustand";
 import apiClient from "@/api/apiClient";
 import { persist, createJSONStorage } from "zustand/middleware";
 import Routes from "@/api/endpoints";
+import Cookies from "js-cookie";
 
 export const useAuthStore = create(
     persist((set, get) => ({
@@ -31,6 +32,10 @@ export const useAuthStore = create(
 
                 const { user, accessToken, refreshToken } = res.data.data;
 
+                // SET COOKIE FOR MIDDLEWARE (Expires in 1 day, adjust as needed)
+                Cookies.set("accessToken", accessToken, { expires: 1 });
+                Cookies.set("userRole", user.user_type, { expires: 1 });
+
                 set({
                     user,
                     accessToken,
@@ -55,14 +60,13 @@ export const useAuthStore = create(
         // ------------------------
         logout: async () => {
             try {
-                await apiClient.post(
-                    Routes.AUTH.LOGOUT,
-                    {},
-                    { withCredentials: true }
-                );
+                await apiClient.post(Routes.AUTH.LOGOUT, {}, { withCredentials: true });
             } catch { }
 
-            // Clear memory only (safe)
+            // REMOVE COOKIE
+            Cookies.remove("accessToken");
+            Cookies.remove("userRole");
+            Cookies.remove("next-auth.session-token");
             set({
                 user: null,
                 accessToken: null,
@@ -125,7 +129,7 @@ export const useAuthStore = create(
         // ------------------------
         getProfile: async () => {
             if (user.user_type === "shop_owner") {
-                
+
             }
 
             set({ loading: true, error: null });
@@ -213,7 +217,7 @@ export const useAuthStore = create(
                 isAuthenticated: state.isAuthenticated,
                 user: state.user,
             }),
-            
+
         }
     )
 );

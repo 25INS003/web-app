@@ -5,8 +5,24 @@ import Sidebar from "@/layout/sidebar";
 import Header from "@/layout/header";
 import { useSidebar } from "@/store/uiStore";
 
-export default function AdminLayout({children}) {
+// import { useEffect } from "react";
+// import { useAuthStore } from "@/store/authStore";
+// import Cookies from 'js-cookie';
+
+export default function AdminLayout({ children }) {
     const { isSidebarOpen } = useSidebar();
+
+    // !! Only enable this if you want strict syncing !!
+    ///////////////////////////////////////////////////////////////////////////
+    // const { logout } = useAuthStore();                                   //
+    // useEffect(() => {                                                    //
+    //     // If cookie is gone but state says logged in, force logout     //
+    //     const token = Cookies.get('accessToken');                       //
+    //     if (!token) {
+    //         logout(); 
+    //     }
+    // }, []);
+    ////////////////////////////////////////////////////
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
