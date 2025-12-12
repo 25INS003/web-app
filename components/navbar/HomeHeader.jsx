@@ -109,11 +109,11 @@ const HomeHeader = () => {
             {/* Navigation Links (Desktop) */}
             {!isMobile && (
                 <nav className="flex space-x-6 text-foreground items-center justify-center text-foreground">
-                    <a href="/" className="hover:text-gray-300">Home</a>
-                    <a href="/papers" className="hover:text-gray-300">Papers</a>
-                    <a href="/upload" className="hover:text-gray-300">Upload</a>
+                    <a href="/dashboard" className="hover:text-gray-300">Dashboard</a>
+                    {/* <a href="/papers" className="hover:text-gray-300">Papers</a> */}
+                    {/* <a href="/upload" className="hover:text-gray-300">Upload</a> */}
                     
-                    <a href="/contact" className="hover:text-gray-300">Contact</a>
+                    {/* <a href="/contact" className="hover:text-gray-300">Contact</a> */}
                     
                     
                     {/* {(user?.is_superuser || user?.is_staff) && <a href="/pages/admin" className="hover:text-gray-300">Admin</a>}
@@ -131,11 +131,11 @@ const HomeHeader = () => {
                         transition={{ duration: 0.2, ease: "easeOut" }}
                         className="flex flex-col items-center justify-center space-y-8 text-white text-3xl w-full   flex-grow p-4"
                     >
-                        <a href="/" onClick={handleLinkClick} className="hover:text-gray-300 text-foreground">Home</a>
-                        <a href="/papers" onClick={handleLinkClick} className="hover:text-gray-300 text-foreground">Paper</a>
-                        <a href="/upload" onClick={handleLinkClick} className="hover:text-gray-300 text-foreground">Upload</a>
+                        <a href="/dashboard" onClick={handleLinkClick} className="hover:text-gray-300 text-foreground">dashboard</a>
+                        {/* <a href="/papers" onClick={handleLinkClick} className="hover:text-gray-300 text-foreground">Paper</a> */}
+                        {/* <a href="/upload" onClick={handleLinkClick} className="hover:text-gray-300 text-foreground">Upload</a> */}
 
-                        <a href="/contact" onClick={handleLinkClick} className="hover:text-gray-300 text-foreground">Contact</a>
+                        {/* <a href="/contact" onClick={handleLinkClick} className="hover:text-gray-300 text-foreground">Contact</a> */}
                         <div><ThemeToggle/></div>
                         {/* {(user?.is_superuser || user?.is_staff) && <a href="/pages/admin" className="hover:text-gray-300">Admin</a>} */}
 
