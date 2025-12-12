@@ -14,13 +14,17 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, Store, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function SelectShop({ onShopSelect }) {
+export default function SelectShop({ selectedShop, onShopSelect }) {
   const myShops = useShopStore((state) => state.myShops);
   const isLoading = useShopStore((state) => state.isLoading);
   const fetchMyShops = useShopStore((state) => state.fetchMyShops);
   
-  const [selectedShop, setSelectedShop] = useState(null);
+  // Internal state for uncontrolled usage (optional fallback)
+  const [internalSelected, setInternalSelected] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Derived state: Use the prop if provided, otherwise use internal state
+  const displayShop = selectedShop || internalSelected;
 
   // Fetch data on mount
   useEffect(() => {
@@ -30,7 +34,7 @@ export default function SelectShop({ onShopSelect }) {
   }, [fetchMyShops]);
 
   const handleSelect = (shop) => {
-    setSelectedShop(shop);
+    setInternalSelected(shop);
     setIsOpen(false);
     
     if (typeof onShopSelect === 'function') {
@@ -38,11 +42,13 @@ export default function SelectShop({ onShopSelect }) {
     }
   };
 
-  // Loading State
-  if (isLoading) {
+  // Loading State: Only show full loader if we have NO shops and ARE loading.
+  // This prevents the UI from flickering to "Loading..." if we already have data 
+  // (e.g., when the component is re-rendered in the header).
+  if (isLoading && (!myShops || myShops.length === 0)) {
     return (
-      <div className="w-full max-w-xs">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+      <div className="relative w-full max-w-xs">
+        <label className="absolute top-0 left-0 -translate-y-fulltext-sm font-medium text-gray-700 mb-1">
           Select a Shop
         </label>
         <div className="flex items-center justify-center h-10 w-full border border-gray-200 rounded-md bg-gray-50">
@@ -57,8 +63,8 @@ export default function SelectShop({ onShopSelect }) {
   const isDisabled = shops.length === 0;
 
   return (
-    <div className="w-full max-w-xs">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+    <div className="relative w-full max-w-xs">
+      <label className="absolute top-0 left-0 -translate-y-full text-sm font-medium text-gray-700 mb-1">
         Select a Shop
       </label>
       
@@ -69,14 +75,14 @@ export default function SelectShop({ onShopSelect }) {
             disabled={isDisabled}
             className={cn(
               "w-full justify-between",
-              !selectedShop && "text-muted-foreground"
+              !displayShop && "text-muted-foreground"
             )}
           >
             <div className="flex items-center gap-2">
               <Store className="h-4 w-4" />
               <span className="truncate">
-                {selectedShop 
-                  ? selectedShop.name || 'Unnamed shop'
+                {displayShop 
+                  ? displayShop.name || 'Unnamed shop'
                   : isDisabled 
                     ? 'No shops found' 
                     : 'Choose a shop...'
@@ -105,7 +111,7 @@ export default function SelectShop({ onShopSelect }) {
                 onClick={() => shop && handleSelect(shop)}
                 className={cn(
                   "cursor-pointer",
-                  selectedShop?._id === shop?._id && "bg-accent"
+                  displayShop?._id === shop?._id && "bg-accent"
                 )}
               >
                 <div className="flex items-center gap-2">
