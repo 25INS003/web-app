@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Download, CheckCircle, ShoppingBag, BarChart3, Users } from 'lucide-react';
 
 // Ensure these paths match your project structure
-import SelectShop from '@/components/Dropdowns/selectShop'; 
+import SelectShop from '@/components/Dropdowns/selectShop';
 import OrderFilter from '@/components/order/OrderFilter';
 import OrderTable from '@/components/order/OrderTable';
 import { useShopOrderStore } from '@/store/shopOrderStore'; // Adjusted to your path
@@ -39,7 +39,7 @@ const OrdersDashboard = () => {
         const queryParams = {
             page,
             limit,
-            ...filters, 
+            ...filters,
         };
 
         // Handle Tab specific override
@@ -57,7 +57,7 @@ const OrdersDashboard = () => {
 
     const handleFilterChange = (newFilters) => {
         setFilters(newFilters);
-        setPage(1); 
+        setPage(1);
     };
 
     const handleTabChange = (val) => {
@@ -79,7 +79,7 @@ const OrdersDashboard = () => {
     // --- Client-Side Stats ---
     const stats = useMemo(() => {
         if (!orders.length) return { totalRevenue: "0.00", activeCustomers: 0, pendingCount: 0 };
-        
+
         // Note: This only calculates based on current page data. 
         // For accurate totals, you should fetch from a /stats endpoint.
         const delivered = orders.filter(o => o.order_status === 'delivered');
@@ -93,11 +93,11 @@ const OrdersDashboard = () => {
     // --- Render ---
     if (!shopSelected) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-                <Card className="w-full max-w-md p-6">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900 p-4">
+                <Card className="w-full max-w-md p-6 dark:bg-slate-800 dark:text-slate-100">
                     <div className="text-center mb-6">
-                        <h2 className="text-2xl font-bold">Select a Shop</h2>
-                        <p className="text-muted-foreground">Please choose a shop to manage orders.</p>
+                        <h2 className="text-2xl font-bold dark:text-slate-100">Select a Shop</h2>
+                        <p className="text-muted-foreground dark:text-slate-400">Please choose a shop to manage orders.</p>
                     </div>
                     <SelectShop selectedShop={shopSelected} onShopSelect={setShopSelected} />
                 </Card>
@@ -106,38 +106,42 @@ const OrdersDashboard = () => {
     }
 
     return (
-        <div className="p-4 md:p-6 lg:p-8 space-y-6">
+        <div className="p-4 md:p-6 lg:p-8 space-y-6 bg-white dark:bg-slate-900 min-h-screen dark:text-slate-100">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Order Management</h1>
-                    <p className="text-muted-foreground">
-                        Managing: <span className="font-semibold text-foreground">{shopSelected.name || "Selected Shop"}</span>
+                    <h1 className="text-3xl font-bold tracking-tight dark:text-slate-100">Order Management</h1>
+                    <p className="text-muted-foreground dark:text-slate-400">
+                        Managing: <span className="font-semibold text-foreground dark:text-slate-200">{shopSelected.name || "Selected Shop"}</span>
                     </p>
                 </div>
 
                 <div className="flex flex-wrap gap-2 items-center">
-                    {/* Shop Switcher in Header */}
                     <div className="w-[200px]">
-                        <SelectShop 
-                            selectedShop={shopSelected} 
-                            onShopSelect={setShopSelected} 
+                        <SelectShop
+                            selectedShop={shopSelected}
+                            onShopSelect={setShopSelected}
                         />
                     </div>
 
-                    <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
+                    <Button
+                        variant="outline"
+                        onClick={handleRefresh}
+                        disabled={isLoading}
+                        className="dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-100"
+                    >
                         <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                         Refresh
                     </Button>
                     <Button
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-600"
                         onClick={handleProcessPending}
                         disabled={stats.pendingCount === 0 || isLoading}
                     >
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Accept Pending ({stats.pendingCount})
                     </Button>
-                    {/* <Button variant="outline">
+                    {/* <Button variant="outline" className="dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-100">
                         <Download className="w-4 h-4 mr-2" /> Export
                     </Button> */}
                 </div>
@@ -145,10 +149,10 @@ const OrdersDashboard = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
+                <Card className="dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
                     <CardContent className="p-4 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-muted-foreground">Page Revenue</p>
+                            <p className="text-sm text-muted-foreground dark:text-slate-400">Page Revenue</p>
                             <p className="text-2xl font-bold">${stats.totalRevenue}</p>
                         </div>
                         <div className="p-2 bg-green-100 rounded-full dark:bg-green-900">
@@ -156,10 +160,10 @@ const OrdersDashboard = () => {
                         </div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
                     <CardContent className="p-4 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-muted-foreground">Active Customers</p>
+                            <p className="text-sm text-muted-foreground dark:text-slate-400">Active Customers</p>
                             <p className="text-2xl font-bold">{stats.activeCustomers}</p>
                         </div>
                         <div className="p-2 bg-blue-100 rounded-full dark:bg-blue-900">
@@ -167,10 +171,10 @@ const OrdersDashboard = () => {
                         </div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
                     <CardContent className="p-4 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-muted-foreground">Total Orders</p>
+                            <p className="text-sm text-muted-foreground dark:text-slate-400">Total Orders</p>
                             <p className="text-2xl font-bold">{total}</p>
                         </div>
                         <div className="p-2 bg-orange-100 rounded-full dark:bg-orange-900">
@@ -182,7 +186,7 @@ const OrdersDashboard = () => {
 
             {/* Tabs & Content */}
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                <TabsList className="bg-white dark:bg-slate-800/60 border mb-4">
+                <TabsList className="bg-white dark:bg-slate-800/60 border dark:border-slate-700 mb-4">
                     <TabsTrigger value="all">All Orders</TabsTrigger>
                     <TabsTrigger value="pending">
                         Pending

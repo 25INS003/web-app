@@ -16,7 +16,7 @@ import {
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
 
 import { useCategoryStore } from "@/store/categoryStore";
@@ -31,7 +31,7 @@ export default function SelectCategory({
   isInvalid = false,
 }) {
   const [open, setOpen] = React.useState(false);
-  
+
   // Use the Zustand store
   const { categories, fetchCategories, isLoading, error } = useCategoryStore();
 
@@ -44,7 +44,7 @@ export default function SelectCategory({
 
   // Find the selected category object
   const selectedCategory = categories.find((category) => category._id === value);
-  
+
   const getButtonText = () => {
     if (isLoading) {
       return (
@@ -55,12 +55,12 @@ export default function SelectCategory({
       );
     }
     if (error) {
-        return (
-            <span className="text-red-500 flex items-center">
-                <XCircle className="mr-2 h-4 w-4" />
-                Error: Failed to load
-            </span>
-        );
+      return (
+        <span className="text-red-500 flex items-center">
+          <XCircle className="mr-2 h-4 w-4" />
+          Error: Failed to load
+        </span>
+      );
     }
     if (selectedCategory) {
       return selectedCategory.name;
@@ -75,7 +75,7 @@ export default function SelectCategory({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-[250px] justify-between", {
+          className={cn("w-[250px] justify-between dark:bg-slate-900", {
             "border-red-500": isInvalid || error,
             "text-muted-foreground": !selectedCategory && !isLoading && !error,
           })}
@@ -85,12 +85,15 @@ export default function SelectCategory({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[250px] p-0">
-        <Command>
-          <CommandInput placeholder="Search category..." />
-          <CommandList>
+      <PopoverContent className="w-[250px] p-0 dark:bg-slate-900">
+        <Command className="dark:bg-slate-900">
+          <CommandInput
+            placeholder="Search category..."
+            className="dark:bg-slate-900 dark:text-slate-200 placeholder:dark:text-slate-400"
+          />
+          <CommandList className="dark:bg-slate-900">
             <CommandEmpty>No category found.</CommandEmpty>
-            <CommandGroup>
+            <CommandGroup className="dark:text-slate-200">
               {categories.map((category) => (
                 <CommandItem
                   key={category._id}
@@ -101,6 +104,7 @@ export default function SelectCategory({
                     onCateSelect(newId);
                     setOpen(false);
                   }}
+                  className="hover:dark:bg-slate-800 focus:dark:bg-slate-800"
                 >
                   <Check
                     className={cn(

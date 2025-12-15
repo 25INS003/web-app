@@ -42,18 +42,16 @@ export default function SelectShop({ selectedShop, onShopSelect }) {
     }
   };
 
-  // Loading State: Only show full loader if we have NO shops and ARE loading.
-  // This prevents the UI from flickering to "Loading..." if we already have data 
-  // (e.g., when the component is re-rendered in the header).
+  // Loading State
   if (isLoading && (!myShops || myShops.length === 0)) {
     return (
       <div className="relative w-full max-w-xs">
-        <label className="absolute top-0 left-0 -translate-y-fulltext-sm font-medium text-gray-700 mb-1">
+        <label className="absolute top-0 left-0 -translate-y-full text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">
           Select a Shop
         </label>
-        <div className="flex items-center justify-center h-10 w-full border border-gray-200 rounded-md bg-gray-50">
-          <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
-          <span className="ml-2 text-sm text-gray-500">Loading shops...</span>
+        <div className="flex items-center justify-center h-10 w-full border border-gray-200 rounded-md bg-gray-50 dark:bg-slate-800 dark:border-slate-700">
+          <Loader2 className="h-4 w-4 animate-spin text-gray-500 dark:text-slate-400" />
+          <span className="ml-2 text-sm text-gray-500 dark:text-slate-400">Loading shops...</span>
         </div>
       </div>
     );
@@ -64,7 +62,7 @@ export default function SelectShop({ selectedShop, onShopSelect }) {
 
   return (
     <div className="relative w-full max-w-xs">
-      <label className="absolute top-0 left-0 -translate-y-full text-sm font-medium text-gray-700 mb-1">
+      <label className="absolute top-0 left-0 -translate-y-full text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">
         Select a Shop
       </label>
       
@@ -75,7 +73,8 @@ export default function SelectShop({ selectedShop, onShopSelect }) {
             disabled={isDisabled}
             className={cn(
               "w-full justify-between",
-              !displayShop && "text-muted-foreground"
+              "dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-100",
+              !displayShop && "text-muted-foreground dark:text-slate-400"
             )}
           >
             <div className="flex items-center gap-2">
@@ -96,12 +95,18 @@ export default function SelectShop({ selectedShop, onShopSelect }) {
           </Button>
         </DropdownMenuTrigger>
         
-        <DropdownMenuContent className="w-full max-w-xs" align="start">
-          <DropdownMenuLabel>My Shops</DropdownMenuLabel>
-          <DropdownMenuSeparator />
+        <DropdownMenuContent 
+          className="w-full max-w-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100" 
+          align="start"
+        >
+          <DropdownMenuLabel className="dark:text-slate-300">My Shops</DropdownMenuLabel>
+          <DropdownMenuSeparator className="dark:bg-slate-700" />
           
           {shops.length === 0 ? (
-            <DropdownMenuItem disabled className="text-center text-muted-foreground">
+            <DropdownMenuItem 
+              disabled 
+              className="text-center text-muted-foreground dark:text-slate-400"
+            >
               No shops available
             </DropdownMenuItem>
           ) : (
@@ -111,7 +116,8 @@ export default function SelectShop({ selectedShop, onShopSelect }) {
                 onClick={() => shop && handleSelect(shop)}
                 className={cn(
                   "cursor-pointer",
-                  displayShop?._id === shop?._id && "bg-accent"
+                  "dark:focus:bg-slate-700 dark:hover:bg-slate-700",
+                  displayShop?._id === shop?._id && "bg-accent dark:bg-slate-700"
                 )}
               >
                 <div className="flex items-center gap-2">

@@ -9,12 +9,12 @@ import { useProductStore } from "@/store/productStore"; // Check your path
 import SelectCategory from "@/components/Dropdowns/selectCategory";
 
 // --- Icons ---
-import { 
-  ArrowLeft, 
-  Upload, 
-  X, 
-  Loader2, 
-  Save 
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Loader2,
+  Save
 } from "lucide-react";
 
 // --- Shadcn UI ---
@@ -40,14 +40,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner"; 
+import { toast } from "sonner";
 
 // --- Validation Schema ---
 const productSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().optional(),
   brand: z.string().optional(),
-  category_id: z.string().min(1, "Category is required"), 
+  category_id: z.string().min(1, "Category is required"),
   price: z.coerce.number().min(0, "Price cannot be negative"),
   discounted_price: z.coerce.number().min(0).optional(),
   stock_quantity: z.coerce.number().min(0, "Stock cannot be negative"),
@@ -83,7 +83,7 @@ const AddProductPage = () => {
       min_stock_alert: 5,
       unit: "piece",
       is_available: true,
-      category_id: "", 
+      category_id: "",
     },
   });
 
@@ -115,7 +115,7 @@ const AddProductPage = () => {
 
       if (result) {
         toast.success("Product created successfully!");
-        
+
         // 2. Upload Images
         // Handle result structure (Object vs Boolean)
         const newProductId = result._id || result.product_id || (typeof result === 'object' ? result._id : null);
@@ -140,28 +140,27 @@ const AddProductPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-5xl">
+    <div className="container mx-auto p-6 max-w-5xl dark:bg-slate-900 dark:text-slate-100 min-h-screen">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-5 w-5" />
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="dark:hover:bg-slate-800">
+          <ArrowLeft className="h-5 w-5 dark:text-slate-200" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Add New Product</h1>
-          <p className="text-muted-foreground">Fill in the details to create a new product listing.</p>
+          <h1 className="text-2xl font-bold tracking-tight dark:text-slate-100">Add New Product</h1>
+          <p className="text-muted-foreground dark:text-slate-400">Fill in the details to create a new product listing.</p>
         </div>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
+
             {/* Left Column */}
             <div className="md:col-span-2 space-y-6">
-              
-              <Card>
+              <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader>
-                  <CardTitle>Product Details</CardTitle>
+                  <CardTitle className="dark:text-slate-100">Product Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
@@ -169,9 +168,13 @@ const AddProductPage = () => {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Product Name</FormLabel>
+                        <FormLabel className="dark:text-slate-300">Product Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Sony Wireless Headphones" {...field} />
+                          <Input
+                            placeholder="e.g. Sony Wireless Headphones"
+                            {...field}
+                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -184,29 +187,31 @@ const AddProductPage = () => {
                       name="brand"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Brand</FormLabel>
+                          <FormLabel className="dark:text-slate-300">Brand</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. Sony" {...field} />
+                            <Input
+                              placeholder="e.g. Sony"
+                              {...field}
+                              className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+
                     {/* --- FIXED SECTION --- */}
                     <FormField
                       control={form.control}
                       name="category_id"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel className="dark:text-slate-300">Category</FormLabel>
                           <FormControl>
                             <SelectCategory
                               value={field.value}
-                              // FIXED: Changed from onCategorySelect to onCateSelect
                               onCateSelect={(id) => {
-                                // Your SelectCategory passes the ID directly
-                                field.onChange(id); 
+                                field.onChange(id);
                               }}
                               isInvalid={!!form.formState.errors.category_id}
                             />
@@ -224,12 +229,12 @@ const AddProductPage = () => {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel className="dark:text-slate-300">Description</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Detailed product description..." 
-                            className="resize-none min-h-[120px]" 
-                            {...field} 
+                          <Textarea
+                            placeholder="Detailed product description..."
+                            className="resize-none min-h-[120px] dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -240,50 +245,50 @@ const AddProductPage = () => {
               </Card>
 
               {/* Media Card */}
-              <Card>
+              <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader>
-                  <CardTitle>Product Images</CardTitle>
+                  <CardTitle className="dark:text-slate-100">Product Images</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     {imagePreviews.map((src, index) => (
-                      <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border">
+                      <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border dark:border-slate-700">
                         <img src={src} alt="Preview" className="w-full h-full object-cover" />
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
                         >
                           <X className="h-4 w-4" />
                         </button>
                       </div>
                     ))}
-                    
+
                     {imagePreviews.length < 5 && (
-                      <label className="border-2 border-dashed border-gray-300 rounded-lg aspect-square flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-colors">
-                        <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                        <span className="text-xs text-gray-500">Upload Image</span>
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          multiple 
-                          className="hidden" 
+                      <label className="border-2 border-dashed border-gray-300 rounded-lg aspect-square flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-colors dark:border-slate-600 dark:hover:border-blue-400 dark:bg-slate-900">
+                        <Upload className="h-8 w-8 text-gray-400 mb-2 dark:text-slate-500" />
+                        <span className="text-xs text-gray-500 dark:text-slate-400">Upload Image</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
                           onChange={handleImageChange}
                         />
                       </label>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">Upload up to 5 images.</p>
+                  <p className="text-xs text-muted-foreground dark:text-slate-500">Upload up to 5 images.</p>
                 </CardContent>
               </Card>
             </div>
 
             {/* Right Column */}
             <div className="space-y-6">
-              
-              <Card>
+
+              <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader>
-                  <CardTitle>Pricing</CardTitle>
+                  <CardTitle className="dark:text-slate-100">Pricing</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
@@ -291,9 +296,13 @@ const AddProductPage = () => {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Base Price (₹)</FormLabel>
+                        <FormLabel className="dark:text-slate-300">Base Price (₹)</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input
+                            type="number"
+                            {...field}
+                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -304,9 +313,13 @@ const AddProductPage = () => {
                     name="discounted_price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Discounted Price (Optional)</FormLabel>
+                        <FormLabel className="dark:text-slate-300">Discounted Price (Optional)</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input
+                            type="number"
+                            {...field}
+                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -315,9 +328,9 @@ const AddProductPage = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader>
-                  <CardTitle>Inventory</CardTitle>
+                  <CardTitle className="dark:text-slate-100">Inventory</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
@@ -326,9 +339,13 @@ const AddProductPage = () => {
                       name="stock_quantity"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Stock</FormLabel>
+                          <FormLabel className="dark:text-slate-300">Stock</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} />
+                            <Input
+                              type="number"
+                              {...field}
+                              className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -339,14 +356,14 @@ const AddProductPage = () => {
                       name="unit"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Unit</FormLabel>
+                          <FormLabel className="dark:text-slate-300">Unit</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
                                 <SelectValue placeholder="Unit" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
+                            <SelectContent className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
                               <SelectItem value="piece">Piece</SelectItem>
                               <SelectItem value="kg">Kg</SelectItem>
                               <SelectItem value="gram">Gram</SelectItem>
@@ -366,9 +383,13 @@ const AddProductPage = () => {
                     name="min_stock_alert"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Low Stock Alert</FormLabel>
+                        <FormLabel className="dark:text-slate-300">Low Stock Alert</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input
+                            type="number"
+                            {...field}
+                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -379,7 +400,7 @@ const AddProductPage = () => {
                     control={form.control}
                     name="is_available"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 dark:border-slate-700">
                         <FormControl>
                           <Checkbox
                             checked={field.value}
@@ -387,7 +408,7 @@ const AddProductPage = () => {
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel>Available for Sale</FormLabel>
+                          <FormLabel className="dark:text-slate-300">Available for Sale</FormLabel>
                         </div>
                       </FormItem>
                     )}
@@ -398,10 +419,15 @@ const AddProductPage = () => {
             </div>
           </div>
 
-          <Separator />
+          <Separator className="dark:bg-slate-700" />
 
           <div className="flex justify-end gap-4">
-            <Button variant="outline" type="button" onClick={() => router.back()}>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => router.back()}
+              className="dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-100"
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || isLoading} className="w-[150px]">
