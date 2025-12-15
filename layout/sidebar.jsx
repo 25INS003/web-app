@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, Users, Settings, Package, ChevronLeft, Menu, Store } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Users, Settings, Package, ChevronLeft, Menu, Store, Shield } from "lucide-react";
 import { useSidebar } from "@/store/uiStore";
 import { usePathname } from "next/navigation";
 
@@ -15,6 +15,7 @@ const Sidebar = () => {
         { name: "Orders", icon: ShoppingBag, href: "/orders" },
         { name: "Products", icon: Package, href: "/products" },
         { name: "My Shops", icon: Store, href: "/myshop" },
+        { name: "Verify", icon: Shield, href: "/verify" },
         { name: "Settings", icon: Settings, href: "/settings" },
     ];
 
@@ -35,7 +36,9 @@ const Sidebar = () => {
             {/* Navigation Links */}
             <nav className="mt-4 flex flex-col gap-2 px-2">
                 {menuItems.map((item) => {
-                    const isActive = pathname === item.href || (item.href === "/myshop" && pathname.startsWith("/myshop"));
+                    const isActive = pathname === item.href || 
+                                   (item.href === "/myshop" && pathname.startsWith("/myshop")) ||
+                                   (item.href === "/verify" && pathname.startsWith("/verify"));
                     return (
                         <Link
                             key={item.name}
