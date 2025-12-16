@@ -1,13 +1,14 @@
 "use client";
 
 import { create } from "zustand";
-import apiClient from "@/api/apiClient"; 
+import apiClient from "@/api/apiClient";
 
 export const useShopStore = create((set, get) => ({
   // --- STATE ---
   myShops: [],
   isLoading: false,
   error: null,
+  currentShop: null,
 
   // --- ACTIONS ---
 
@@ -101,4 +102,9 @@ export const useShopStore = create((set, get) => ({
       return undefined;
     }
   },
+  
+  setCurrentShop: (shop) => {
+    set({ currentShop: shop });
+  },
+  
 }));

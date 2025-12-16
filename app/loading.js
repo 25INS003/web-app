@@ -1,9 +1,9 @@
 export default function Loading() {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
             <div className="flex flex-col items-center space-y-4">
                 <svg
-                    className="h-8 w-8 animate-spin text-blue-600"
+                    className="h-8 w-8 animate-spin text-indigo-400"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -23,7 +23,7 @@ export default function Loading() {
                     ></path>
                 </svg>
 
-                <p className="text-sm text-gray-600">Loading...</p>
+                <p className="text-sm text-slate-400">Loading...</p>
             </div>
         </div>
     );

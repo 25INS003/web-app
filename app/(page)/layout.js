@@ -4,6 +4,7 @@
 import Sidebar from "@/layout/sidebar";
 import Header from "@/layout/header";
 import { useSidebar } from "@/store/uiStore";
+import { cn } from "@/lib/utils";
 
 // import { useEffect } from "react";
 // import { useAuthStore } from "@/store/authStore";
@@ -25,20 +26,26 @@ export default function AdminLayout({ children }) {
     ////////////////////////////////////////////////////
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-            {/* 1. Sidebar */}
+        <div className="relative min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+            {/* Sidebar */}
             <Sidebar />
 
-            {/* 2. Header */}
+            {/* Header */}
             <Header />
 
-            {/* 3. Main Content Area */}
+            {/* Main Content */}
             <main
-                className={`pt-20 px-6 pb-8 transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"
-                    }`}
+                className={cn(
+                    "flex flex-col", 
+                    "pt-20 px-6 pb-8",
+                    "min-h-[calc(100vh-5rem)]",
+                    "transition-[margin] duration-300",
+                    isSidebarOpen ? "ml-64" : "ml-20"
+                )}
             >
                 {children}
             </main>
         </div>
     );
+
 }

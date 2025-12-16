@@ -18,6 +18,8 @@ export const useShopOrderStore = create()(
     limit: 25,
     isLoading: false,
     error: null,
+    currentOrder: null, 
+    isOrderLoading: false,
 
     /**
      * GET /shops/:shopId/orders
@@ -138,6 +140,33 @@ export const useShopOrderStore = create()(
           error: error.response?.data?.message || `Failed to update status to ${status}`,
           isLoading: false,
         });
+      }
+    },
+
+    /**
+     * GET /shops/:shopId/orders/:orderId
+     */
+    fetchOrderDetails: async (shopId, orderId) => {
+      set({ isOrderLoading: true, error: null, currentOrder: null });
+      try {
+        const response = await apiClient.get(
+          `/shops/${shopId}/orders/${orderId}`
+        );
+
+        const order = response.data.data.order;
+
+        set({
+          currentOrder: order || null,
+          isOrderLoading: false,
+        });
+        return order; // Return order for direct use if needed
+      } catch (error) {
+        set({
+          error:
+            error.response?.data?.message || "Failed to fetch order details",
+          isOrderLoading: false,
+        });
+        throw error; // Re-throw to handle in component
       }
     },
 

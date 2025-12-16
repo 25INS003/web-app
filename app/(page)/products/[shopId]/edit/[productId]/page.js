@@ -183,7 +183,7 @@ const EditProductPage = () => {
         }
 
         toast.success("Product updated successfully");
-        router.push(`/shop/${shopId}/products`);
+        router.push(`/products/${shopId}/view/${productId}`);
       } else {
         toast.error("Failed to update product");
       }
@@ -198,7 +198,7 @@ const EditProductPage = () => {
   // --- Loading State ---
   if (isInitializing) {
     return (
-      <div className="container mx-auto p-6 max-w-5xl space-y-6 dark:bg-slate-900 min-h-screen">
+      <div className="container mx-auto p-6 max-w-5xl space-y-6 dark:bg-slate-900">
         <Skeleton className="h-10 w-1/3 dark:bg-slate-800" />
         <div className="grid grid-cols-3 gap-6">
           <Skeleton className="col-span-2 h-[400px] dark:bg-slate-800" />
@@ -209,7 +209,7 @@ const EditProductPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-5xl dark:bg-slate-900 dark:text-slate-100 min-h-screen">
+    <div className="container mx-auto p-6 max-w-5xl dark:text-slate-100 ">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="dark:hover:bg-slate-800">

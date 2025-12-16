@@ -79,6 +79,7 @@ const AddProductPage = () => {
       description: "",
       brand: "",
       price: 0,
+      discounted_price: 0,
       stock_quantity: 0,
       min_stock_alert: 5,
       unit: "piece",
@@ -126,8 +127,8 @@ const AddProductPage = () => {
           await uploadProductImages(shopId, newProductId, formData);
           toast.success("Images uploaded successfully");
         }
-
-        router.push(`/shop/${shopId}/products`);
+        toast.success("Product created successfully");
+        router.push(`/shop/products`);
       } else {
         toast.error("Failed to create product");
       }
@@ -140,7 +141,7 @@ const AddProductPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-5xl dark:bg-slate-900 dark:text-slate-100 min-h-screen">
+    <div className="container mx-auto p-6 max-w-5xl dark:text-slate-100">
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="dark:hover:bg-slate-800">
           <ArrowLeft className="h-5 w-5 dark:text-slate-200" />

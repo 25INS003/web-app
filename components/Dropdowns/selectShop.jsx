@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, Store, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function SelectShop({ selectedShop, onShopSelect }) {
+export default function SelectShop({ selectedShop, onShopSelect, ShowLabel=true }) {
   const myShops = useShopStore((state) => state.myShops);
   const isLoading = useShopStore((state) => state.isLoading);
   const fetchMyShops = useShopStore((state) => state.fetchMyShops);
@@ -62,9 +62,9 @@ export default function SelectShop({ selectedShop, onShopSelect }) {
 
   return (
     <div className="relative w-full max-w-xs">
-      <label className="absolute top-0 left-0 -translate-y-full text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">
+      {ShowLabel && <label className="absolute top-0 left-0 -translate-y-full text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">
         Select a Shop
-      </label>
+      </label>}
       
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
