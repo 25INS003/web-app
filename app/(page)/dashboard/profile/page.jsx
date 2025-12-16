@@ -142,14 +142,14 @@ export default function ShopOwnerProfilePage() {
 
   if (!profile && !isLoading) {
      return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
           <div className="text-red-500">Profile not found.</div>
         </div>
      );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 px-4 transition-colors">
+    <div className="bg-gray-50 dark:bg-gray-900 py-6 px-4 transition-colors">
       <div className="max-w-5xl mx-auto">
         {/* Top Bar */}
         <div className="mb-6 flex items-center justify-between">

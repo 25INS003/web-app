@@ -3,10 +3,12 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { useProductStore } from "@/store/productStore"; // Adjust path
-import SelectShop from "@/components/Dropdowns/selectShop";
+import { useProductStore } from "@/store/productStore";
+import GlobalSelectShop from "@/components/Dropdowns/selectShop0";
+import { Card } from "@/components/ui/card";
+import { useShopStore } from "@/store/shopStore";
+import { toast } from "sonner";
 
-// --- Icons (Lucide React) ---
 import {
     Plus,
     Search,
@@ -14,10 +16,11 @@ import {
     Edit,
     MoreHorizontal,
     Loader2,
-    ImageIcon
+    ImageIcon,
+    Eye,
+    X, // Import X for clearing search
 } from "lucide-react";
 
-// --- Shadcn UI Components ---
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,75 +47,78 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 
-// ==========================================
-// Sub-Component: Create Product Modal
-// ==========================================
+/* =========================================
+   Create Product Dialog
+========================================= */
 const CreateProductDialog = ({ shopId, open, onOpenChange }) => {
     const { createProduct, isLoading } = useProductStore();
-    const { register, handleSubmit, reset, formState: { errors } } = useForm();
+    const { register, handleSubmit, reset } = useForm();
 
     const onSubmit = async (data) => {
+        if (!shopId) {
+            toast.error("Please select a shop first.");
+            return;
+        }
+
         const payload = {
             ...data,
             price: Number(data.price),
             stock_quantity: Number(data.stock_quantity),
             shop_id: shopId,
-            // Note: You would typically add a Category Selector here
+            unit: data.unit || 'piece',
         };
 
         const success = await createProduct(shopId, payload);
         if (success) {
             reset();
             onOpenChange(false);
+            toast.success("Product created successfully!");
+        } else {
+            toast.error("Failed to create product.");
         }
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                 <DialogHeader>
-                    <DialogTitle>Add New Product</DialogTitle>
-                    <DialogDescription>Add a new item to your inventory.</DialogDescription>
+                    <DialogTitle className="text-slate-900 dark:text-slate-100">Add New Product</DialogTitle>
+                    <DialogDescription className="text-slate-500 dark:text-slate-400">
+                        Add a new item to your inventory.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Name</label>
-                            <Input {...register("name", { required: "Name is required" })} placeholder="Product Name" />
-                            {errors.name && <span className="text-red-500 text-xs">{errors.name.message}</span>}
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Unit</label>
-                            <select
-                                {...register("unit", { required: true })}
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            >
-                                <option value="piece">Piece</option>
-                                <option value="kg">Kg</option>
-                                <option value="gram">Gram</option>
-                                <option value="liter">Liter</option>
-                                <option value="set">Set</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Price</label>
-                            <Input type="number" {...register("price", { required: true, min: 0 })} placeholder="0.00" />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Stock</label>
-                            <Input type="number" {...register("stock_quantity", { required: true, min: 0 })} placeholder="0" />
-                        </div>
-                    </div>
+                    <Input
+                        {...register("name", { required: true })}
+                        placeholder="Product Name"
+                        className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                    />
+                    <Input
+                        type="number"
+                        {...register("price", { required: true })}
+                        placeholder="Price (₹)"
+                        className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                    />
+                    <Input
+                        type="number"
+                        {...register("stock_quantity", { required: true })}
+                        placeholder="Stock Quantity"
+                        className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                    />
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button type="submit" disabled={isLoading}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create
+                        <Button
+                            variant="outline"
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                            className="bg-white dark:bg-slate-800 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100"
+                        >
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={isLoading} className="dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700">
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Create
                         </Button>
                     </DialogFooter>
                 </form>
@@ -121,180 +127,229 @@ const CreateProductDialog = ({ shopId, open, onOpenChange }) => {
     );
 };
 
-// ==========================================
-// Main Page Component
-// ==========================================
+/* =========================================
+   Products List Page (UPDATED)
+========================================= */
 const ProductsListPage = () => {
-    // Local State
-    const [selectedShop, setSelectedShop] = useState(null);
+    const { currentShop } = useShopStore();
+    const shopId = currentShop?._id ?? null;
+
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
-    // Store State
     const {
-        products,
+        products = [],
         pagination,
         isLoading,
         fetchShopProducts,
         setFilters,
-        setPage,
-        deleteProduct
+        setPage, // Not strictly needed for search as setFilters resets page, but good for pagination UI
+        deleteProduct,
+        queryParams,
     } = useProductStore();
 
-    // 1. Fetch products whenever shop changes
+    /* 1. Initial Load & Shop Change Reset */
     useEffect(() => {
-        if (selectedShop?._id) {
-            // Reset search when switching shops
-            setSearchTerm("");
-            fetchShopProducts(selectedShop._id);
-        }
-    }, [selectedShop, fetchShopProducts]);
+        if (!shopId) return;
 
-    // 2. Handle Search
+        // Reset local and store state when shop changes
+        setSearchTerm("");
+        setFilters({ search: "" });
+        fetchShopProducts(shopId);
+    }, [shopId, fetchShopProducts, setFilters]);
+
+    /* 2. Search Handler (UPDATED) */
     const handleSearch = (e) => {
-        e.preventDefault();
-        setFilters({ search: searchTerm });
+        e.preventDefault(); // Prevent page reload
+
+        // Update the store with the search term
+        setFilters({ search: searchTerm }, shopId);
+        console.log("Searching for:", searchTerm);
+        console.log("Current Query Params:", queryParams);
+
+        // TRIGGER THE API CALL
+        fetchShopProducts(shopId);
     };
 
-    // 3. Handle Delete
+    /* 3. Clear Search Handler (NEW) */
+    const handleClearSearch = () => {
+        setSearchTerm("");
+        setFilters({ search: "" });
+        fetchShopProducts(shopId);
+    };
+
+    /* Delete Handler */
     const handleDelete = async (productId) => {
+        if (!shopId) return;
         if (window.confirm("Are you sure you want to delete this product?")) {
-            await deleteProduct(selectedShop._id, productId);
+            const success = await deleteProduct(shopId, productId);
+            if (success) {
+                toast.success("Product deleted successfully.");
+            } else {
+                toast.error("Failed to delete product.");
+            }
         }
     };
 
-    // 4. Render Logic - No Shop Selected
-    if (!selectedShop) {
+    if (!shopId) {
         return (
-            <div className="container mx-auto p-4 flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-                <h1 className="text-2xl font-bold">Product Management</h1>
-                <div className="w-full max-w-sm">
-                    <SelectShop onShopSelect={setSelectedShop} />
-                </div>
-                <p className="text-muted-foreground">Please select a shop to manage inventory.</p>
+            <div className="flex-1 w-full flex items-center justify-center p-4 min-h-[50vh]">
+                <Card className="w-full max-w-md p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Product Management</h2>
+                        <p className="text-slate-500 dark:text-slate-400 mt-2">
+                            Please select a shop to manage inventory.
+                        </p>
+                    </div>
+                    <GlobalSelectShop ShowLabel={false} />
+                </Card>
             </div>
         );
     }
 
-    // 5. Render Logic - Shop Selected (Dashboard)
     return (
         <div className="container mx-auto p-6 space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="w-[200px]">
-                        <SelectShop onShopSelect={setSelectedShop} />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Products</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Managing {selectedShop.name} ({pagination.totalProducts} items)
-                        </p>
-                    </div>
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Products</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        Managing <span className="font-semibold text-slate-700 dark:text-slate-300">{currentShop?.name}</span> • {pagination?.totalProducts ?? 0} items found
+                    </p>
                 </div>
 
-                <Link href={`products/${selectedShop._id}/add`}>
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" /> Add Product
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <div className="w-full sm:w-[200px]">
+                        <GlobalSelectShop />
+                    </div>
+
+                    <Button onClick={() => setIsCreateOpen(true)} className="w-full sm:w-auto dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Product
                     </Button>
-                </Link>
+                </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex items-center gap-2 bg-white p-4 rounded-lg border shadow-sm">
-                <form onSubmit={handleSearch} className="flex-1 flex items-center gap-2 max-w-sm">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            {/* Search Bar (UPDATED UI) */}
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+                <form onSubmit={handleSearch} className="flex gap-2 max-w-lg">
+                    <div className="relative w-full">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
-                            placeholder="Search by name..."
-                            className="pl-8"
+                            placeholder="Search by name, SKU, or category..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-9 pr-10 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-500"
                         />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                onClick={handleClearSearch}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        )}
                     </div>
-                    <Button type="submit" variant="secondary">Search</Button>
+                    <Button type="submit" variant="secondary" className="bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700">
+                        Search
+                    </Button>
                 </form>
             </div>
 
             {/* Table */}
-            <div className="rounded-md border bg-white shadow-sm">
+            <div className="rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[80px]">Image</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead>Price</TableHead>
-                            <TableHead>Stock</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                    <TableHeader className="bg-slate-50 dark:bg-slate-950/50">
+                        <TableRow className="border-b border-slate-200 dark:border-slate-800 hover:bg-transparent">
+                            <TableHead className="w-[80px] text-slate-700 dark:text-slate-300">Image</TableHead>
+                            <TableHead className="text-slate-700 dark:text-slate-300">Name</TableHead>
+                            <TableHead className="text-slate-700 dark:text-slate-300">Category</TableHead>
+                            <TableHead className="text-slate-700 dark:text-slate-300">Price</TableHead>
+                            <TableHead className="text-slate-700 dark:text-slate-300">Stock</TableHead>
+                            <TableHead className="text-right text-slate-700 dark:text-slate-300">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
+
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
-                                    <div className="flex justify-center items-center gap-2">
-                                        <Loader2 className="h-6 w-6 animate-spin" /> Loading...
+                                <TableCell colSpan={6} className="h-24 text-center border-slate-200 dark:border-slate-800">
+                                    <div className="flex items-center justify-center text-slate-500 dark:text-slate-400">
+                                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                                        Loading products...
                                     </div>
                                 </TableCell>
                             </TableRow>
                         ) : products.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                                    No products found.
+                                <TableCell colSpan={6} className="h-24 text-center border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                                    {searchTerm ? `No results found for "${searchTerm}"` : "No products found. Add one to get started!"}
                                 </TableCell>
                             </TableRow>
                         ) : (
                             products.map((product) => (
-                                <TableRow key={product._id}>
+                                <TableRow key={product._id} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                     <TableCell>
-                                        {product.images && product.images.length > 0 ? (
-                                            <img src={product.images[0]} alt="" className="h-10 w-10 rounded-md object-cover border" />
+                                        {product.images?.length ? (
+                                            <img src={product.images[0].url || product.images[0]} alt={product.name} className="h-10 w-10 rounded-md object-cover border border-slate-200 dark:border-slate-700" />
                                         ) : (
-                                            <div className="h-10 w-10 rounded-md bg-secondary flex items-center justify-center">
-                                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                                            <div className="h-10 w-10 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
+                                                <ImageIcon className="h-5 w-5 text-slate-400" />
                                             </div>
                                         )}
                                     </TableCell>
-                                    <TableCell className="font-medium">
-                                        <div className="flex flex-col">
-                                            <span>{product.name}</span>
-                                            <span className="text-xs text-muted-foreground">{product.brand}</span>
-                                        </div>
+                                    <TableCell className="font-medium text-slate-900 dark:text-slate-100">
+                                        {product.name}
+                                        <div className="text-xs text-slate-500 dark:text-slate-500 font-mono mt-0.5">{product.sku}</div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="outline">{product.category_id?.name || "N/A"}</Badge>
+                                        <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900">
+                                            {typeof product.category_id === 'object' ? product.category_id?.name : "General"}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="font-medium text-slate-900 dark:text-slate-200">
+                                        ₹{product.price}
                                     </TableCell>
                                     <TableCell>
-                                        {product.discounted_price ? (
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-green-600">₹{product.discounted_price}</span>
-                                                <span className="text-xs line-through text-muted-foreground">₹{product.price}</span>
-                                            </div>
-                                        ) : (
-                                            <span>₹{product.price}</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant={product.stock_quantity > 0 ? "default" : "destructive"}>
-                                            {product.stock_quantity > 0 ? `${product.stock_quantity} ${product.unit}` : "Out of Stock"}
+                                        <Badge
+                                            className={
+                                                product.stock_quantity > 10
+                                                    ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
+                                                    : product.stock_quantity > 0
+                                                        ? "bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
+                                                        : "bg-red-100 text-red-700 hover:bg-red-100 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+                                            }
+                                        >
+                                            {product.stock_quantity > 0
+                                                ? `${product.stock_quantity} ${product.unit || 'units'}`
+                                                : "Out of Stock"}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                                    <MoreHorizontal className="h-4 w-4" />
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                                    <MoreHorizontal className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem >
-                                                    <Link href={`products/${selectedShop._id}/edit/${product._id}`} className=" h-full w-full flex items-center">
-                                                        <Edit className="mr-2 h-4 w-4" /> Edit
+                                            <DropdownMenuContent align="end" className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 w-40">
+                                                <DropdownMenuItem asChild className="cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800">
+                                                    <Link href={`/products/${shopId}/view/${product._id}`} className="w-full flex items-center text-slate-700 dark:text-slate-200">
+                                                        <Eye className="mr-2 h-4 w-4" /> View
                                                     </Link>
-
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(product._id)}>
+
+                                                <DropdownMenuItem asChild className="cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800">
+                                                    <Link href={`/products/${shopId}/inventory/${product._id}`} className="w-full flex items-center text-slate-700 dark:text-slate-200">
+                                                        <Edit className="mr-2 h-4 w-4" /> Edit Stock
+                                                    </Link>
+                                                </DropdownMenuItem>
+
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20 focus:text-red-700"
+                                                    onClick={() => handleDelete(product._id)}
+                                                >
                                                     <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
@@ -307,36 +362,8 @@ const ProductsListPage = () => {
                 </Table>
             </div>
 
-            {/* Pagination */}
-            {!isLoading && products.length > 0 && (
-                <div className="flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">
-                        Page {pagination.currentPage} of {pagination.totalPages}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(pagination.currentPage - 1)}
-                            disabled={!pagination.hasPrev}
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(pagination.currentPage + 1)}
-                            disabled={!pagination.hasNext}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </div>
-            )}
-
-            {/* Create Product Modal */}
             <CreateProductDialog
-                shopId={selectedShop?._id}
+                shopId={shopId}
                 open={isCreateOpen}
                 onOpenChange={setIsCreateOpen}
             />
