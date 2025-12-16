@@ -35,7 +35,7 @@ export const useProductStore = create((set, get) => ({
    * Update filters/search and reset to page 1
    * @param {Object} newParams 
    */
-  setFilters: (newParams) => {
+  setFilters: (newParams,shopId = null) => {
     set((state) => ({
       queryParams: {
         ...state.queryParams,
