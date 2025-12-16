@@ -2,7 +2,16 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, Users, Settings, Package, ChevronLeft, Menu, Store, Shield } from "lucide-react";
+import { 
+    LayoutDashboard, 
+    ShoppingBag, 
+    Package, 
+    ChevronLeft, 
+    Menu, 
+    Store, 
+    Shield,
+    Layers 
+} from "lucide-react";
 import { useSidebar } from "@/store/uiStore";
 import { usePathname } from "next/navigation";
 
@@ -12,11 +21,12 @@ const Sidebar = () => {
 
     const menuItems = [
         { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+        // Added Categories just below Dashboard
+        { name: "Categories", icon: Layers, href: "/categories" },
         { name: "Orders", icon: ShoppingBag, href: "/orders" },
         { name: "Products", icon: Package, href: "/products" },
         { name: "My Shops", icon: Store, href: "/myshop" },
         { name: "Verify", icon: Shield, href: "/verify" },
-        { name: "Settings", icon: Settings, href: "/settings" },
     ];
 
     return (
@@ -38,7 +48,8 @@ const Sidebar = () => {
                 {menuItems.map((item) => {
                     const isActive = pathname === item.href || 
                                    (item.href === "/myshop" && pathname.startsWith("/myshop")) ||
-                                   (item.href === "/verify" && pathname.startsWith("/verify"));
+                                   (item.href === "/verify" && pathname.startsWith("/verify")) ||
+                                   (item.href === "/categories" && pathname.startsWith("/categories"));
                     return (
                         <Link
                             key={item.name}

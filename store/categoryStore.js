@@ -4,9 +4,6 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import apiClient from "@/api/apiClient";
 
-
-
-// 3. Create the Store with Persistence
 export const useCategoryStore = create()(
   persist(
     (set, get) => ({
@@ -21,8 +18,6 @@ export const useCategoryStore = create()(
         set({ isLoading: true, error: null });
         try {
           const response = await apiClient.get("/admin/categories");
-          // Assuming response.data.data or response.data contains the array
-          // Adjust based on your actual API response structure
           const categories = response.data.data || response.data; 
           set({ categories, isLoading: false });
         } catch (error) {
@@ -33,31 +28,45 @@ export const useCategoryStore = create()(
         }
       },
 
-      // --- Create Category ---
+      // --- Create Category (UPDATED) ---
       createCategory: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.post("/admin/categories", data);
+          // Check if data is FormData (contains file) or plain JSON
+          const isFormData = data instanceof FormData;
+          
+          const config = isFormData 
+            ? { headers: { "Content-Type": "multipart/form-data" } }
+            : {};
+
+          const response = await apiClient.post("/admin/categories", data, config);
           const newCategory = response.data.data || response.data;
           
           set((state) => ({
             categories: [...state.categories, newCategory],
             isLoading: false,
           }));
+          return newCategory;
         } catch (error) {
+          console.error("Create Category Error:", error);
           set({ 
             error: error.response?.data?.message || "Failed to create category", 
             isLoading: false 
           });
-          throw error; // Re-throw to handle UI feedback (e.g., toasts) in component
+          throw error;
         }
       },
 
-      // --- Update Category ---
+      // --- Update Category (UPDATED) ---
       updateCategory: async (id, data) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.put(`/admin/categories/${id}`, data);
+          const isFormData = data instanceof FormData;
+          const config = isFormData 
+            ? { headers: { "Content-Type": "multipart/form-data" } }
+            : {};
+
+          const response = await apiClient.put(`/admin/categories/${id}`, data, config);
           const updatedCategory = response.data.data || response.data;
 
           set((state) => ({
@@ -92,31 +101,11 @@ export const useCategoryStore = create()(
           throw error;
         }
       },
-
-      // --- Update Order ---
-      updateCategoryOrder: async (id, newOrder) => {
-        // Optimistic update: Update UI immediately before API call
-        const previousCategories = get().categories;
-        
-        set((state) => ({
-          categories: state.categories.map((cat) => 
-            cat._id === id ? { ...cat, order: newOrder } : cat
-          )
-        }));
-
-        try {
-          await apiClient.put(`/admin/categories/${id}/order`, { order: newOrder });
-          // Optionally refetch to ensure sync: await get().fetchCategories();
-        } catch (error) {
-          // Revert on failure
-          set({ categories: previousCategories, error: "Failed to update order" });
-        }
-      },
     }),
     {
-      name: "category-storage", // unique name for localStorage key
-      storage: createJSONStorage(() => localStorage), // use localStorage
-      partialize: (state) => ({ categories: state.categories }), // Only persist the data, not loading/error states
+      name: "category-storage",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ categories: state.categories }),
     }
   )
 );
