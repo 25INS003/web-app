@@ -7,11 +7,9 @@ const publicPaths = [
   "/forgot-password", 
   "/reset-password",
   "/unauthorized", 
-  "/verify-otp",
-  
 ];
 
-const adminPaths = ["/admin","/verify-owner"]; 
+const adminPaths = ["/admin"]; 
 
 export function proxy(request) {
   const { pathname } = request.nextUrl;
