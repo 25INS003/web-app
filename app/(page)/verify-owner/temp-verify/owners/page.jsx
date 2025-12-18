@@ -17,6 +17,10 @@ import {
     ShieldCheck,
     AlertCircle
 } from "lucide-react";
+
+// 1. Import your store (Adjust the path to where your useOwnerStore is located)
+import { useOwnerStore } from "@/store/useOwnerStore"; 
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +33,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 
+// --- Sub-component: Owner Details Dialog ---
 const OwnerDetailsDialog = ({ open, onOpenChange, owner }) => {
     if (!owner) return null;
 
@@ -137,57 +142,31 @@ const OwnerDetailsDialog = ({ open, onOpenChange, owner }) => {
     );
 };
 
+// --- Main Page Component ---
 const OwnerVerificationPage = () => {
     const router = useRouter();
-    const [owners, setOwners] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    
+    // 2. Extract state and actions from the store
+    const { 
+        owners, 
+        isLoading, 
+        fetchOwners, 
+        verifyOwner, 
+        isVerifying 
+    } = useOwnerStore();
+
+    // 3. Local UI state for search and dialogs
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedOwner, setSelectedOwner] = useState(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-    const [verifyingId, setVerifyingId] = useState(null);
 
-    const fetchOwners = async () => {
-        setIsLoading(true);
-        try {
-            const response = await fetch('/api/owners');
-            if (!response.ok) {
-                throw new Error('Failed to fetch owners');
-            }
-            const data = await response.json();
-            setOwners(data.owners || []);
-        } catch (error) {
-            console.error("Error fetching owners:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
+    // 4. Initial data fetch
     useEffect(() => {
         fetchOwners();
-    }, []);
+    }, [fetchOwners]);
 
     const handleVerify = async (ownerId) => {
-        setVerifyingId(ownerId);
-        try {
-            const response = await fetch(`/api/owners/${ownerId}/verify`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ isVerified: true }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to verify owner');
-            }
-
-            fetchOwners();
-        } catch (error) {
-            console.error("Error verifying owner:", error);
-            alert("Failed to verify owner. Please try again.");
-        } finally {
-            setVerifyingId(null);
-        }
+        await verifyOwner(ownerId);
     };
 
     const handleViewDetails = (owner) => {
@@ -195,6 +174,7 @@ const OwnerVerificationPage = () => {
         setIsDetailsOpen(true);
     };
 
+    // 5. Logic for filtering and counts
     const filteredOwners = owners.filter(owner =>
         owner.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         owner.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -226,6 +206,7 @@ const OwnerVerificationPage = () => {
                 </div>
             </div>
 
+            {/* Summary Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="bg-white dark:bg-slate-800/60">
                     <CardContent className="p-6">
@@ -264,6 +245,7 @@ const OwnerVerificationPage = () => {
                 </Card>
             </div>
 
+            {/* Search Bar */}
             <Card className="bg-white dark:bg-slate-800/60">
                 <CardContent className="p-4">
                     <div className="relative">
@@ -278,6 +260,7 @@ const OwnerVerificationPage = () => {
                 </CardContent>
             </Card>
 
+            {/* Content Area */}
             {isLoading ? (
                 <div className="flex justify-center items-center h-64">
                     <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
@@ -352,9 +335,9 @@ const OwnerVerificationPage = () => {
                                             size="sm"
                                             className="flex-1 bg-green-600 hover:bg-green-700"
                                             onClick={() => handleVerify(owner._id)}
-                                            disabled={verifyingId === owner._id}
+                                            disabled={isVerifying === owner._id}
                                         >
-                                            {verifyingId === owner._id ? (
+                                            {isVerifying === owner._id ? (
                                                 <>
                                                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                                                     Verifying...
@@ -370,7 +353,7 @@ const OwnerVerificationPage = () => {
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className={owner.isVerified ? "flex-1" : "flex-1"}
+                                        className="flex-1"
                                         onClick={() => handleViewDetails(owner)}
                                     >
                                         <Eye className="h-3 w-3 mr-1" />

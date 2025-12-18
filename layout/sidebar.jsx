@@ -29,7 +29,7 @@ const Sidebar = () => {
         { name: "Categories", icon: Layers, href: "/categories" },
 
         ...(user?.user_type === "admin"
-            ? [{ name: "Verify", icon: Shield, href: "/verify" }]
+            ? [{ name: "Verify", icon: Shield, href: "/verify-owner" }]
             : []),
     ];
 
