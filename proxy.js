@@ -7,6 +7,8 @@ const publicPaths = [
   "/forgot-password", 
   "/reset-password",
   "/unauthorized", 
+  "/verify-otp",
+  
 ];
 
 const adminPaths = ["/admin","/verify-owner"]; 

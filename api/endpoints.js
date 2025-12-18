@@ -3,16 +3,34 @@ const Routes = {
   V1Base: "/api/v1",
 
   AUTH: {
+    // Core Auth
     LOGIN: "/auth/login",
-    PROFILE: "/auth/profile",
+    REGISTER: "/auth/register",
     LOGOUT: "/auth/logout",
     REFRESH: "/auth/refresh-token",
-    FORGOT: "/auth/forgot-password",
-    RESET: "/auth/reset-password",
+    ME: "/auth/me", // Matches router.get("/me")
+
+    // OTP / Password Reset Flow
+    PASSWORD: {
+      FORGOT: "/auth/password/forgot",
+      VERIFY_OTP: "/auth/password/verify-otp",
+      RESEND_OTP: "/auth/password/resend-otp",
+      RESET: "/auth/password/reset",
+      SET: "/auth/password/set",
+      CHANGE: "/auth/password/change",
+    },
+
+    // Social Auth
+    SOCIAL: {
+      GOOGLE: "/auth/google",
+      FACEBOOK: "/auth/facebook",
+      LINK: "/auth/social/link",
+      UNLINK: "/auth/social/unlink",
+      ACCOUNTS: "/auth/social/accounts",
+    },
   },
 
-
-  // below are example additional endpoints
+  // Example additional endpoints
   USERS: {
     LIST: "/users",
     DETAIL: (id) => `/users/${id}`,

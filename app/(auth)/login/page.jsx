@@ -10,10 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-// import { Checkbox } from "@/components/ui/checkbox";
 import { Spinner } from "@/components/ui/spinner";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
-
+import { useGoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {
     const [credentials, setCredentials] = useState({
@@ -21,248 +20,214 @@ export default function LoginPage() {
         password: "",
     });
     const [showPassword, setShowPassword] = useState(false);
-    // const [rememberMe, setRememberMe] = useState(false);
     const [clientReady, setClientReady] = useState(false);
 
     const router = useRouter();
-    const { login, loading, error, isAuthenticated, initializeAuth, clearError } = useAuthStore();
-
-    const handleInitializeAuth = useCallback(initializeAuth, []);
-    const handleLogin = useCallback(login, [login]);
-    const navigateToDashboard = useCallback(() => router.push("/dashboard"), [router]);
+    
+    const { login, socialLogin, loading, error, isAuthenticated, initializeAuth, clearError } = useAuthStore();
 
     // Initialize auth state on component mount
     useEffect(() => {
-        handleInitializeAuth().finally(() => {
+        const init = async () => {
+            await initializeAuth();
             setClientReady(true);
-        });
-    }, [handleInitializeAuth]);
+        };
+        init();
+    }, [initializeAuth]);
 
     // Redirect if already authenticated
     useEffect(() => {
         if (isAuthenticated && clientReady) {
-            navigateToDashboard();
+            router.push("/dashboard");
         }
-    }, [isAuthenticated, clientReady, navigateToDashboard]);
+    }, [isAuthenticated, clientReady, router]);
 
-    // Clear error when credentials change
-    useEffect(() => {
-        if (error) {
-            clearError();
-        }
-    }, [credentials.email, credentials.password]);
-
+    // Clear store errors when user starts typing again
     const handleChange = (e) => {
+        if (error) clearError();
         const { name, value } = e.target;
-        setCredentials((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+        setCredentials((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!credentials.email || !credentials.password) {
-            toast.error("Please fill in all fields", {
-                description: "Email and password are required to sign in.",
-            });
+            toast.error("Required fields missing", { description: "Please enter both email and password." });
             return;
         }
 
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(credentials.email)) {
-            toast.error("Invalid email format", {
-                description: "Please enter a valid email address.",
-            });
-            return;
-        }
-
-        const result = await handleLogin(credentials);
+        const result = await login(credentials);
 
         if (result.success) {
-            toast.success("Welcome back!", {
-                description: "You have been successfully signed in.",
-            });
-
-            // if (rememberMe) {
-            //     toast.info("Remember me enabled", {
-            //         description: "Your session will be remembered on this device.",
-            //     });
-            // }
-
-            navigateToDashboard();
+            toast.success("Welcome back!", { description: "Redirecting to dashboard..." });
+            router.push("/dashboard");
         } else {
-            toast.error("Sign in failed", {
-                description: error || "Please check your credentials and try again.",
-            });
+            // result.error contains the msg from err.response.data.message
+            toast.error("Sign in failed", { description: result.error || "Invalid credentials." });
         }
     };
 
+    const handleSocialLogin = async (provider) => {
+        const result = await socialLogin(provider);
+        if (result.success) {
+            toast.success(`Signed in with ${provider}`);
+            router.push("/dashboard");
+        } else {
+            toast.error(`${provider} login failed`);
+        }
+    };
 
+    const handleGoogleSuccess = async (tokenResponse) => {
+        // This is the access_token needed by your backend
+        const result = await socialLogin("google", tokenResponse.access_token);
+        
+        if (result.success) {
+            toast.success("Logged in successfully!");
+            router.push("/dashboard");
+        } else {
+            toast.error(result.error);
+        }
+    };
 
-    // Render guard
+    const loginWithGoogle = useGoogleLogin({
+        onSuccess: handleGoogleSuccess,
+        onError: () => toast.error("Google Login Failed"),
+    });
+
+    // Prevent hydration flicker or showing login form to auth'd users
     if (!clientReady || isAuthenticated) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="flex flex-col items-center space-y-4">
-                    <Spinner />
-                    <p className="text-sm text-gray-600">Loading...</p>
+                    <Spinner size={32} className="text-blue-600" />
+                    <p className="text-sm text-gray-500 animate-pulse">Verifying session...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-primary-foreground/80 backdrop-blur-m sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center bg-primary-foreground/80 relative overflow-hidden sm:px-6 lg:px-8">
             <Image
                 src="/loginBk.png"
                 alt="Background"
-                fill // makes it cover the parent container
-                className="object-cover -z-1"
-
-                priority // optional, loads immediately
+                fill
+                className="object-cover -z-10 brightness-95"
+                priority
             />
-            <div className="w-full max-w-md">
-                <div className="text-center mb-8">
-                    <h1 className="mt-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+
+            <div className="w-full max-w-md z-10">
+                <div className="text-center mb-6">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
                         Provider Portal
                     </h1>
                 </div>
 
-                <Card className="shadow-xl border-0">
+                <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
                     <CardHeader className="space-y-1">
-                        <CardTitle className="text-2xl font-bold text-center">
-                            Sign in
-                        </CardTitle>
+                        <CardTitle className="text-2xl font-bold text-center">Sign in</CardTitle>
                         <CardDescription className="text-center">
-                            Enter your credentials to access your account
+                            Access your account dashboard
                         </CardDescription>
                     </CardHeader>
 
                     <CardContent className="space-y-4">
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            {/* Email Field */}
                             <div className="space-y-2">
                                 <Label htmlFor="email" className="flex items-center gap-2">
-                                    <Mail className="h-4 w-4" />
+                                    <Mail className="h-4 w-4 text-gray-500" />
                                     Email address
                                 </Label>
                                 <Input
                                     id="email"
                                     name="email"
                                     type="email"
-                                    autoComplete="email"
+                                    placeholder="name@company.com"
                                     required
                                     value={credentials.email}
                                     onChange={handleChange}
-                                    placeholder="Enter your email"
                                     disabled={loading}
-                                    className="h-11"
+                                    className="h-11 focus-visible:ring-blue-500"
                                 />
                             </div>
 
-
                             <div className="space-y-2">
-                                <Label htmlFor="password" className="flex items-center gap-2">
-                                    <Lock className="h-4 w-4" />
-                                    Password
+                                <Label htmlFor="password flex items-center justify-between">
+                                    <span className="flex items-center gap-2">
+                                        <Lock className="h-4 w-4 text-gray-500" /> Password
+                                    </span>
                                 </Label>
                                 <div className="relative">
                                     <Input
                                         id="password"
                                         name="password"
                                         type={showPassword ? "text" : "password"}
-                                        autoComplete="current-password"
                                         required
                                         value={credentials.password}
                                         onChange={handleChange}
-                                        placeholder="Enter your password"
                                         disabled={loading}
-                                        className="h-11 pr-10"
+                                        className="h-11 pr-10 focus-visible:ring-blue-500"
                                     />
-                                    <Button
+                                    <button
                                         type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        className="absolute right-0 top-0 h-11 px-3 py-2 hover:bg-transparent"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        disabled={loading}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                                     >
-                                        {showPassword ? (
-                                            <EyeOff className="h-4 w-4 text-gray-500" />
-                                        ) : (
-                                            <Eye className="h-4 w-4 text-gray-500" />
-                                        )}
-                                        <span className="sr-only">
-                                            {showPassword ? "Hide password" : "Show password"}
-                                        </span>
-                                    </Button>
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Remember Me & Forgot Password */}
-                            <div className="flex items-center justify-between">
-                                {/* <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="rememberMe"
-                                        checked={rememberMe}
-                                        onCheckedChange={(checked) => setRememberMe(checked)}
-                                        disabled={loading}
-                                    />
-                                    <Label
-                                        htmlFor="rememberMe"
-                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                        Remember me
-                                    </Label>
-                                </div> */}
+                            <div className="flex items-center justify-end">
                                 <Link
                                     href="/forgot-password"
-                                    className="text-sm text-blue-600 hover:text-blue-500 hover:underline transition-colors"
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
                                 >
                                     Forgot password?
                                 </Link>
                             </div>
 
-                            {/* Submit Button */}
                             <Button
                                 type="submit"
-                                disabled={loading || !credentials.email || !credentials.password}
-                                className="w-full h-11 text-base font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
-                                size="lg"
+                                disabled={loading}
+                                className="w-full h-11 bg-blue-600 hover:bg-blue-700 transition-all shadow-md"
                             >
-                                {loading ? (
-                                    <>
-                                        <Spinner className="mr-2" size={16} />
-                                        Signing in...
-                                    </>
-                                ) : (
-                                    "Sign in"
-                                )}
+                                {loading ? <Spinner className="mr-2" size={16} /> : "Sign in"}
                             </Button>
                         </form>
 
+                        <div className="relative my-4">
+                            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200"></span></div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-white px-2 text-gray-400 font-medium">Or continue with</span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <Button variant="outline" onClick={() => loginWithGoogle()} disabled={loading} className="h-10">
+                                Google
+                            </Button>
+                            <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={loading} className="h-10">
+                                Facebook
+                            </Button>
+                        </div>
                     </CardContent>
 
-                    <CardFooter className="flex flex-col space-y-4">
-                        <div className="text-center">
-                            <Link
-                                href="/contact"
-                                className="text-xs text-gray-500 hover:text-gray-700 hover:underline transition-colors"
-                            >
-                                Need help? Contact support
+                    <CardFooter className="flex flex-col border-t p-6 bg-gray-50/50">
+                        <p className="text-sm text-center text-gray-600">
+                            Don't have an account?{" "}
+                            <Link href="/register" className="text-blue-600 font-semibold hover:underline">
+                                Create account
                             </Link>
-                        </div>
+                        </p>
                     </CardFooter>
                 </Card>
 
-                {/* Security Notice */}
-                <div className="mt-6 text-center">
-                    <div className="inline-flex items-center gap-2 text-xs text-gray-500 bg-white/50 backdrop-blur-sm rounded-lg px-3 py-2">
+                <div className="mt-6 flex justify-center">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 bg-white/80 px-4 py-2 rounded-full border shadow-sm">
                         <AlertCircle className="h-3 w-3" />
-                        Your security is our priority. We use industry-standard encryption.
+                        Encrypted Secure Connection
                     </div>
                 </div>
             </div>

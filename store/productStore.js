@@ -133,9 +133,31 @@ export const useProductStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Update Product
-   */
+  updateProduct: async (shopId, productId, productData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await apiClient.put(`/shops/${shopId}/products/${productId}`, productData);
+      const updatedProduct = response.data.data || response.data;
+
+      set((state) => ({
+        products: state.products.map((p) =>
+          p._id === productId || p.product_id === productId ? updatedProduct : p
+        ),
+        currentProduct: updatedProduct,
+        isLoading: false,
+      }));
+      return true;
+    } catch (err) {
+      set({
+        error: err.response?.data?.message || "Failed to update product",
+        isLoading: false
+      });
+      return false;
+    }
+  },
+
+
+
   uploadProductImages: async (shopId, productId, formData) => {
     set({ isLoading: true, error: null });
     try {
