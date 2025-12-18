@@ -17,7 +17,7 @@ export const useCategoryStore = create()(
       fetchCategories: async () => {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.get("/admin/categories");
+          const response = await apiClient.get("/category/categories");
           const categories = response.data.data || response.data; 
           set({ categories, isLoading: false });
         } catch (error) {
@@ -39,7 +39,7 @@ export const useCategoryStore = create()(
             ? { headers: { "Content-Type": "multipart/form-data" } }
             : {};
 
-          const response = await apiClient.post("/admin/categories", data, config);
+          const response = await apiClient.post("/category/categories", data, config);
           const newCategory = response.data.data || response.data;
           
           set((state) => ({
@@ -66,7 +66,7 @@ export const useCategoryStore = create()(
             ? { headers: { "Content-Type": "multipart/form-data" } }
             : {};
 
-          const response = await apiClient.put(`/admin/categories/${id}`, data, config);
+          const response = await apiClient.put(`/category/categories/${id}`, data, config);
           const updatedCategory = response.data.data || response.data;
 
           set((state) => ({
@@ -88,7 +88,7 @@ export const useCategoryStore = create()(
       deleteCategory: async (id) => {
         set({ isLoading: true, error: null });
         try {
-          await apiClient.delete(`/admin/categories/${id}`);
+          await apiClient.delete(`/category/categories/${id}`);
           set((state) => ({
             categories: state.categories.filter((cat) => cat._id !== id),
             isLoading: false,
