@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
-import { useGoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {
     const [credentials, setCredentials] = useState({
@@ -78,23 +77,7 @@ export default function LoginPage() {
         }
     };
 
-    const handleGoogleSuccess = async (tokenResponse) => {
-        // This is the access_token needed by your backend
-        const result = await socialLogin("google", tokenResponse.access_token);
-        
-        if (result.success) {
-            toast.success("Logged in successfully!");
-            router.push("/dashboard");
-        } else {
-            toast.error(result.error);
-        }
-    };
-
-    const loginWithGoogle = useGoogleLogin({
-        onSuccess: handleGoogleSuccess,
-        onError: () => toast.error("Google Login Failed"),
-    });
-
+    
     // Prevent hydration flicker or showing login form to auth'd users
     if (!clientReady || isAuthenticated) {
         return (
@@ -205,7 +188,7 @@ export default function LoginPage() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                            <Button variant="outline" onClick={() => loginWithGoogle()} disabled={loading} className="h-10">
+                            <Button variant="outline" onClick={() => handleSocialLogin()} disabled={loading} className="h-10">
                                 Google
                             </Button>
                             <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={loading} className="h-10">
