@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 
 export default function ResetPassword() {
