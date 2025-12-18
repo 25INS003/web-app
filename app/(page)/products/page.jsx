@@ -2,11 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
 import { useProductStore } from "@/store/productStore";
+import { useShopStore } from "@/store/shopStore";
 import GlobalSelectShop from "@/components/Dropdowns/selectShop0";
 import { Card } from "@/components/ui/card";
-import { useShopStore } from "@/store/shopStore";
 import { toast } from "sonner";
 
 import {
@@ -18,7 +17,9 @@ import {
     Loader2,
     ImageIcon,
     Eye,
-    X, // Import X for clearing search
+    X,
+    Filter,
+    RefreshCcw
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,175 +33,94 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
-/* =========================================
-   Create Product Dialog
-========================================= */
-const CreateProductDialog = ({ shopId, open, onOpenChange }) => {
-    const { createProduct, isLoading } = useProductStore();
-    const { register, handleSubmit, reset } = useForm();
-
-    const onSubmit = async (data) => {
-        if (!shopId) {
-            toast.error("Please select a shop first.");
-            return;
-        }
-
-        const payload = {
-            ...data,
-            price: Number(data.price),
-            stock_quantity: Number(data.stock_quantity),
-            shop_id: shopId,
-            unit: data.unit || 'piece',
-        };
-
-        const success = await createProduct(shopId, payload);
-        if (success) {
-            reset();
-            onOpenChange(false);
-            toast.success("Product created successfully!");
-        } else {
-            toast.error("Failed to create product.");
-        }
-    };
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                <DialogHeader>
-                    <DialogTitle className="text-slate-900 dark:text-slate-100">Add New Product</DialogTitle>
-                    <DialogDescription className="text-slate-500 dark:text-slate-400">
-                        Add a new item to your inventory.
-                    </DialogDescription>
-                </DialogHeader>
-
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
-                    <Input
-                        {...register("name", { required: true })}
-                        placeholder="Product Name"
-                        className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                    />
-                    <Input
-                        type="number"
-                        {...register("price", { required: true })}
-                        placeholder="Price (₹)"
-                        className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                    />
-                    <Input
-                        type="number"
-                        {...register("stock_quantity", { required: true })}
-                        placeholder="Stock Quantity"
-                        className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                    />
-
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            type="button"
-                            onClick={() => onOpenChange(false)}
-                            className="bg-white dark:bg-slate-800 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100"
-                        >
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading} className="dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
-};
-
-/* =========================================
-   Products List Page (UPDATED)
-========================================= */
 const ProductsListPage = () => {
     const { currentShop } = useShopStore();
     const shopId = currentShop?._id ?? null;
 
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-
     const {
-        products = [],
+        products,
         pagination,
         isLoading,
-        fetchShopProducts,
         setFilters,
-        setPage, // Not strictly needed for search as setFilters resets page, but good for pagination UI
         deleteProduct,
         queryParams,
     } = useProductStore();
 
-    /* 1. Initial Load & Shop Change Reset */
+    // --- Local State for "Staged" Filters ---
+    const [tempFilters, setTempFilters] = useState({
+        search: "",
+        is_available: "true",
+        inStock: "all",
+        sortBy: "created_at"
+    });
+
+    // Sync temp state with store on initial load or shop change
     useEffect(() => {
         if (!shopId) return;
 
-        // Reset local and store state when shop changes
-        setSearchTerm("");
-        setFilters({ search: "" });
-        fetchShopProducts(shopId);
-    }, [shopId, fetchShopProducts, setFilters]);
+        const initialFilters = {
+            search: "",
+            is_available: "true",
+            inStock: "all",
+            sortBy: "created_at",
+            page: 1
+        };
 
-    /* 2. Search Handler (UPDATED) */
-    const handleSearch = (e) => {
-        e.preventDefault(); // Prevent page reload
+        setTempFilters(initialFilters);
+        setFilters(initialFilters, shopId);
+    }, [shopId, setFilters]);
 
-        // Update the store with the search term
-        setFilters({ search: searchTerm }, shopId);
-        console.log("Searching for:", searchTerm);
-        console.log("Current Query Params:", queryParams);
-
-        // TRIGGER THE API CALL
-        fetchShopProducts(shopId);
+    // --- Filter Handlers ---
+    const handleApplyFilters = () => {
+        setFilters({
+            ...tempFilters,
+            inStock: tempFilters.inStock === "all" ? undefined : tempFilters.inStock,
+            page: 1
+        }, shopId);
+        toast.success("Filters applied");
     };
 
-    /* 3. Clear Search Handler (NEW) */
-    const handleClearSearch = () => {
-        setSearchTerm("");
-        setFilters({ search: "" });
-        fetchShopProducts(shopId);
+    const handleResetFilters = () => {
+        const reset = {
+            search: "",
+            is_available: "true",
+            inStock: "all",
+            sortBy: "created_at"
+        };
+        setTempFilters(reset);
+        setFilters({ ...reset, page: 1 }, shopId);
     };
 
-    /* Delete Handler */
     const handleDelete = async (productId) => {
         if (!shopId) return;
-        if (window.confirm("Are you sure you want to delete this product?")) {
-            const success = await deleteProduct(shopId, productId);
-            if (success) {
-                toast.success("Product deleted successfully.");
-            } else {
-                toast.error("Failed to delete product.");
-            }
-        }
+        if (!window.confirm("Delete this product?")) return;
+
+        const ok = await deleteProduct(shopId, productId);
+        ok ? toast.success("Product deleted") : toast.error("Delete failed");
     };
 
     if (!shopId) {
         return (
-            <div className="flex-1 w-full flex items-center justify-center p-4 min-h-[50vh]">
-                <Card className="w-full max-w-md p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div className="text-center mb-6">
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Product Management</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mt-2">
-                            Please select a shop to manage inventory.
-                        </p>
-                    </div>
+            <div className="flex-1 flex items-center justify-center min-h-[50vh] bg-slate-950">
+                <Card className="p-6 w-full max-w-md bg-slate-900 border-slate-800 text-slate-100">
+                    <h2 className="text-xl font-semibold mb-2">Product Management</h2>
+                    <p className="text-sm text-slate-400 mb-4">
+                        Select a shop to manage products
+                    </p>
                     <GlobalSelectShop ShowLabel={false} />
                 </Card>
             </div>
@@ -208,147 +128,201 @@ const ProductsListPage = () => {
     }
 
     return (
-        <div className="container mx-auto p-6 space-y-6">
-            {/* Header */}
+        <div className="min-h-screen bg-slate-950 text-slate-100 p-6 space-y-6">
+            {/* -------------------------------- Header -------------------------------- */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Products</h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        Managing <span className="font-semibold text-slate-700 dark:text-slate-300">{currentShop?.name}</span> • {pagination?.totalProducts ?? 0} items found
+                    <h1 className="text-3xl font-bold tracking-tight text-white">Products</h1>
+                    <p className="text-sm text-slate-400">
+                        Managing <span className="text-indigo-400 font-medium">{pagination.totalProducts}</span> items in <span className="text-slate-200">{currentShop?.name}</span>
                     </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                    <div className="w-full sm:w-[200px]">
-                        <GlobalSelectShop />
-                    </div>
-
-                    <Button onClick={() => setIsCreateOpen(true)} className="w-full sm:w-auto dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Product
-                    </Button>
-                </div>
+                <Link
+                    href={`products/${shopId}/add`}
+                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-500 shadow-lg shadow-indigo-500/20"
+                >
+                    <Plus className="h-4 w-4" />
+                    Add Product
+                </Link>
             </div>
 
-            {/* Search Bar (UPDATED UI) */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
-                <form onSubmit={handleSearch} className="flex gap-2 max-w-lg">
-                    <div className="relative w-full">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            {/* -------------------------------- Filter Bar -------------------------------- */}
+            <Card className="p-4 bg-slate-900 border-slate-800 shadow-xl">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    {/* Search */}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                         <Input
-                            placeholder="Search by name, SKU, or category..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 pr-10 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-500"
+                            placeholder="Search name, SKU..."
+                            value={tempFilters.search}
+                            onChange={(e) => setTempFilters({ ...tempFilters, search: e.target.value })}
+                            className="pl-9 bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500"
                         />
-                        {searchTerm && (
-                            <button
-                                type="button"
-                                onClick={handleClearSearch}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        )}
                     </div>
-                    <Button type="submit" variant="secondary" className="bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700">
-                        Search
-                    </Button>
-                </form>
-            </div>
 
-            {/* Table */}
-            <div className="rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                    {/* Availability */}
+                    <Select
+                        value={tempFilters.is_available}
+                        onValueChange={(v) => setTempFilters({ ...tempFilters, is_available: v })}
+                    >
+                        <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-200">
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
+                            <SelectItem value="none">All Statuses</SelectItem>
+                            <SelectItem value="true">Available</SelectItem>
+                            <SelectItem value="false">Hidden</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {/* Stock */}
+                    <Select
+                        value={tempFilters.inStock}
+                        onValueChange={(v) => setTempFilters({ ...tempFilters, inStock: v })}
+                    >
+                        <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-200">
+                            <SelectValue placeholder="Stock Level" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
+                            <SelectItem value="all">All Stock</SelectItem>
+                            <SelectItem value="true">In Stock</SelectItem>
+                            <SelectItem value="false">Out of Stock</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {/* Sort */}
+                    <Select
+                        value={tempFilters.sortBy}
+                        onValueChange={(v) => setTempFilters({ ...tempFilters, sortBy: v })}
+                    >
+                        <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-200">
+                            <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
+                            <SelectItem value="created_at">Newest First</SelectItem>
+                            <SelectItem value="price">Price</SelectItem>
+                            <SelectItem value="name">Alphabetical</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={handleApplyFilters}
+                            className="flex-1 bg-slate-700 hover:bg-slate-600 text-white border-none"
+                        >
+                            <Filter className="h-4 w-4 mr-2" />
+                            Filter
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={handleResetFilters}
+                            className="border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                        >
+                            <RefreshCcw className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            </Card>
+
+            {/* -------------------------------- Table -------------------------------- */}
+            <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden shadow-2xl">
                 <Table>
-                    <TableHeader className="bg-slate-50 dark:bg-slate-950/50">
-                        <TableRow className="border-b border-slate-200 dark:border-slate-800 hover:bg-transparent">
-                            <TableHead className="w-[80px] text-slate-700 dark:text-slate-300">Image</TableHead>
-                            <TableHead className="text-slate-700 dark:text-slate-300">Name</TableHead>
-                            <TableHead className="text-slate-700 dark:text-slate-300">Category</TableHead>
-                            <TableHead className="text-slate-700 dark:text-slate-300">Price</TableHead>
-                            <TableHead className="text-slate-700 dark:text-slate-300">Stock</TableHead>
-                            <TableHead className="text-right text-slate-700 dark:text-slate-300">Actions</TableHead>
+                    <TableHeader className="bg-slate-800/50">
+                        <TableRow className="border-slate-800 hover:bg-transparent">
+                            <TableHead className="text-slate-400">Preview</TableHead>
+                            <TableHead className="text-slate-400">Product Details</TableHead>
+                            <TableHead className="text-slate-400">Category</TableHead>
+                            <TableHead className="text-slate-400">Price</TableHead>
+                            <TableHead className="text-slate-400">Stock</TableHead>
+                            <TableHead className="text-right text-slate-400">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
 
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center border-slate-200 dark:border-slate-800">
-                                    <div className="flex items-center justify-center text-slate-500 dark:text-slate-400">
-                                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                                        Loading products...
-                                    </div>
+                                <TableCell colSpan={6} className="text-center py-20">
+                                    <Loader2 className="h-8 w-8 animate-spin inline text-indigo-500" />
+                                    <p className="mt-2 text-slate-500">Fetching products...</p>
                                 </TableCell>
                             </TableRow>
                         ) : products.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                                    {searchTerm ? `No results found for "${searchTerm}"` : "No products found. Add one to get started!"}
+                                <TableCell colSpan={6} className="text-center py-20 text-slate-500">
+                                    No products matching your criteria
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            products.map((product) => (
-                                <TableRow key={product._id} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            products.map((p) => (
+                                <TableRow key={p._id} className="border-slate-800 hover:bg-slate-800/30 transition-colors">
                                     <TableCell>
-                                        {product.images?.length ? (
-                                            <img src={product.images[0].url || product.images[0]} alt={product.name} className="h-10 w-10 rounded-md object-cover border border-slate-200 dark:border-slate-700" />
-                                        ) : (
-                                            <div className="h-10 w-10 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
-                                                <ImageIcon className="h-5 w-5 text-slate-400" />
-                                            </div>
-                                        )}
+                                        <div className="h-12 w-12 rounded-lg bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-700">
+                                            {p.images?.length ? (
+                                                <img
+                                                    src={p.images[0].url || p.images[0]}
+                                                    className="h-full w-full object-cover"
+                                                    alt={p.name}
+                                                />
+                                            ) : (
+                                                <ImageIcon className="h-5 w-5 text-slate-600" />
+                                            )}
+                                        </div>
                                     </TableCell>
-                                    <TableCell className="font-medium text-slate-900 dark:text-slate-100">
-                                        {product.name}
-                                        <div className="text-xs text-slate-500 dark:text-slate-500 font-mono mt-0.5">{product.sku}</div>
-                                    </TableCell>
+
                                     <TableCell>
-                                        <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900">
-                                            {typeof product.category_id === 'object' ? product.category_id?.name : "General"}
+                                        <div className="font-semibold text-slate-200">{p.name}</div>
+                                        <div className="text-xs font-mono text-slate-500 uppercase">
+                                            {p.sku || "No SKU"}
+                                        </div>
+                                    </TableCell>
+
+                                    <TableCell className="text-slate-300">
+                                        <Badge variant="outline" className="border-slate-700 text-slate-400">
+                                            {p.category_id?.name ?? "General"}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="font-medium text-slate-900 dark:text-slate-200">
-                                        ₹{product.price}
+
+                                    <TableCell className="font-medium text-slate-200">
+                                        ₹{p.price.toLocaleString()}
                                     </TableCell>
+
                                     <TableCell>
                                         <Badge
                                             className={
-                                                product.stock_quantity > 10
-                                                    ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
-                                                    : product.stock_quantity > 0
-                                                        ? "bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
-                                                        : "bg-red-100 text-red-700 hover:bg-red-100 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+                                                p.stock_quantity > 0
+                                                    ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                                    : "bg-rose-500/10 text-rose-500 border-rose-500/20"
                                             }
                                         >
-                                            {product.stock_quantity > 0
-                                                ? `${product.stock_quantity} ${product.unit || 'units'}`
-                                                : "Out of Stock"}
+                                            {p.stock_quantity > 0
+                                                ? `${p.stock_quantity} in stock`
+                                                : "Out of stock"}
                                         </Badge>
                                     </TableCell>
+
                                     <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-800">
-                                                    <MoreHorizontal className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                                                <Button variant="ghost" size="icon" className="hover:bg-slate-700 text-slate-400">
+                                                    <MoreHorizontal className="h-5 w-5" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 w-40">
-                                                <DropdownMenuItem asChild className="cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800">
-                                                    <Link href={`/products/${shopId}/view/${product._id}`} className="w-full flex items-center text-slate-700 dark:text-slate-200">
-                                                        <Eye className="mr-2 h-4 w-4" /> View
+                                            <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700 text-slate-200">
+                                                <DropdownMenuItem className="focus:bg-slate-700 cursor-pointer" asChild>
+                                                    <Link href={`/products/${shopId}/view/${p._id}`}>
+                                                        <Eye className="mr-2 h-4 w-4" /> View Details
                                                     </Link>
                                                 </DropdownMenuItem>
-
-                                                <DropdownMenuItem asChild className="cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800">
-                                                    <Link href={`/products/${shopId}/inventory/${product._id}`} className="w-full flex items-center text-slate-700 dark:text-slate-200">
-                                                        <Edit className="mr-2 h-4 w-4" /> Edit Stock
+                                                <DropdownMenuItem className="focus:bg-slate-700 cursor-pointer" asChild>
+                                                    <Link href={`/products/${shopId}/inventory/${p._id}`}>
+                                                        <Edit className="mr-2 h-4 w-4" /> Edit Product
                                                     </Link>
                                                 </DropdownMenuItem>
-
                                                 <DropdownMenuItem
-                                                    className="cursor-pointer text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20 focus:text-red-700"
-                                                    onClick={() => handleDelete(product._id)}
+                                                    className="text-rose-400 focus:bg-rose-500/10 cursor-pointer"
+                                                    onClick={() => handleDelete(p._id)}
                                                 >
                                                     <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                 </DropdownMenuItem>
@@ -361,12 +335,6 @@ const ProductsListPage = () => {
                     </TableBody>
                 </Table>
             </div>
-
-            <CreateProductDialog
-                shopId={shopId}
-                open={isCreateOpen}
-                onOpenChange={setIsCreateOpen}
-            />
         </div>
     );
 };

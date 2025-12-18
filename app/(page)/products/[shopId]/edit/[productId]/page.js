@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,7 +15,8 @@ import {
   X,
   Loader2,
   Save,
-  ImageIcon
+  ImageIcon,
+  Plus
 } from "lucide-react";
 
 // --- Shadcn UI ---
@@ -63,25 +64,22 @@ const EditProductPage = () => {
   const router = useRouter();
   const { shopId, productId } = params;
 
-  // --- Store ---
   const {
     currentProduct,
     getProductDetails,
     updateProduct,
     uploadProductImages,
-    isLoading
+    isLoading: storeLoading
   } = useProductStore();
 
-  // --- Local State ---
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Image State
-  const [existingImages, setExistingImages] = useState([]); // URLs from backend
-  const [newImageFiles, setNewImageFiles] = useState([]);   // Files to upload
-  const [newImagePreviews, setNewImagePreviews] = useState([]); // Previews for new files
+  // Image Management State
+  const [existingImages, setExistingImages] = useState([]);
+  const [newImageFiles, setNewImageFiles] = useState([]);
+  const [newImagePreviews, setNewImagePreviews] = useState([]);
 
-  // --- Form Setup ---
   const form = useForm({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -97,7 +95,6 @@ const EditProductPage = () => {
     },
   });
 
-  // --- 1. Fetch Data on Mount ---
   useEffect(() => {
     const init = async () => {
       if (shopId && productId) {
@@ -108,24 +105,24 @@ const EditProductPage = () => {
     init();
   }, [shopId, productId, getProductDetails]);
 
-  // --- 2. Populate Form when Data Arrives ---
   useEffect(() => {
     if (!isInitializing && currentProduct) {
-      // Handle Category: might be an object (populated) or string
+      // Handle Category safely
       const catId = typeof currentProduct.category_id === 'object'
         ? currentProduct.category_id?._id
         : currentProduct.category_id;
 
       form.reset({
-        name: currentProduct.name,
+        // Use logical OR (||) to ensure no value is ever undefined/null
+        name: currentProduct.name || "",
         description: currentProduct.description || "",
         brand: currentProduct.brand || "",
-        price: currentProduct.price,
-        discounted_price: currentProduct.discounted_price || 0,
-        stock_quantity: currentProduct.stock_quantity,
-        min_stock_alert: currentProduct.min_stock_alert,
-        unit: currentProduct.unit,
-        is_available: currentProduct.is_available,
+        price: currentProduct.price ?? 0,
+        discounted_price: currentProduct.discounted_price ?? 0,
+        stock_quantity: currentProduct.stock_quantity ?? 0,
+        min_stock_alert: currentProduct.min_stock_alert ?? 5,
+        unit: currentProduct.unit || "piece",
+        is_available: !!currentProduct.is_available,
         category_id: catId || "",
       });
 
@@ -133,30 +130,37 @@ const EditProductPage = () => {
     }
   }, [currentProduct, isInitializing, form]);
 
+  // Clean up object URLs to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [newImagePreviews]);
+
   // --- Handlers ---
 
-  // Handle New Image Selection
   const handleNewImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    const totalImages = existingImages.length + newImageFiles.length + files.length;
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      const totalImages = existingImages.length + newImageFiles.length + files.length;
 
-    if (totalImages > 5) {
-      toast.error("You can only have up to 5 images total.");
-      return;
+      if (totalImages > 5) {
+        toast.error("Maximum 5 images allowed");
+        return;
+      }
+
+      const newPreviews = files.map((file) => URL.createObjectURL(file));
+      setNewImageFiles((prev) => [...prev, ...files]);
+      setNewImagePreviews((prev) => [...prev, ...newPreviews]);
     }
-
-    const newPreviews = files.map((file) => URL.createObjectURL(file));
-    setNewImageFiles((prev) => [...prev, ...files]);
-    setNewImagePreviews((prev) => [...prev, ...newPreviews]);
   };
 
-  // Remove New Image (Local)
   const removeNewImage = (index) => {
+    URL.revokeObjectURL(newImagePreviews[index]); // Cleanup
     setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
     setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Remove Existing Image (Just hides it from UI for now, logic depends on backend)
   const removeExistingImage = (index) => {
     setExistingImages((prev) => prev.filter((_, i) => i !== index));
   };
@@ -164,196 +168,167 @@ const EditProductPage = () => {
   const onSubmit = async (values) => {
     setIsSubmitting(true);
     try {
-      // 1. Update Basic Info
+      // 1. Prepare payload with "Kept" images
       const payload = {
         ...values,
-        // Send the list of KEPT images back to the backend
-        images: existingImages,
-      }
+        images: existingImages, // Tells backend to keep these, remove others
+      };
 
       const success = await updateProduct(shopId, productId, payload);
 
       if (success) {
-        // 2. Upload NEW Images (if any)
+        // 2. If metadata update succeeded, upload NEW files
         if (newImageFiles.length > 0) {
           const formData = new FormData();
-          newImageFiles.forEach((file) => formData.append("images", file));
+          newImageFiles.forEach((file) => {
+            formData.append("images", file); // Key must match your backend Multer/upload config
+          });
 
           await uploadProductImages(shopId, productId, formData);
         }
 
         toast.success("Product updated successfully");
         router.push(`/products/${shopId}/view/${productId}`);
-      } else {
-        toast.error("Failed to update product");
+        router.refresh();
       }
     } catch (error) {
-      console.error(error);
-      toast.error("An error occurred");
+      console.error("Update failed:", error);
+      toast.error("Failed to update product details");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // --- Loading State ---
   if (isInitializing) {
     return (
-      <div className="container mx-auto p-6 max-w-5xl space-y-6 dark:bg-slate-900">
-        <Skeleton className="h-10 w-1/3 dark:bg-slate-800" />
-        <div className="grid grid-cols-3 gap-6">
-          <Skeleton className="col-span-2 h-[400px] dark:bg-slate-800" />
-          <Skeleton className="h-[400px] dark:bg-slate-800" />
+      <div className="container mx-auto p-6 max-w-5xl space-y-6">
+        <Skeleton className="h-10 w-1/3" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Skeleton className="md:col-span-2 h-[500px]" />
+          <Skeleton className="h-[500px]" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-5xl dark:text-slate-100 ">
-      {/* Header */}
+    <div className="container mx-auto p-6 max-w-5xl dark:text-slate-100">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="dark:hover:bg-slate-800">
-          <ArrowLeft className="h-5 w-5 dark:text-slate-200" />
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+          <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight dark:text-slate-100">Edit Product</h1>
-          <p className="text-muted-foreground dark:text-slate-400">Update product details and inventory.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Edit Product</h1>
+          <p className="text-sm text-muted-foreground">Manage details and media for this item.</p>
         </div>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            {/* Left Column */}
             <div className="md:col-span-2 space-y-6">
-
+              {/* Product Info */}
               <Card className="dark:bg-slate-800 dark:border-slate-700">
-                <CardHeader>
-                  <CardTitle className="dark:text-slate-100">Product Details</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle>General Information</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="dark:text-slate-300">Product Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Product Name"
-                            {...field}
-                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
-                          />
-                        </FormControl>
+                        <FormLabel>Product Name</FormLabel>
+                        <FormControl><Input {...field} className="dark:bg-slate-900" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="brand"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="dark:text-slate-300">Brand</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Brand"
-                              {...field}
-                              className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
-                            />
-                          </FormControl>
-                          <FormMessage />
+                          <FormLabel>Brand</FormLabel>
+                          <FormControl><Input {...field} className="dark:bg-slate-900" /></FormControl>
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={form.control}
                       name="category_id"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="dark:text-slate-300">Category</FormLabel>
-                          <FormControl>
-                            <SelectCategory
-                              value={field.value}
-                              onCateSelect={(id) => field.onChange(id)}
-                            />
-                          </FormControl>
+                          <FormLabel>Category</FormLabel>
+                          <SelectCategory value={field.value} onCateSelect={field.onChange} />
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
-
                   <FormField
                     control={form.control}
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="dark:text-slate-300">Description</FormLabel>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Description..."
-                            className="resize-none min-h-[120px] dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
-                            {...field}
-                          />
+                          <Textarea {...field} className="min-h-[120px] dark:bg-slate-900" />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
                 </CardContent>
               </Card>
 
-              {/* Media Card */}
+              {/* Enhanced Media Card */}
               <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader>
-                  <CardTitle className="dark:text-slate-100">Images</CardTitle>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Product Images</CardTitle>
+                    <span className="text-xs text-muted-foreground">
+                      {existingImages.length + newImageFiles.length} / 5 Images
+                    </span>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
 
-                    {/* 1. Existing Images (From Backend) */}
+                    {/* Existing Images */}
                     {existingImages.map((src, index) => (
-                      <div key={`existing-${index}`} className="relative group aspect-square rounded-lg overflow-hidden border dark:border-slate-700">
+                      <div key={`old-${index}`} className="relative group aspect-square rounded-md overflow-hidden border bg-slate-100 dark:bg-slate-900">
                         <img src={src} alt="Existing" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-white text-xs font-medium">Existing</span>
-                        </div>
+                        <div className="absolute top-1 left-1 bg-black/60 text-[10px] text-white px-1.5 rounded">Saved</div>
                         <button
                           type="button"
                           onClick={() => removeExistingImage(index)}
-                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </button>
                       </div>
                     ))}
 
-                    {/* 2. New Image Previews (Local) */}
+                    {/* New Previews */}
                     {newImagePreviews.map((src, index) => (
-                      <div key={`new-${index}`} className="relative group aspect-square rounded-lg overflow-hidden border border-blue-500 dark:border-blue-400">
-                        <img src={src} alt="New" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-blue-500/20 pointer-events-none" />
+                      <div key={`new-${index}`} className="relative group aspect-square rounded-md overflow-hidden border-2 border-primary/50">
+                        <img src={src} alt="Preview" className="w-full h-full object-cover" />
+                        <div className="absolute top-1 left-1 bg-primary text-[10px] text-white px-1.5 rounded">New</div>
                         <button
                           type="button"
                           onClick={() => removeNewImage(index)}
-                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </button>
                       </div>
                     ))}
 
-                    {/* Upload Button */}
-                    {(existingImages.length + newImagePreviews.length) < 5 && (
-                      <label className="border-2 border-dashed border-gray-300 rounded-lg aspect-square flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-colors dark:border-slate-600 dark:hover:border-blue-400 dark:bg-slate-900">
-                        <Upload className="h-8 w-8 text-gray-400 mb-2 dark:text-slate-500" />
-                        <span className="text-xs text-gray-500 dark:text-slate-400">Add Image</span>
+                    {/* Upload Trigger */}
+                    {existingImages.length + newImageFiles.length < 5 && (
+                      <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed rounded-md cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors border-slate-300 dark:border-slate-700">
+                        <Plus className="h-6 w-6 text-muted-foreground mb-1" />
+                        <span className="text-[10px] font-medium text-muted-foreground">Upload</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -364,34 +339,22 @@ const EditProductPage = () => {
                       </label>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground dark:text-slate-500">
-                    Note: "Existing" images are currently saved. "New" images will be uploaded upon saving.
-                  </p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Right Column */}
+            {/* Sidebar Controls */}
             <div className="space-y-6">
-
               <Card className="dark:bg-slate-800 dark:border-slate-700">
-                <CardHeader>
-                  <CardTitle className="dark:text-slate-100">Pricing</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="dark:text-slate-300">Price (₹)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
-                          />
-                        </FormControl>
+                        <FormLabel>Base Price (₹)</FormLabel>
+                        <Input type="number" {...field} className="dark:bg-slate-900" />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -401,15 +364,8 @@ const EditProductPage = () => {
                     name="discounted_price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="dark:text-slate-300">Discounted Price</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
-                          />
-                        </FormControl>
-                        <FormMessage />
+                        <FormLabel>Sale Price (Optional)</FormLabel>
+                        <Input type="number" {...field} className="dark:bg-slate-900" />
                       </FormItem>
                     )}
                   />
@@ -417,25 +373,16 @@ const EditProductPage = () => {
               </Card>
 
               <Card className="dark:bg-slate-800 dark:border-slate-700">
-                <CardHeader>
-                  <CardTitle className="dark:text-slate-100">Inventory</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle>Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="stock_quantity"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="dark:text-slate-300">Stock</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
-                            />
-                          </FormControl>
-                          <FormMessage />
+                          <FormLabel>Stock</FormLabel>
+                          <Input type="number" {...field} className="dark:bg-slate-900" />
                         </FormItem>
                       )}
                     />
@@ -444,23 +391,17 @@ const EditProductPage = () => {
                       name="unit"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="dark:text-slate-300">Unit</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
-                                <SelectValue placeholder="Unit" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
-                              <SelectItem value="piece">Piece</SelectItem>
-                              <SelectItem value="kg">Kg</SelectItem>
-                              <SelectItem value="gram">Gram</SelectItem>
-                              <SelectItem value="liter">Liter</SelectItem>
-                              <SelectItem value="set">Set</SelectItem>
-                              <SelectItem value="pair">Pair</SelectItem>
+                          <FormLabel>Unit</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger className="dark:bg-slate-900">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["piece", "kg", "gram", "liter", "pair", "set"].map(u => (
+                                <SelectItem key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -468,69 +409,35 @@ const EditProductPage = () => {
 
                   <FormField
                     control={form.control}
-                    name="min_stock_alert"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="dark:text-slate-300">Low Stock Alert</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
                     name="is_available"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 dark:border-slate-700">
+                      <FormItem className="flex items-center space-x-2 space-y-0 border rounded-md p-3 dark:border-slate-700">
                         <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="dark:text-slate-300">Available for Sale</FormLabel>
-                        </div>
+                        <FormLabel className="text-sm font-medium">Visible to Customers</FormLabel>
                       </FormItem>
                     )}
                   />
                 </CardContent>
               </Card>
-
             </div>
           </div>
 
-          <Separator className="dark:bg-slate-700" />
-
-          <div className="flex justify-end gap-4">
+          <div className="flex justify-end items-center gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border dark:border-slate-700">
+            <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
             <Button
-              variant="outline"
-              type="button"
-              onClick={() => router.back()}
-              className="dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-100"
+              type="submit"
+              disabled={isSubmitting || storeLoading}
+              className="min-w-[140px]"
             >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting || isLoading} className="w-[150px]">
-              {(isSubmitting || isLoading) ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...
-                </>
+              {isSubmitting ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
               ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" /> Update
-                </>
+                <><Save className="mr-2 h-4 w-4" /> Save Changes</>
               )}
             </Button>
           </div>
-
         </form>
       </Form>
     </div>

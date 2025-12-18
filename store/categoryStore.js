@@ -18,55 +18,46 @@ export const useCategoryStore = create()(
         set({ isLoading: true, error: null });
         try {
           const response = await apiClient.get("/admin/categories");
-          const categories = response.data.data || response.data; 
+          const categories = response.data.data || response.data;
           set({ categories, isLoading: false });
         } catch (error) {
-          set({ 
-            error: error.response?.data?.message || "Failed to fetch categories", 
-            isLoading: false 
+          set({
+            error: error.response?.data?.message || "Failed to fetch categories",
+            isLoading: false
           });
         }
       },
 
-      // --- Create Category (UPDATED) ---
-      createCategory: async (data) => {
+      // --- Create Category (JSON Version) ---
+      createCategory: async (categoryData) => {
         set({ isLoading: true, error: null });
         try {
-          // Check if data is FormData (contains file) or plain JSON
-          const isFormData = data instanceof FormData;
-          
-          const config = isFormData 
-            ? { headers: { "Content-Type": "multipart/form-data" } }
-            : {};
-
-          const response = await apiClient.post("/admin/categories", data, config);
+          const response = await apiClient.post("/admin/categories", categoryData, {
+            headers: {
+              "Content-Type": "application/json"
+            },
+          });
           const newCategory = response.data.data || response.data;
-          
+
           set((state) => ({
             categories: [...state.categories, newCategory],
             isLoading: false,
           }));
           return newCategory;
         } catch (error) {
-          console.error("Create Category Error:", error);
-          set({ 
-            error: error.response?.data?.message || "Failed to create category", 
-            isLoading: false 
+          set({
+            error: error.response?.data?.message || "Failed to create category",
+            isLoading: false
           });
           throw error;
         }
       },
 
-      // --- Update Category (UPDATED) ---
-      updateCategory: async (id, data) => {
+      // --- Update Category (JSON Version) ---
+      updateCategory: async (id, updatedData) => {
         set({ isLoading: true, error: null });
         try {
-          const isFormData = data instanceof FormData;
-          const config = isFormData 
-            ? { headers: { "Content-Type": "multipart/form-data" } }
-            : {};
-
-          const response = await apiClient.put(`/admin/categories/${id}`, data, config);
+          const response = await apiClient.put(`/admin/categories/${id}`, updatedData);
           const updatedCategory = response.data.data || response.data;
 
           set((state) => ({
@@ -76,9 +67,33 @@ export const useCategoryStore = create()(
             isLoading: false,
           }));
         } catch (error) {
-          set({ 
-            error: error.response?.data?.message || "Failed to update category", 
-            isLoading: false 
+          set({
+            error: error.response?.data?.message || "Failed to update category",
+            isLoading: false
+          });
+          throw error;
+        }
+      },
+
+      // --- Update Display Order ---
+      updateCategoryOrder: async (id, display_order) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await apiClient.put(`/admin/categories/${id}/order`, {
+            display_order
+          });
+          const updatedCategory = response.data.data || response.data;
+
+          set((state) => ({
+            categories: state.categories.map((cat) =>
+              cat._id === id ? updatedCategory : cat
+            ),
+            isLoading: false,
+          }));
+        } catch (error) {
+          set({
+            error: error.response?.data?.message || "Failed to update order",
+            isLoading: false
           });
           throw error;
         }
@@ -94,9 +109,9 @@ export const useCategoryStore = create()(
             isLoading: false,
           }));
         } catch (error) {
-          set({ 
-            error: error.response?.data?.message || "Failed to delete category", 
-            isLoading: false 
+          set({
+            error: error.response?.data?.message || "Failed to delete category",
+            isLoading: false
           });
           throw error;
         }
