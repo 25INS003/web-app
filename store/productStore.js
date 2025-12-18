@@ -1,14 +1,13 @@
 "use client";
 
 import { create } from "zustand";
-import apiClient from "@/api/apiClient"; // Ensure this points to your axios instance
+import apiClient from "@/api/apiClient";
 
 export const useProductStore = create((set, get) => ({
   // ================= STATE =================
   products: [],
   currentProduct: null,
 
-  // Matches your API response structure
   pagination: {
     currentPage: 1,
     totalPages: 1,
@@ -17,13 +16,16 @@ export const useProductStore = create((set, get) => ({
     hasPrev: false,
   },
 
-  // Query parameters to send to backend
+  // Query parameters (MATCH BACKEND)
   queryParams: {
     page: 1,
     limit: 10,
     search: "",
     category: "",
-    isAvailable: undefined, // undefined means "all"
+    inStock: undefined,          // "true" | "false" | undefined
+    is_available: "true",        // "true" | "false" | "none"
+    sortBy: "created_at",
+    sortOrder: "desc",
   },
 
   isLoading: false,
@@ -32,108 +34,105 @@ export const useProductStore = create((set, get) => ({
   // ================= ACTIONS =================
 
   /**
-   * Update filters/search and reset to page 1
-   * @param {Object} newParams 
+   * Update filters & reset page
    */
-  setFilters: (newParams,shopId = null) => {
+  setFilters: (newParams, shopId = null) => {
     set((state) => ({
       queryParams: {
         ...state.queryParams,
         ...newParams,
-        page: 1 // Always reset to page 1 when filtering/searching
-      }
+        page: 1,
+      },
     }));
+
     if (shopId) {
       get().fetchShopProducts(shopId);
     }
   },
 
   /**
-   * Change Page Number
-   * @param {Number} page 
+   * Change Page (auto-fetch)
    */
-  setPage: (page) => {
+  setPage: (page, shopId) => {
     set((state) => ({
-      queryParams: { ...state.queryParams, page }
+      queryParams: { ...state.queryParams, page },
     }));
+
+    if (shopId) {
+      get().fetchShopProducts(shopId);
+    }
   },
 
-  /**
-   * Clear selected product
-   */
   resetCurrentProduct: () => set({ currentProduct: null }),
 
-  // ================= API OPERATIONS =================
+  // ================= API =================
 
   /**
-   * Fetch Products (Listing)
-   * GET /:shopId/products
+   * Fetch Shop Products
    */
   fetchShopProducts: async (shopId) => {
     set({ isLoading: true, error: null });
     const { queryParams } = get();
 
     try {
-      // Build URL params dynamically
       const params = new URLSearchParams();
-      params.append("page", queryParams.page);
-      params.append("limit", queryParams.limit);
-      if (queryParams.search) params.append("search", queryParams.search);
-      if (queryParams.category) params.append("category", queryParams.category);
-      if (queryParams.isAvailable !== undefined) params.append("isAvailable", queryParams.isAvailable);
 
-      const response = await apiClient.get(`shops/${shopId}/products`); //?${params.toString()}
+      Object.entries(queryParams).forEach(([key, value]) => {
+        if (value !== undefined && value !== "" && value !== "none") {
+          params.append(key, value);
+        }
+      });
 
-      // Destructure based on your specific JSON response
+      const response = await apiClient.get(
+        `/shops/${shopId}/products?${params.toString()}`
+      );
+
       const { products, pagination } = response.data.data;
 
       set({
-        products: products,
-        pagination: pagination,
+        products,
+        pagination,
         isLoading: false,
       });
     } catch (err) {
-      console.error("Fetch error:", err);
       set({
         error: err.response?.data?.message || "Failed to fetch products",
-        isLoading: false
+        isLoading: false,
       });
     }
   },
 
   /**
    * Create Product
-   * POST /:shopId/products
    */
   createProduct: async (shopId, productData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await apiClient.post(`shops/${shopId}/products`, productData);
+      const response = await apiClient.post(
+        `/shops/${shopId}/products`,
+        productData
+      );
 
-      const newProduct = response.data.data || response.data;
+      const newProduct = response.data.data;
 
       set((state) => ({
-        products: [newProduct, ...state.products], // Add to top of list
+        products: [newProduct, ...state.products],
         pagination: {
           ...state.pagination,
-          totalProducts: state.pagination.totalProducts + 1
+          totalProducts: state.pagination.totalProducts + 1,
         },
         isLoading: false,
       }));
-      return true;
+      return newProduct;
     } catch (err) {
       set({
         error: err.response?.data?.message || "Failed to create product",
-        isLoading: false
+        isLoading: false,
       });
       return false;
     }
   },
 
-  /**
-   * Update Product
-   * PUT /:shopId/products/:productId
-   */
   updateProduct: async (shopId, productId, productData) => {
     set({ isLoading: true, error: null });
     try {
@@ -157,38 +156,8 @@ export const useProductStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Delete Product
-   * DELETE /:shopId/products/:productId
-   */
-  deleteProduct: async (shopId, productId) => {
-    set({ isLoading: true, error: null });
-    try {
-      await apiClient.delete(`/shops/${shopId}/products/${productId}`);
 
-      set((state) => ({
-        // Filter out the deleted product
-        products: state.products.filter((p) => p._id !== productId && p.product_id !== productId),
-        pagination: {
-          ...state.pagination,
-          totalProducts: state.pagination.totalProducts - 1
-        },
-        isLoading: false,
-      }));
-      return true;
-    } catch (err) {
-      set({
-        error: err.response?.data?.message || "Failed to delete product",
-        isLoading: false
-      });
-      return false;
-    }
-  },
 
-  /**
-   * Upload Images
-   * POST /:shopId/products/:productId/images
-   */
   uploadProductImages: async (shopId, productId, formData) => {
     set({ isLoading: true, error: null });
     try {
@@ -198,50 +167,112 @@ export const useProductStore = create((set, get) => ({
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      const updatedProduct = response.data.data || response.data;
+      // The backend returns: { images: [...], product: { ... } }
+      const updatedProduct = response.data.data.product;
 
       set((state) => ({
         products: state.products.map((p) =>
           p._id === productId ? updatedProduct : p
         ),
+        // Update currentProduct if it's the one we just uploaded for
+        currentProduct: updatedProduct,
         isLoading: false,
       }));
       return true;
     } catch (err) {
       set({
         error: err.response?.data?.message || "Failed to upload images",
-        isLoading: false
+        isLoading: false,
       });
       return false;
     }
   },
 
   /**
-   * Get Single Product Details
-   * Use this for the Edit page if the product isn't already in the list
+   * Delete Product
+   */
+  deleteProduct: async (shopId, productId) => {
+    set({ isLoading: true, error: null });
+    try {
+      await apiClient.delete(
+        `/shops/${shopId}/products/${productId}`
+      );
+
+      set((state) => ({
+        products: state.products.filter((p) => p._id !== productId),
+        pagination: {
+          ...state.pagination,
+          totalProducts: state.pagination.totalProducts - 1,
+        },
+        isLoading: false,
+      }));
+      return true;
+    } catch (err) {
+      set({
+        error: err.response?.data?.message || "Failed to delete product",
+        isLoading: false,
+      });
+      return false;
+    }
+  },
+
+  /**
+   * Upload Product Images
+   */
+  uploadProductImages: async (shopId, productId, formData) => {
+    set({ isLoading: true, error: null });
+    try {
+      console.log(shopId,productId,formData)
+      const response = await apiClient.post(
+        `/shops/${shopId}/products/${productId}/images`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" }
+        }
+      );
+
+      // Destructure 'product' from response.data.data
+      // because the controller returns { images, product }
+      const { product: updatedProduct } = response.data.data;
+
+      set((state) => ({
+        products: state.products.map((p) =>
+          // Ensure you match the ID correctly (usually _id from MongoDB)
+          p._id === productId ? updatedProduct : p
+        ),
+        isLoading: false,
+      }));
+
+      return true;
+    } catch (err) {
+      set({
+        // Captures the message from your ApiError class
+        error: err.response?.data?.message || "Failed to upload images",
+        isLoading: false,
+      });
+      return false;
+    }
+  },
+
+  /**
+   * Get Single Product
    */
   getProductDetails: async (shopId, productId) => {
     set({ isLoading: true, error: null });
 
-    // 1. Check if we already have it in the list (client-side cache)
-    const existing = get().products.find(p => p._id === productId || p.product_id === productId);
-    if (existing) {
-      set({ currentProduct: existing, isLoading: false });
+    const cached = get().products.find((p) => p._id === productId);
+    if (cached) {
+      set({ currentProduct: cached, isLoading: false });
       return;
     }
-    try {
-      // If your backend supports getting by ID via query or param, adjust here:
-      // For now, assuming you might add a specific route or filter the list
-      const response = await apiClient.get(`/shops/${shopId}/products/${productId}`);
-      const product = response.data.data;
 
-      if (product) {
-        set({ currentProduct: product, isLoading: false });
-      } else {
-        set({ error: "Product not found", isLoading: false });
-      }
-    } catch (err) {
-      set({ error: "Could not load details", isLoading: false });
+    try {
+      const response = await apiClient.get(
+        `/shops/${shopId}/products/${productId}`
+      );
+      set({ currentProduct: response.data.data, isLoading: false });
+    } catch {
+      set({ error: "Could not load product", isLoading: false });
     }
-  }
+  },
 }));

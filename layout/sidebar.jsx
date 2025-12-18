@@ -2,16 +2,17 @@
 "use client";
 
 import Link from "next/link";
-import { 
-    LayoutDashboard, 
-    ShoppingBag, 
-    Package, 
-    ChevronLeft, 
-    Menu, 
-    Store, 
+import {
+    LayoutDashboard,
+    ShoppingBag,
+    Package,
+    ChevronLeft,
+    Menu,
+    Store,
     Shield,
-    Layers 
+    Layers
 } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
 import { useSidebar } from "@/store/uiStore";
 import { usePathname } from "next/navigation";
 
@@ -19,14 +20,17 @@ const Sidebar = () => {
     const { isSidebarOpen, toggleSidebar } = useSidebar();
     const pathname = usePathname();
 
+    const { user } = useAuthStore();
     const menuItems = [
         { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-        // Added Categories just below Dashboard
-        { name: "Categories", icon: Layers, href: "/categories" },
-        { name: "Orders", icon: ShoppingBag, href: "/orders" },
-        { name: "Products", icon: Package, href: "/products" },
         { name: "My Shops", icon: Store, href: "/myshop" },
-        { name: "Verify", icon: Shield, href: "/verify" },
+        { name: "Products", icon: Package, href: "/products" },
+        { name: "Orders", icon: ShoppingBag, href: "/orders" },
+        { name: "Categories", icon: Layers, href: "/categories" },
+
+        ...(user?.user_type === "admin"
+            ? [{ name: "Verify", icon: Shield, href: "/verify-owner" }]
+            : []),
     ];
 
     return (
@@ -46,23 +50,23 @@ const Sidebar = () => {
             {/* Navigation Links */}
             <nav className="mt-4 flex flex-col gap-2 px-2">
                 {menuItems.map((item) => {
-                    const isActive = pathname === item.href || 
-                                   (item.href === "/myshop" && pathname.startsWith("/myshop")) ||
-                                   (item.href === "/verify" && pathname.startsWith("/verify")) ||
-                                   (item.href === "/categories" && pathname.startsWith("/categories"));
+                    const isActive = pathname === item.href ||
+                        (item.href === "/myshop" && pathname.startsWith("/myshop")) ||
+                        (item.href === "/verify" && pathname.startsWith("/verify")) ||
+                        (item.href === "/categories" && pathname.startsWith("/categories"));
                     return (
                         <Link
                             key={item.name}
                             href={item.href}
                             className={`flex items-center rounded-md p-3 transition-colors group
-                                    ${isActive 
-                                        ? "bg-blue-600 text-white" 
-                                        : "text-slate-300 hover:bg-slate-800 hover:text-white dark:hover:bg-slate-700 dark:hover:text-white"
-                                    }
-                                    ${isSidebarOpen 
-                                        ? "p-3 gap-4 justify-start"        
-                                        : "p-3 gap-0 justify-center"       
-                                    }
+                                    ${isActive
+                                    ? "bg-blue-600 text-white"
+                                    : "text-slate-300 hover:bg-slate-800 hover:text-white dark:hover:bg-slate-700 dark:hover:text-white"
+                                }
+                                    ${isSidebarOpen
+                                    ? "p-3 gap-4 justify-start"
+                                    : "p-3 gap-0 justify-center"
+                                }
                                 `}
                         >
                             <item.icon size={22} />

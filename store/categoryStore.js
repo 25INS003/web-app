@@ -21,15 +21,15 @@ export const useCategoryStore = create()(
           const categories = response.data.data || response.data; 
           set({ categories, isLoading: false });
         } catch (error) {
-          set({ 
-            error: error.response?.data?.message || "Failed to fetch categories", 
-            isLoading: false 
+          set({
+            error: error.response?.data?.message || "Failed to fetch categories",
+            isLoading: false
           });
         }
       },
 
-      // --- Create Category (UPDATED) ---
-      createCategory: async (data) => {
+      // --- Create Category (JSON Version) ---
+      createCategory: async (categoryData) => {
         set({ isLoading: true, error: null });
         try {
           // Check if data is FormData (contains file) or plain JSON
@@ -41,30 +41,27 @@ export const useCategoryStore = create()(
 
           const response = await apiClient.post("/category/categories", data, config);
           const newCategory = response.data.data || response.data;
-          
+
           set((state) => ({
             categories: [...state.categories, newCategory],
             isLoading: false,
           }));
           return newCategory;
         } catch (error) {
-          console.error("Create Category Error:", error);
-          set({ 
-            error: error.response?.data?.message || "Failed to create category", 
-            isLoading: false 
+          set({
+            error: error.response?.data?.message || "Failed to create category",
+            isLoading: false
           });
           throw error;
         }
       },
 
-      // --- Update Category (UPDATED) ---
-      updateCategory: async (id, data) => {
+      // --- Update Category (JSON Version) ---
+      updateCategory: async (id, updatedData) => {
         set({ isLoading: true, error: null });
         try {
-          const isFormData = data instanceof FormData;
-          const config = isFormData 
-            ? { headers: { "Content-Type": "multipart/form-data" } }
-            : {};
+          const response = await apiClient.put(`/category/categories/${id}`, updatedData);
+          const updatedCategory = response.data.data || response.data;
 
           const response = await apiClient.put(`/category/categories/${id}`, data, config);
           const updatedCategory = response.data.data || response.data;
@@ -76,9 +73,9 @@ export const useCategoryStore = create()(
             isLoading: false,
           }));
         } catch (error) {
-          set({ 
-            error: error.response?.data?.message || "Failed to update category", 
-            isLoading: false 
+          set({
+            error: error.response?.data?.message || "Failed to update order",
+            isLoading: false
           });
           throw error;
         }
@@ -94,9 +91,9 @@ export const useCategoryStore = create()(
             isLoading: false,
           }));
         } catch (error) {
-          set({ 
-            error: error.response?.data?.message || "Failed to delete category", 
-            isLoading: false 
+          set({
+            error: error.response?.data?.message || "Failed to delete category",
+            isLoading: false
           });
           throw error;
         }

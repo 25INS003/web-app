@@ -52,26 +52,22 @@ const productSchema = z.object({
   discounted_price: z.coerce.number().min(0).optional(),
   stock_quantity: z.coerce.number().min(0, "Stock cannot be negative"),
   min_stock_alert: z.coerce.number().min(1).default(5),
-  unit: z.enum(["piece", "kg", "gram", "liter", "pair", "set", "loaf"]),
+  unit: z.enum(["piece", "kg", "gram", "liter", "pair", "set", "loaf", "dozen", "meter", "yard", "bottle", "pack"]),
   weight_kg: z.coerce.number().optional(),
   is_available: z.boolean().default(true),
   attributes: z.object({}).optional(),
 });
-
 const AddProductPage = () => {
   const params = useParams();
   const router = useRouter();
   const shopId = params.shopId;
 
-  // Store
   const { createProduct, uploadProductImages, isLoading } = useProductStore();
 
-  // Local State for Images
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form Hook
   const form = useForm({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -88,15 +84,12 @@ const AddProductPage = () => {
     },
   });
 
-  // --- Handlers ---
-
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length + imageFiles.length > 5) {
       toast.error("You can only upload up to 5 images.");
       return;
     }
-
     const newPreviews = files.map((file) => URL.createObjectURL(file));
     setImageFiles((prev) => [...prev, ...files]);
     setImagePreviews((prev) => [...prev, ...newPreviews]);
@@ -107,34 +100,62 @@ const AddProductPage = () => {
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // --- REFACTORED SUBMIT HANDLER ---
   const onSubmit = async (values) => {
-    console.log("Form Values:", values);
     setIsSubmitting(true);
+
     try {
-      // 1. Create Product Text Data
-      const result = await createProduct(shopId, values);
+      /* --------------------------------
+        1. Create Product (Initial Data)
+      -------------------------------- */
+      // Note: ensure createProduct returns the product object on success
+      const product = await createProduct(shopId, values);
+  
+      console.log("uploaded product detials",product);
 
-      if (result) {
-        toast.success("Product created successfully!");
-
-        // 2. Upload Images
-        // Handle result structure (Object vs Boolean)
-        const newProductId = result._id || result.product_id || (typeof result === 'object' ? result._id : null);
-
-        if (imageFiles.length > 0 && newProductId) {
-          const formData = new FormData();
-          imageFiles.forEach((file) => formData.append("images", file));
-          await uploadProductImages(shopId, newProductId, formData);
-          toast.success("Images uploaded successfully");
-        }
-        toast.success("Product created successfully");
-        router.push(`/shop/products`);
-      } else {
-        toast.error("Failed to create product");
+      if (!product || !product.product._id) {
+        // The store should have set the error state already
+        toast.error("Could not create product. Please check details.");
+        return;
       }
+
+      const productId = product.product._id;
+
+      /* --------------------------------
+        2. Upload Images (Sequential Step)
+      -------------------------------- */
+      if (imageFiles.length > 0) {
+        const formData = new FormData();
+        // 'images' must match the backend's upload.array("images", 5)
+        imageFiles.forEach((file) => {
+          formData.append("images", file);
+        });
+
+        const uploadSuccess = await uploadProductImages(
+          shopId,
+          productId,
+          formData
+        );
+
+        if (!uploadSuccess) {
+          toast.warning(
+            "Product created, but image upload failed. You can retry from the edit page."
+          );
+          // We still redirect because the product exists
+          router.push(`/products/${shopId}`);
+          return;
+        }
+      }
+
+      /* --------------------------------
+        3. Success & Navigation
+      -------------------------------- */
+      toast.success("Product and images uploaded successfully!");
+      router.push(`/products/${shopId}`);
+
     } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong");
+      console.error("Submission Process Error:", error);
+      toast.error("An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
     }
@@ -443,7 +464,7 @@ const AddProductPage = () => {
               )}
             </Button>
           </div>
-          
+
         </form>
       </Form>
     </div>
