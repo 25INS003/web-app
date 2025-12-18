@@ -8,6 +8,7 @@ const Routes = {
     REGISTER: "/auth/register",
     LOGOUT: "/auth/logout",
     REFRESH: "/auth/refresh-token",
+    PROFILE: "/auth/profile",
     ME: "/auth/me", // Matches router.get("/me")
 
     // OTP / Password Reset Flow
