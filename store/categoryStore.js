@@ -18,7 +18,7 @@ export const useCategoryStore = create()(
         set({ isLoading: true, error: null });
         try {
           const response = await apiClient.get("/category/categories");
-          const categories = response.data.data || response.data; 
+          const categories = response.data.data || response.data;
           set({ categories, isLoading: false });
         } catch (error) {
           set({
@@ -32,14 +32,11 @@ export const useCategoryStore = create()(
       createCategory: async (categoryData) => {
         set({ isLoading: true, error: null });
         try {
-          // Check if data is FormData (contains file) or plain JSON
-          const isFormData = data instanceof FormData;
-          
-          const config = isFormData 
-            ? { headers: { "Content-Type": "multipart/form-data" } }
-            : {};
-
-          const response = await apiClient.post("/category/categories", data, config);
+          const response = await apiClient.post("/category/categories", categoryData, {
+            headers: {
+              "Content-Type": "application/json"
+            },
+          });
           const newCategory = response.data.data || response.data;
 
           set((state) => ({
@@ -63,7 +60,28 @@ export const useCategoryStore = create()(
           const response = await apiClient.put(`/category/categories/${id}`, updatedData);
           const updatedCategory = response.data.data || response.data;
 
-          const response = await apiClient.put(`/category/categories/${id}`, data, config);
+          set((state) => ({
+            categories: state.categories.map((cat) =>
+              cat._id === id ? updatedCategory : cat
+            ),
+            isLoading: false,
+          }));
+        } catch (error) {
+          set({
+            error: error.response?.data?.message || "Failed to update category",
+            isLoading: false
+          });
+          throw error;
+        }
+      },
+
+      // --- Update Display Order ---
+      updateCategoryOrder: async (id, display_order) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await apiClient.put(`/category/categories/${id}/order`, {
+            display_order
+          });
           const updatedCategory = response.data.data || response.data;
 
           set((state) => ({
