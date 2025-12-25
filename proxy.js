@@ -5,6 +5,7 @@ const publicPaths = [
   "/login", 
   "/register", 
   "/forgot-password", 
+  "/verify-otp",
   "/reset-password",
   "/unauthorized", 
 ];

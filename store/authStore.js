@@ -10,12 +10,17 @@ import Cookies from "js-cookie";
 export const useAuthStore = create(
     persist(
         (set, get) => ({
+
+            email: "",
             user: null,
             accessToken: null,
             refreshToken: null,
+            resetToken: null,
             isAuthenticated: false,
             loading: false,
             error: null,
+
+            setEmail: (email) => set({ email }),
 
             // ------------------------
             // REGISTER
@@ -37,7 +42,6 @@ export const useAuthStore = create(
                     return { success: false, error: errorMessage };
                 }
             },
-
             // ------------------------
             // LOGIN
             // ------------------------
@@ -234,6 +238,68 @@ export const useAuthStore = create(
                 set((state) => ({
                     user: { ...state.user, ...userData },
                 }));
+            },
+
+            // Step 1: Request OTP
+            sendOtp: async (email) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const res = await apiClient.post(Routes.AUTH.PASSWORD.FORGOT, { email });
+                    set({ isLoading: false, message: res.data.message });
+                    return { success: true };
+                } catch (err) {
+                    set({ error: err.response?.data?.message || "Error sending OTP", isLoading: false });
+                    return { success: false };
+                }
+            },
+
+            // Step 2: Resend OTP
+            resendOtp: async (email) => {
+                set({ isLoading: true, error: null, message: null });
+                try {
+                    const res = await apiClient.post(Routes.AUTH.PASSWORD.RESEND_OTP, { email });
+                    set({ isLoading: false, message: res.data.message });
+                    return { success: true };
+                } catch (err) {
+                    set({ error: err.response?.data?.message || "Error resending OTP", isLoading: false });
+                    return { success: false };
+                }
+            },
+
+            // Step 3: Verify OTP (Captures resetToken)
+            verifyOtp: async (email, otp) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const res = await apiClient.post(Routes.AUTH.PASSWORD.VERIFY_OTP, { email, otp });
+                    // Store the token returned by your Step 2 backend logic
+                    set({
+                        resetToken: res.data.data.resetToken,
+                        isLoading: false,
+                        error: null
+                    });
+                    return { success: true };
+                } catch (err) {
+                    set({ error: err.response?.data?.message || "Invalid OTP", isLoading: false });
+                    return { success: false };
+                }
+            },
+
+            // Step 4: Final Reset
+            resetPassword: async (newPassword) => {
+                const { resetToken } = useAuthStore.getState();
+                console.log(resetToken)
+                set({ isLoading: true, error: null });
+                try {
+                    const res = await apiClient.post(Routes.AUTH.PASSWORD.RESET, {
+                        resetToken,
+                        newPassword
+                    });
+                    set({ isLoading: false, resetToken: null, email: "" }); // Clear state on success
+                    return { success: true };
+                } catch (err) {
+                    set({ error: err.response?.data?.message || "Reset failed", isLoading: false });
+                    return { success: false };
+                }
             },
 
             // ------------------------
