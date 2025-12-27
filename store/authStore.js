@@ -81,23 +81,22 @@ export const useAuthStore = create(
             // ------------------------
             logout: async () => {
                 try {
-                    // Call backend to clear httpOnly cookies
+                    // Remove client-side cookies
+                    Cookies.remove("accessToken");
+                    Cookies.remove("userRole");
+                    Cookies.remove("next-auth.session-token"); // If applicable
+
+                    set({
+                        user: null,
+                        accessToken: null,
+                        refreshToken: null,
+                        isAuthenticated: false,
+                    });
                     await apiClient.post(Routes.AUTH.LOGOUT, {}, { withCredentials: true });
                 } catch (error) {
                     console.error("Logout error:", error);
                 }
 
-                // Remove client-side cookies
-                Cookies.remove("accessToken");
-                Cookies.remove("userRole");
-                Cookies.remove("next-auth.session-token"); // If applicable
-
-                set({
-                    user: null,
-                    accessToken: null,
-                    refreshToken: null,
-                    isAuthenticated: false,
-                });
             },
 
             // ------------------------
