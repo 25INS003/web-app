@@ -108,6 +108,7 @@ export const useProductStore = create((set, get) => ({
   createProduct: async (shopId, productData) => {
     set({ isLoading: true, error: null });
     try {
+      productData.is_verified = true
       const response = await apiClient.post(
         `/shops/${shopId}/products`,
         productData
@@ -136,6 +137,8 @@ export const useProductStore = create((set, get) => ({
   updateProduct: async (shopId, productId, productData) => {
     set({ isLoading: true, error: null });
     try {
+      console.log(productData)
+      productData.is_verified = true
       const response = await apiClient.put(`/shops/${shopId}/products/${productId}`, productData);
       const updatedProduct = response.data.data || response.data;
 
