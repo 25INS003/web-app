@@ -47,7 +47,11 @@ const AddShopPage = () => {
         defaultValues: {
             name: "",
             business_name: "",
+<<<<<<< HEAD
             categories: [], 
+=======
+            categories: [], // Initialized as array
+>>>>>>> e7394cf1ebcd2d4fb9c1c3eb1b6f542276dfe8da
             delivery_radius_km: 5,
             preparation_time: 30,
             delivery_fee: 0,
@@ -60,6 +64,10 @@ const AddShopPage = () => {
     // Sync the UI category selection with the form state
     useEffect(() => {
         if (category) {
+<<<<<<< HEAD
+=======
+            // Schema expects an array of category IDs/Names
+>>>>>>> e7394cf1ebcd2d4fb9c1c3eb1b6f542276dfe8da
             setValue("categories", [category], { shouldValidate: true });
         }
     }, [category, setValue]);
@@ -77,6 +85,7 @@ const AddShopPage = () => {
             preparation_time: Number(data.preparation_time),
         };
 
+<<<<<<< HEAD
         // Call the store action
         await createNewShop(formattedData);
 
@@ -85,6 +94,16 @@ const AddShopPage = () => {
         reset();
         setCategory(null);
         router.push("/myshop");
+=======
+        const result = await createNewShop(formattedData);
+
+        // If the store returns the new shop object, it was successful
+        if (result) {
+            reset();
+            setCategory(null);
+            router.push("/myshop");
+        }
+>>>>>>> e7394cf1ebcd2d4fb9c1c3eb1b6f542276dfe8da
     };
 
     return (
@@ -130,6 +149,10 @@ const AddShopPage = () => {
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Category *</label>
                             <SelectCategory value={category} onCateSelect={setCategory} />
+<<<<<<< HEAD
+=======
+                            {/* Registering categories for validation */}
+>>>>>>> e7394cf1ebcd2d4fb9c1c3eb1b6f542276dfe8da
                             <input type="hidden" {...register("categories", { required: "Please select a category" })} />
                             {errors.categories && <p className="text-xs text-red-500">{errors.categories.message}</p>}
                         </div>
@@ -236,6 +259,10 @@ const AddShopPage = () => {
                     </Card>
                 </div>
 
+<<<<<<< HEAD
+=======
+                {/* Global Error Display from Store */}
+>>>>>>> e7394cf1ebcd2d4fb9c1c3eb1b6f542276dfe8da
                 {storeError && (
                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                         {storeError}

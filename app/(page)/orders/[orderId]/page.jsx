@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { useShopOrderStore } from "@/store/useShopOrderStore";
+import { useShopOrderStore } from "@/store/shopOrderStore";
 import {useShopStore} from '@/store/shopStore';
 
 

@@ -25,7 +25,7 @@ export const useAuthStore = create(
                 try {
                     // Assuming Routes.AUTH.REGISTER maps to your register endpoint
                     const res = await apiClient.post(Routes.AUTH.REGISTER, userData);
-                    
+
                     // Backend returns { user, user_type } but no tokens on register
                     // User needs to login after registration
                     set({ loading: false });
@@ -46,7 +46,7 @@ export const useAuthStore = create(
 
                 try {
                     const res = await apiClient.post(Routes.AUTH.LOGIN, credentials);
-                    
+
                     // Matches ApiResponse structure: { user, accessToken, refreshToken }
                     const { user, accessToken, refreshToken } = res.data.data;
 
@@ -54,7 +54,7 @@ export const useAuthStore = create(
                     // We set these client-side cookies primarily for Middleware checks 
                     // or easy access to user roles in the UI.
                     Cookies.set("userRole", user.user_type, { expires: 1 });
-                    Cookies.set("accessToken", accessToken, { expires: 1 }); 
+                    Cookies.set("accessToken", accessToken, { expires: 1 });
 
                     set({
                         user,
@@ -129,7 +129,7 @@ export const useAuthStore = create(
             initializeAuth: async () => {
                 // Check if we have tokens/cookies before making the call
                 const token = get().accessToken || Cookies.get("accessToken");
-                
+
                 if (!token) {
                     return { success: false };
                 }
@@ -164,7 +164,7 @@ export const useAuthStore = create(
             // ------------------------
             getProfile: async () => {
                 set({ loading: true, error: null });
-                
+
                 // Fix: Access user from state using get()
                 const currentUser = get().user;
 
