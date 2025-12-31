@@ -142,12 +142,7 @@ const AddProductPage = () => {
             "Product created, but image upload failed. You can retry from the edit page."
           );
           // We still redirect because the product exists
-<<<<<<< HEAD
-          // FIX: Redirect to /products instead of /products/[shopId] which triggers 404
-          router.push(`/products`);
-=======
           router.push(`/products/${shopId}`);
->>>>>>> e7394cf1ebcd2d4fb9c1c3eb1b6f542276dfe8da
           return;
         }
       }
@@ -156,12 +151,7 @@ const AddProductPage = () => {
         3. Success & Navigation
       -------------------------------- */
       toast.success("Product and images uploaded successfully!");
-<<<<<<< HEAD
-      // FIX: Redirect to /products instead of /products/[shopId]
-      router.push(`/products`);
-=======
       router.push(`/products/${shopId}`);
->>>>>>> e7394cf1ebcd2d4fb9c1c3eb1b6f542276dfe8da
 
     } catch (error) {
       console.error("Submission Process Error:", error);
