@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useParams, useRouter } from "next/navigation";
-import { useProductStore } from "@/store/productStore"; // Check your path
+import { useProductStore } from "@/store/productStore";
 import SelectCategory from "@/components/Dropdowns/selectCategory";
 
 // --- Icons ---
@@ -14,7 +14,8 @@ import {
   Upload,
   X,
   Loader2,
-  Save
+  Save,
+  Image as ImageIcon
 } from "lucide-react";
 
 // --- Shadcn UI ---
@@ -24,7 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
-  FormDescription,
+  FormDescription, // Added if needed
   FormField,
   FormItem,
   FormLabel,
@@ -42,21 +43,34 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
-// --- Validation Schema ---
+// --- Validation Schema (Matched to API) ---
 const productSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().optional(),
   brand: z.string().optional(),
   category_id: z.string().min(1, "Category is required"),
+  
+  // Pricing
   price: z.coerce.number().min(0, "Price cannot be negative"),
-  discounted_price: z.coerce.number().min(0).optional(),
+  compare_at_price: z.coerce.number().min(0).optional(),
+  cost_price: z.coerce.number().min(0).optional(),
+  
+  // Inventory
   stock_quantity: z.coerce.number().min(0, "Stock cannot be negative"),
-  min_stock_alert: z.coerce.number().min(1).default(5),
+  sku: z.string().optional(),
+  barcode: z.string().optional(),
   unit: z.enum(["piece", "kg", "gram", "liter", "pair", "set", "loaf", "dozen", "meter", "yard", "bottle", "pack"]),
-  weight_kg: z.coerce.number().optional(),
-  is_available: z.boolean().default(true),
-  attributes: z.object({}).optional(),
+  
+  // Status
+  is_active: z.boolean().default(true),
+  
+  // Meta
+  attributes: z.array(z.object({
+    name: z.string(),
+    value: z.string()
+  })).optional(),
 });
+
 const AddProductPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -64,8 +78,9 @@ const AddProductPage = () => {
 
   const { createProduct, uploadProductImages, isLoading } = useProductStore();
 
-  const [imageFiles, setImageFiles] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
+  // Changed to single file state
+  const [mainImageFile, setMainImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm({
@@ -74,62 +89,72 @@ const AddProductPage = () => {
       name: "",
       description: "",
       brand: "",
-      price: 0,
-      discounted_price: 0,
-      stock_quantity: 0,
-      min_stock_alert: 5,
-      unit: "piece",
-      is_available: true,
       category_id: "",
+      price: 0,
+      compare_at_price: 0,
+      cost_price: 0,
+      stock_quantity: 0,
+      sku: "",
+      barcode: "",
+      unit: "piece",
+      is_active: true,
+      attributes: [],
     },
   });
 
+  // --- Single Image Handler ---
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length + imageFiles.length > 5) {
-      toast.error("You can only upload up to 5 images.");
-      return;
+    const file = e.target.files?.[0];
+    if (file) {
+      setMainImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
     }
-    const newPreviews = files.map((file) => URL.createObjectURL(file));
-    setImageFiles((prev) => [...prev, ...files]);
-    setImagePreviews((prev) => [...prev, ...newPreviews]);
   };
 
-  const removeImage = (index) => {
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  const removeImage = () => {
+    setMainImageFile(null);
+    setImagePreview(null);
   };
 
-  // --- REFACTORED SUBMIT HANDLER ---
   const onSubmit = async (values) => {
     setIsSubmitting(true);
 
     try {
       /* --------------------------------
-        1. Create Product (Initial Data)
+        1. Prepare Payload matching API
       -------------------------------- */
-      // Note: ensure createProduct returns the product object on success
-      const product = await createProduct(shopId, values);
-  
-      console.log("uploaded product detials",product);
+      // Zod handles coercion, but we ensure structure here
+      const productData = {
+        ...values,
+        shop_id: shopId, // explicit shop assignment if API needs it in body
+      };
 
-      if (!product || !product.product._id) {
-        // The store should have set the error state already
-        toast.error("Could not create product. Please check details.");
+      /* --------------------------------
+        2. Create Product
+      -------------------------------- */
+      const response = await createProduct(shopId, productData);
+      console.log("Created Product Response:", response);
+
+      // Adjust check based on your actual API response structure
+      // Typically: response.data.product._id OR response.product._id
+      const createdProduct = response?.data?.product || response?.product || response?.data;
+      
+      if (!createdProduct || !createdProduct._id && !createdProduct.product_id) {
+        toast.error("Product created but ID missing. Check console.");
         return;
       }
 
-      const productId = product.product._id;
+      const productId = createdProduct.product_id || createdProduct._id;
+      console.log("New Product ID:", productId);
 
       /* --------------------------------
-        2. Upload Images (Sequential Step)
+        3. Upload Main Image (If selected)
       -------------------------------- */
-      if (imageFiles.length > 0) {
+      if (mainImageFile) {
         const formData = new FormData();
-        // 'images' must match the backend's upload.array("images", 5)
-        imageFiles.forEach((file) => {
-          formData.append("images", file);
-        });
+        // Assuming backend handles 'images' array even for single file, 
+        // or specifically looks for 'images' key
+        formData.append("file", mainImageFile); 
 
         const uploadSuccess = await uploadProductImages(
           shopId,
@@ -138,23 +163,17 @@ const AddProductPage = () => {
         );
 
         if (!uploadSuccess) {
-          toast.warning(
-            "Product created, but image upload failed. You can retry from the edit page."
-          );
-          // We still redirect because the product exists
-          router.push(`/products/${shopId}`);
+          toast.warning("Product created, but main image failed to upload.");
+          router.push(`/products`);
           return;
         }
       }
 
-      /* --------------------------------
-        3. Success & Navigation
-      -------------------------------- */
-      toast.success("Product and images uploaded successfully!");
-      router.push(`/products/${shopId}`);
+      toast.success("Product created successfully!");
+      router.push(`/products`);
 
     } catch (error) {
-      console.error("Submission Process Error:", error);
+      console.error("Submission Error:", error);
       toast.error("An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
@@ -163,23 +182,25 @@ const AddProductPage = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-5xl dark:text-slate-100">
+      {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="dark:hover:bg-slate-800">
           <ArrowLeft className="h-5 w-5 dark:text-slate-200" />
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight dark:text-slate-100">Add New Product</h1>
-          <p className="text-muted-foreground dark:text-slate-400">Fill in the details to create a new product listing.</p>
+          <p className="text-muted-foreground dark:text-slate-400">Create a new item in your inventory.</p>
         </div>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            {/* Left Column */}
+            {/* Left Column: General Info & Image */}
             <div className="md:col-span-2 space-y-6">
+              
+              {/* Basic Details */}
               <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader>
                   <CardTitle className="dark:text-slate-100">Product Details</CardTitle>
@@ -190,13 +211,9 @@ const AddProductPage = () => {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="dark:text-slate-300">Product Name</FormLabel>
+                        <FormLabel className="dark:text-slate-300">Product Name *</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="e.g. Sony Wireless Headphones"
-                            {...field}
-                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
-                          />
+                          <Input placeholder="e.g. Wireless Mouse" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -211,30 +228,22 @@ const AddProductPage = () => {
                         <FormItem>
                           <FormLabel className="dark:text-slate-300">Brand</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="e.g. Sony"
-                              {...field}
-                              className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
-                            />
+                            <Input placeholder="e.g. Logitech" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
-                    {/* --- FIXED SECTION --- */}
                     <FormField
                       control={form.control}
                       name="category_id"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="dark:text-slate-300">Category</FormLabel>
+                          <FormLabel className="dark:text-slate-300">Category *</FormLabel>
                           <FormControl>
                             <SelectCategory
                               value={field.value}
-                              onCateSelect={(id) => {
-                                field.onChange(id);
-                              }}
+                              onCateSelect={(id) => field.onChange(id)}
                               isInvalid={!!form.formState.errors.category_id}
                             />
                           </FormControl>
@@ -242,8 +251,6 @@ const AddProductPage = () => {
                         </FormItem>
                       )}
                     />
-                    {/* --------------------- */}
-
                   </div>
 
                   <FormField
@@ -253,10 +260,10 @@ const AddProductPage = () => {
                       <FormItem>
                         <FormLabel className="dark:text-slate-300">Description</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Detailed product description..."
-                            className="resize-none min-h-[120px] dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400"
-                            {...field}
+                          <Textarea 
+                            placeholder="Product features and details..." 
+                            className="resize-none min-h-[120px] dark:bg-slate-900 dark:border-slate-700" 
+                            {...field} 
                           />
                         </FormControl>
                         <FormMessage />
@@ -266,48 +273,47 @@ const AddProductPage = () => {
                 </CardContent>
               </Card>
 
-              {/* Media Card */}
+              {/* Main Image Upload - RESTRICTED TO SINGLE IMAGE */}
               <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader>
-                  <CardTitle className="dark:text-slate-100">Product Images</CardTitle>
+                  <CardTitle className="dark:text-slate-100">Main Image</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    {imagePreviews.map((src, index) => (
-                      <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border dark:border-slate-700">
-                        <img src={src} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="flex flex-col items-center justify-center w-full">
+                    {imagePreview ? (
+                      <div className="relative w-full max-w-sm aspect-square rounded-lg overflow-hidden border dark:border-slate-700">
+                        <img src={imagePreview} alt="Main Preview" className="w-full h-full object-cover" />
                         <button
                           type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+                          onClick={removeImage}
+                          className="absolute top-2 right-2 bg-red-600/90 text-white p-2 rounded-full hover:bg-red-700 transition-colors"
                         >
                           <X className="h-4 w-4" />
                         </button>
                       </div>
-                    ))}
-
-                    {imagePreviews.length < 5 && (
-                      <label className="border-2 border-dashed border-gray-300 rounded-lg aspect-square flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-colors dark:border-slate-600 dark:hover:border-blue-400 dark:bg-slate-900">
-                        <Upload className="h-8 w-8 text-gray-400 mb-2 dark:text-slate-500" />
-                        <span className="text-xs text-gray-500 dark:text-slate-400">Upload Image</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          onChange={handleImageChange}
-                        />
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 border-slate-300 dark:border-slate-600">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <ImageIcon className="w-10 h-10 mb-3 text-slate-400" />
+                          <p className="mb-2 text-sm text-slate-500 dark:text-slate-400">
+                            <span className="font-semibold">Click to upload</span> main image
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            SVG, PNG, JPG or GIF
+                          </p>
+                        </div>
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                       </label>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground dark:text-slate-500">Upload up to 5 images.</p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Right Column */}
+            {/* Right Column: Pricing & Inventory */}
             <div className="space-y-6">
 
+              {/* Pricing */}
               <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader>
                   <CardTitle className="dark:text-slate-100">Pricing</CardTitle>
@@ -318,38 +324,47 @@ const AddProductPage = () => {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="dark:text-slate-300">Base Price (₹)</FormLabel>
+                        <FormLabel className="dark:text-slate-300">Selling Price (₹) *</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
-                          />
+                          <Input type="number" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="discounted_price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="dark:text-slate-300">Discounted Price (Optional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                        control={form.control}
+                        name="compare_at_price"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="dark:text-slate-300 text-xs">Compare At (MRP)</FormLabel>
+                            <FormControl>
+                            <Input type="number" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="cost_price"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="dark:text-slate-300 text-xs">Cost Price</FormLabel>
+                            <FormControl>
+                            <Input type="number" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                  </div>
                 </CardContent>
               </Card>
 
+              {/* Inventory */}
               <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader>
                   <CardTitle className="dark:text-slate-100">Inventory</CardTitle>
@@ -361,13 +376,9 @@ const AddProductPage = () => {
                       name="stock_quantity"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="dark:text-slate-300">Stock</FormLabel>
+                          <FormLabel className="dark:text-slate-300">Quantity *</FormLabel>
                           <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
-                            />
+                            <Input type="number" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -381,17 +392,14 @@ const AddProductPage = () => {
                           <FormLabel className="dark:text-slate-300">Unit</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
+                              <SelectTrigger className="dark:bg-slate-900 dark:border-slate-700">
                                 <SelectValue placeholder="Unit" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
-                              <SelectItem value="piece">Piece</SelectItem>
-                              <SelectItem value="kg">Kg</SelectItem>
-                              <SelectItem value="gram">Gram</SelectItem>
-                              <SelectItem value="liter">Liter</SelectItem>
-                              <SelectItem value="set">Set</SelectItem>
-                              <SelectItem value="pair">Pair</SelectItem>
+                            <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                              {["piece", "kg", "gram", "liter", "pair", "set", "dozen", "pack"].map((u) => (
+                                <SelectItem key={u} value={u} className="capitalize">{u}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -402,16 +410,12 @@ const AddProductPage = () => {
 
                   <FormField
                     control={form.control}
-                    name="min_stock_alert"
+                    name="sku"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="dark:text-slate-300">Low Stock Alert</FormLabel>
+                        <FormLabel className="dark:text-slate-300">SKU</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            className="dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
-                          />
+                          <Input placeholder="Stock Keeping Unit" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -420,17 +424,33 @@ const AddProductPage = () => {
 
                   <FormField
                     control={form.control}
-                    name="is_available"
+                    name="barcode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="dark:text-slate-300">Barcode / EAN</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Scan barcode..." {...field} className="dark:bg-slate-900 dark:border-slate-700" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Separator className="my-2 dark:bg-slate-700" />
+
+                  <FormField
+                    control={form.control}
+                    name="is_active"
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 dark:border-slate-700">
                         <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel className="dark:text-slate-300">Available for Sale</FormLabel>
+                          <FormLabel className="dark:text-slate-300">Active Product</FormLabel>
+                          <FormDescription className="text-xs">
+                            Product will be visible in shop.
+                          </FormDescription>
                         </div>
                       </FormItem>
                     )}
@@ -443,6 +463,7 @@ const AddProductPage = () => {
 
           <Separator className="dark:bg-slate-700" />
 
+          {/* Actions */}
           <div className="flex justify-end gap-4">
             <Button
               variant="outline"
@@ -452,14 +473,14 @@ const AddProductPage = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || isLoading} className="w-[150px]">
+            <Button type="submit" disabled={isSubmitting || isLoading} className="w-[180px] bg-indigo-600 hover:bg-indigo-500">
               {(isSubmitting || isLoading) ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...
                 </>
               ) : (
                 <>
-                  <Save className="mr-2 h-4 w-4" /> Save Product
+                  <Save className="mr-2 h-4 w-4" /> Create Product
                 </>
               )}
             </Button>

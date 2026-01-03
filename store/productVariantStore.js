@@ -1,221 +1,231 @@
 "use client";
 
 import { create } from "zustand";
-import apiClient from "@/api/apiClient"; // Assuming axios instance
+import apiClient from "@/api/apiClient";
 
-const BASE_URL = "/product-variants";
-
-export const useProductVariantStore = create((set, get) => ({
-    // State
-    variants: [], // General list
-    currentVariant: null, // Single variant details
-    groupedProductVariants: null, // Specific structure for "By Product"
-    shopVariants: [], // Specific list for "By Shop"
-    pagination: {
-        current_page: 1,
-        total_pages: 0,
-        total_items: 0,
-        has_next_page: false,
-        has_previous_page: false,
-    },
-    summary: null, 
+export const useVariantStore = create((set, get) => ({
+    // ================= STATE =================
+    currentVariant: null,
     isLoading: false,
     error: null,
 
-    // Actions
+    // ================= ACTIONS =================
 
-    // 1. Get all variants (with filtering)
-    fetchAllVariants: async (params = {}) => {
+    resetCurrentVariant: () => set({ currentVariant: null, error: null }),
+
+    // ================= API =================
+
+    /**
+     * Get Single Variant Detail
+     * Route: GET /variants/:variantId
+     */
+    getVariantDetail: async (variantId) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await apiClient.get(`${BASE_URL}/`, { params });
-            const { variants, pagination, summary } = response.data.data;
-
-            set({
-                variants: variants,
-                pagination: pagination,
-                summary: summary,
-                isLoading: false,
-            });
-        } catch (error) {
-            set({
-                error: error.response?.data?.message || "Failed to fetch variants",
-                isLoading: false,
-            });
-        }
-    },
-
-    // 2. Get Single Variant
-    fetchVariantById: async (variantId) => {
-        set({ isLoading: true, error: null });
-        try {
-            const response = await apiClient.get(`${BASE_URL}/${variantId}`);
+            const response = await apiClient.get(`/variants/${variantId}`);
             set({ currentVariant: response.data.data, isLoading: false });
-            return response.data.data;
-        } catch (error) {
+        } catch (err) {
             set({
-                error: error.response?.data?.message || "Failed to fetch variant",
-                isLoading: false,
-            });
-            throw error;
-        }
-    },
-
-    // 3. Get Variant by SKU
-    fetchVariantBySku: async (sku) => {
-        set({ isLoading: true, error: null });
-        try {
-            const response = await apiClient.get(`${BASE_URL}/sku/${sku}`);
-            set({ currentVariant: response.data.data, isLoading: false });
-        } catch (error) {
-            set({
-                error: error.response?.data?.message || "Failed to fetch variant by SKU",
+                error: err.response?.data?.message || "Failed to load variant details",
                 isLoading: false,
             });
         }
     },
 
-    // 4. Get Variants by Product (Grouped Response)
-    fetchVariantsByProduct: async (productId, params = {}) => {
+    /**
+     * Create Variant
+     * Route: POST /variants/products/:productId
+     */
+    addVariant: async (productId, variantData) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await apiClient.get(`${BASE_URL}/products/${productId}/variants`, { params });
-            set({ groupedProductVariants: response.data.data, isLoading: false });
-        } catch (error) {
-            set({
-                error: error.response?.data?.message || "Failed to fetch product variants",
-                isLoading: false,
-            });
-        }
-    },
+            const response = await apiClient.post(
+                `/variants/products/${productId}`,
+                variantData
+            );
 
-    // 5. Get Variants by Shop
-    fetchVariantsByShop: async (shopId, params = {}) => {
-        set({ isLoading: true, error: null });
-        try {
-            const response = await apiClient.get(`${BASE_URL}/products/${shopId}/variants`, { params }); // Note: Ensure backend route differentiates this from product ID
-            const { variants, pagination, shop } = response.data.data;
-
-            set({
-                shopVariants: variants,
-                pagination: pagination,
-                // You might want to store the shop info separately if needed
-                isLoading: false
-            });
-        } catch (error) {
-            set({
-                error: error.response?.data?.message || "Failed to fetch shop variants",
-                isLoading: false,
-            });
-        }
-    },
-
-    // 6. Create Variant
-    createVariant: async (variantData) => {
-        set({ isLoading: true, error: null });
-        try {
-            // Assuming POST method for creation (Standard REST)
-            const response = await apiClient.post(`${BASE_URL}/`, variantData);
+            // Successfully created variant
             const newVariant = response.data.data;
 
-            // Optimistic update for the list
-            set((state) => ({
-                variants: [newVariant, ...state.variants],
-                isLoading: false,
-            }));
+            set({ currentVariant: newVariant, isLoading: false });
             return newVariant;
-        } catch (error) {
+        } catch (err) {
             set({
-                error: error.response?.data?.message || "Failed to create variant",
+                error: err.response?.data?.message || "Failed to create variant",
                 isLoading: false,
             });
-            throw error;
+            return false;
         }
     },
 
-    // 7. Update Variant
-    updateVariant: async (variantId, updateData) => {
+    /**
+     * Update Variant (General Info)
+     * Route: PUT /variants/:variantId
+     */
+    updateVariant: async (variantId, variantData) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await apiClient.put(`${BASE_URL}/${variantId}`, updateData);
-            const updatedVariant = response.data.data;
+            const response = await apiClient.put(
+                `/variants/${variantId}`,
+                variantData
+            );
 
-            set((state) => ({
-                // Update current variant if it's the one being viewed
-                currentVariant: state.currentVariant?._id === variantId ? updatedVariant : state.currentVariant,
-                // Update item in the list
-                variants: state.variants.map((v) => (v._id === variantId ? updatedVariant : v)),
-                isLoading: false,
-            }));
-            return updatedVariant;
-        } catch (error) {
+            const updatedVariant = response.data.data;
+            set({ currentVariant: updatedVariant, isLoading: false });
+            return true;
+        } catch (err) {
             set({
-                error: error.response?.data?.message || "Failed to update variant",
+                error: err.response?.data?.message || "Failed to update variant",
                 isLoading: false,
             });
-            throw error;
+            return false;
         }
     },
 
-    // 8. Update Stock
-    updateVariantStock: async (variantId, { quantity, operation, reason }) => {
+    /**
+     * Soft Delete / Toggle Status
+     * Route: PATCH /variants/:variantId/status
+     */
+    softDeleteVariant: async (variantId) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await apiClient.put(`${BASE_URL}/${variantId}/stock`, {
-                quantity,
-                operation,
-                reason,
-            });
-            const updatedVariant = response.data.data;
+            const response = await apiClient.patch(
+                `/variants/${variantId}/status`
+            );
 
-            set((state) => ({
-                currentVariant: state.currentVariant?._id === variantId ? updatedVariant : state.currentVariant,
-                variants: state.variants.map((v) => (v._id === variantId ? updatedVariant : v)),
-                // Also update grouped/shop lists if necessary
-                groupedProductVariants: state.groupedProductVariants ? {
-                    ...state.groupedProductVariants,
-                    variants: state.groupedProductVariants.variants.map(v => v._id === variantId ? updatedVariant : v)
-                } : null,
-                isLoading: false,
-            }));
-            return updatedVariant;
-        } catch (error) {
+            // Update local state if we are currently viewing this variant
+            const updatedVariant = response.data.data;
+            const current = get().currentVariant;
+
+            if (current && current._id === variantId) {
+                set({ currentVariant: updatedVariant });
+            }
+
+            set({ isLoading: false });
+            return true;
+        } catch (err) {
             set({
-                error: error.response?.data?.message || "Failed to update stock",
+                error: err.response?.data?.message || "Failed to update status",
                 isLoading: false,
             });
-            throw error;
+            return false;
         }
     },
 
-    // 9. Delete Variant
+    /**
+     * Hard Delete Variant
+     * Route: DELETE /variants/:variantId
+     */
     deleteVariant: async (variantId) => {
         set({ isLoading: true, error: null });
         try {
-            await apiClient.delete(`${BASE_URL}/${variantId}`);
+            await apiClient.delete(`/variants/${variantId}`);
 
-            set((state) => ({
-                variants: state.variants.filter((v) => v._id !== variantId),
-                currentVariant: state.currentVariant?._id === variantId ? null : state.currentVariant,
-                isLoading: false,
-            }));
-        } catch (error) {
+            // Clear current variant if it was the one deleted
+            const current = get().currentVariant;
+            if (current && current._id === variantId) {
+                set({ currentVariant: null });
+            }
+
+            set({ isLoading: false });
+            return true;
+        } catch (err) {
             set({
-                error: error.response?.data?.message || "Failed to delete variant",
+                error: err.response?.data?.message || "Failed to delete variant",
                 isLoading: false,
             });
+            return false;
         }
     },
 
-    // Utility: Reset Store
-    resetStore: () => {
-        set({
-            variants: [],
-            currentVariant: null,
-            groupedProductVariants: null,
-            shopVariants: [],
-            error: null,
-            isLoading: false,
-        });
+    /**
+     * Upload Variant Images (Multiple)
+     * Route: POST /variants/:variantId/images
+     * Middleware: upload.array("files", 13)
+     */
+    uploadVariantImages: async (variantId, fileArray) => {
+        set({ isLoading: true, error: null });
+        try {
+            const formData = new FormData();
+
+            // MUST match backend key 'files'
+            fileArray.forEach((file) => {
+                formData.append("files", file);
+            });
+
+            const response = await apiClient.post(
+                `/variants/${variantId}/images`,
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }
+            );
+
+            // Update state with new image data
+            const updatedVariant = response.data.data;
+            set({ currentVariant: updatedVariant, isLoading: false });
+            return true;
+        } catch (err) {
+            set({
+                error: err.response?.data?.message || "Failed to upload images",
+                isLoading: false,
+            });
+            return false;
+        }
+    },
+
+    /**
+     * Set Main Variant Image
+     * Route: PUT /variants/:variantId/images/main
+     * Middleware: upload.single("file")
+     */
+    setMainVariantImage: async (variantId, file) => {
+        set({ isLoading: true, error: null });
+        try {
+            const formData = new FormData();
+            // MUST match backend key 'file'
+            formData.append("file", file);
+
+            const response = await apiClient.put(
+                `/variants/${variantId}/images/main`,
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }
+            );
+
+            const updatedVariant = response.data.data;
+            set({ currentVariant: updatedVariant, isLoading: false });
+            return true;
+        } catch (err) {
+            set({
+                error: err.response?.data?.message || "Failed to set main image",
+                isLoading: false,
+            });
+            return false;
+        }
+    },
+
+    /**
+     * Delete Variant Image by Index
+     * Route: DELETE /variants/:variantId/images/:imageIndex
+     */
+    deleteVariantImage: async (variantId, imageIndex) => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await apiClient.delete(
+                `/variants/${variantId}/images/${imageIndex}`
+            );
+
+            const updatedVariant = response.data.data;
+            set({ currentVariant: updatedVariant, isLoading: false });
+            return true;
+        } catch (err) {
+            set({
+                error: err.response?.data?.message || "Failed to delete image",
+                isLoading: false,
+            });
+            return false;
+        }
     },
 }));

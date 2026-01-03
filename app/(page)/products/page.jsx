@@ -126,7 +126,7 @@ const ProductsListPage = () => {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Products</h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Managing <span className="text-indigo-600 dark:text-indigo-400 font-medium">{pagination.totalProducts}</span> items in <span className="text-slate-700 dark:text-slate-200">{currentShop?.name}</span>
+                        Managing <span className="text-indigo-600 dark:text-indigo-400 font-medium">{pagination?.totalProducts || 0}</span> items in <span className="text-slate-700 dark:text-slate-200">{currentShop?.name}</span>
                     </p>
                 </div>
 
@@ -139,10 +139,7 @@ const ProductsListPage = () => {
                         <Plus className="h-4 w-4" />
                         Add
                     </Link>
-
                 </div>
-
-
             </div>
 
             {/* -------------------------------- Filter Bar -------------------------------- */}
@@ -152,7 +149,7 @@ const ProductsListPage = () => {
                     <div className="relative">
                         <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                         <Input
-                            placeholder="Search name, SKU..."
+                            placeholder="Search name..."
                             value={tempFilters.search}
                             onChange={(e) => setTempFilters({ ...tempFilters, search: e.target.value })}
                             className="pl-9 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200"
@@ -169,8 +166,8 @@ const ProductsListPage = () => {
                         </SelectTrigger>
                         <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                             <SelectItem value="none">All Statuses</SelectItem>
-                            <SelectItem value="true">Available</SelectItem>
-                            <SelectItem value="false">Hidden</SelectItem>
+                            <SelectItem value="true">Active</SelectItem>
+                            <SelectItem value="false">Inactive</SelectItem>
                         </SelectContent>
                     </Select>
 
@@ -253,83 +250,110 @@ const ProductsListPage = () => {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            products.map((p) => (
-                                <TableRow key={p._id} className="border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                    <TableCell>
-                                        <div className="h-12 w-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700">
-                                            {p.images?.length ? (
-                                                <img
-                                                    src={p.images[0].url || p.images[0]}
-                                                    className="h-full w-full object-cover"
-                                                    alt={p.name}
+                            products.map((p) => {
+                                // Data mapping based on API response
+                                const imageUrl = p.main_image?.url || (p.images && p.images[0]?.url) || (p.images && p.images[0]);
+                                const stockQty = p.total_stock_quantity || 0;
+                                const isInStock = p.is_in_stock;
+                                const isActive = p.is_active;
+
+                                return (
+                                    <TableRow 
+                                        key={p._id} 
+                                        className={`border-slate-200 dark:border-slate-800 transition-colors ${
+                                            isActive ? "hover:bg-slate-50 dark:hover:bg-slate-800/30" : "bg-slate-50/50 opacity-75"
+                                        }`}
+                                    >
+                                        <TableCell>
+                                            <div className="h-12 w-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700">
+                                                {imageUrl ? (
+                                                    <img
+                                                        src={imageUrl}
+                                                        className="h-full w-full object-cover"
+                                                        alt={p.name}
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                            e.currentTarget.nextSibling.style.display = 'block';
+                                                        }}
+                                                    />
+                                                ) : null}
+                                                <ImageIcon 
+                                                    className="h-5 w-5 text-slate-400 dark:text-slate-600" 
+                                                    style={{ display: imageUrl ? 'none' : 'block' }}
                                                 />
-                                            ) : (
-                                                <ImageIcon className="h-5 w-5 text-slate-400 dark:text-slate-600" />
-                                            )}
-                                        </div>
-                                    </TableCell>
+                                            </div>
+                                        </TableCell>
 
-                                    <TableCell>
-                                        <div className="font-semibold text-slate-900 dark:text-slate-200">{p.name}</div>
-                                        <div className="text-xs font-mono text-slate-500 dark:text-slate-500 uppercase">
-                                            {p.sku || "No SKU"}
-                                        </div>
-                                    </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <div className="font-semibold text-slate-900 dark:text-slate-200">
+                                                    {p.name}
+                                                    {!isActive && <span className="ml-2 text-xs text-rose-500">(Inactive)</span>}
+                                                </div>
+                                                {/* Replaced SKU with Brand and Unit as SKU was missing in root JSON */}
+                                                <div className="text-xs font-medium text-slate-500 dark:text-slate-500 uppercase flex gap-2">
+                                                    {p.brand && <span>{p.brand}</span>}
+                                                    {p.brand && p.unit && <span>•</span>}
+                                                    {p.unit && <span>{p.unit}</span>}
+                                                </div>
+                                            </div>
+                                        </TableCell>
 
-                                    <TableCell>
-                                        <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
-                                            {p.category_id?.name ?? "General"}
-                                        </Badge>
-                                    </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+                                                {p.category_id?.name ?? "Uncategorized"}
+                                            </Badge>
+                                        </TableCell>
 
-                                    <TableCell className="font-medium text-slate-900 dark:text-slate-200">
-                                        ₹{p.price.toLocaleString()}
-                                    </TableCell>
+                                        <TableCell className="font-medium text-slate-900 dark:text-slate-200">
+                                            ₹{p.price?.toLocaleString()}
+                                        </TableCell>
 
-                                    <TableCell>
-                                        <Badge
-                                            variant="secondary"
-                                            className={
-                                                p.stock_quantity > 0
-                                                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-500 border-emerald-200 dark:border-emerald-500/20"
-                                                    : "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-500 border-rose-200 dark:border-rose-500/20"
-                                            }
-                                        >
-                                            {p.stock_quantity > 0
-                                                ? `${p.stock_quantity} in stock`
-                                                : "Out of stock"}
-                                        </Badge>
-                                    </TableCell>
+                                        <TableCell>
+                                            <Badge
+                                                variant="secondary"
+                                                className={
+                                                    isInStock && stockQty > 0
+                                                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-500 border-emerald-200 dark:border-emerald-500/20"
+                                                        : "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-500 border-rose-200 dark:border-rose-500/20"
+                                                }
+                                            >
+                                                {isInStock && stockQty > 0
+                                                    ? `${stockQty} in stock`
+                                                    : "Out of stock"}
+                                            </Badge>
+                                        </TableCell>
 
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400">
-                                                    <MoreHorizontal className="h-5 w-5" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200">
-                                                <DropdownMenuItem className="focus:bg-slate-100 dark:focus:bg-slate-700 cursor-pointer" asChild>
-                                                    <Link href={`/products/${shopId}/view/${p._id}`}>
-                                                        <Eye className="mr-2 h-4 w-4" /> View Details
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem className="focus:bg-slate-100 dark:focus:bg-slate-700 cursor-pointer" asChild>
-                                                    <Link href={`/products/${shopId}/inventory/${p._id}`}>
-                                                        <Edit className="mr-2 h-4 w-4" /> Edit Product
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    className="text-rose-600 dark:text-rose-400 focus:bg-rose-50 dark:focus:bg-rose-500/10 cursor-pointer"
-                                                    onClick={() => handleDelete(p._id)}
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            ))
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400">
+                                                        <MoreHorizontal className="h-5 w-5" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200">
+                                                    <DropdownMenuItem className="focus:bg-slate-100 dark:focus:bg-slate-700 cursor-pointer" asChild>
+                                                        <Link href={`/products/${shopId}/view/${p._id}`}>
+                                                            <Eye className="mr-2 h-4 w-4" /> View Details
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="focus:bg-slate-100 dark:focus:bg-slate-700 cursor-pointer" asChild>
+                                                        <Link href={`/products/${shopId}/inventory/${p._id}`}>
+                                                            <Edit className="mr-2 h-4 w-4" /> Edit Product
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="text-rose-600 dark:text-rose-400 focus:bg-rose-50 dark:focus:bg-rose-500/10 cursor-pointer"
+                                                        onClick={() => handleDelete(p._id)}
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>
