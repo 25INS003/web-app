@@ -23,6 +23,7 @@ export const useProductStore = create((set, get) => ({
     category: "",
     inStock: undefined,
     is_available: "true",
+    is_active: "true",
     sortBy: "created_at",
     sortOrder: "desc",
   },
@@ -34,9 +35,15 @@ export const useProductStore = create((set, get) => ({
 
   setFilters: (newParams, shopId = null) => {
     set((state) => ({
-      queryParams: { ...state.queryParams, ...newParams, page: 1 },
+      queryParams: { 
+        ...state.queryParams, 
+        ...newParams 
+      },
     }));
-    if (shopId) get().fetchShopProducts(shopId);
+
+    if (shopId) {
+      get().fetchShopProducts(shopId);
+    }
   },
 
   setPage: (page, shopId) => {
@@ -65,8 +72,10 @@ export const useProductStore = create((set, get) => ({
       );
 
       const { products, pagination } = response.data.data;
-
+      console.log("Products Store State:", { products, pagination });
       set({ products, pagination, isLoading: false });
+
+        
     } catch (err) {
       set({
         error: err.response?.data?.message || "Failed to fetch products",
@@ -180,11 +189,35 @@ export const useProductStore = create((set, get) => ({
     }
   },
 
-  softDeleteProduct: async (shopId, productId) => {
+  softDeleteProduct: async (shopId, productId, action=false) => {
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.put(
-        `/shops/${shopId}/products/${productId}/status`
+        `/shops/${shopId}/products/${productId}/status`,{ is_active: action }
+      );
+      const updatedProduct = response.data.data;
+
+      set((state) => ({
+        products: state.products.map((p) =>
+          p._id === productId ? updatedProduct : p
+        ),
+        isLoading: false,
+      }));
+      return true;
+    } catch (err) {
+      set({
+        error: err.response?.data?.message || "Failed to update status",
+        isLoading: false,
+      });
+      return false;
+    }
+  },
+
+  restoreSoftDeleteProduct: async (shopId, productId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await apiClient.put(
+        `/shops/${shopId}/products/${productId}/status`,{ is_active: true }
       );
       const updatedProduct = response.data.data;
 

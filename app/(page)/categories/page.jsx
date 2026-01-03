@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { useCategoryStore } from "@/store/categoryStore";
 import { useForm } from "react-hook-form";
-import { 
-    Layers, 
-    Plus, 
-    Search, 
-    ChevronDown, 
-    ChevronUp, 
+import {
+    Layers,
+    Plus,
+    Search,
+    ChevronDown,
+    ChevronUp,
     ImageIcon,
     Loader2
 } from "lucide-react";
@@ -48,7 +48,7 @@ const flattenCategories = (categories, level = 0) => {
 const CategoryDialog = ({ open, onOpenChange, parentId = null }) => {
     const { createCategory, categories, isLoading } = useCategoryStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
     // Flatten categories for the dropdown
     const flatCategories = flattenCategories(categories);
 
@@ -91,18 +91,18 @@ const CategoryDialog = ({ open, onOpenChange, parentId = null }) => {
             formData.append("name", data.name);
             formData.append("description", data.description || "");
             // Ensure display_order is sent as a number or string representation of a number
-            formData.append("display_order", data.display_order.toString()); 
+            formData.append("display_order", data.display_order.toString());
             formData.append("is_active", data.is_active);
 
             // Handle parent_id: Only append if it's not an empty string
             if (data.parent_id) {
-                 formData.append("parent_id", data.parent_id);
+                formData.append("parent_id", data.parent_id);
             }
-            
+
             // Handle image file upload
             // data.image is a FileList returned by the file input. We take the first file.
             if (data.image && data.image.length > 0) {
-                 formData.append("image", data.image[0]);
+                formData.append("image", data.image[0]);
             }
 
             // The createCategory action in your store needs to accept FormData
@@ -133,9 +133,9 @@ const CategoryDialog = ({ open, onOpenChange, parentId = null }) => {
                     {/* Name Input */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Category Name *</label>
-                        <Input 
-                            {...register("name", { required: "Name is required" })} 
-                            placeholder="e.g. Electronics" 
+                        <Input
+                            {...register("name", { required: "Name is required" })}
+                            placeholder="e.g. Electronics"
                         />
                         {errors.name && <span className="text-red-500 text-xs">{errors.name.message}</span>}
                     </div>
@@ -161,23 +161,23 @@ const CategoryDialog = ({ open, onOpenChange, parentId = null }) => {
                         {/* Order Number (Read Only) */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Order Number</label>
-                            <Input 
-                                type="number" 
-                                {...register("display_order")} 
-                                readOnly 
+                            <Input
+                                type="number"
+                                {...register("display_order")}
+                                readOnly
                                 className="bg-gray-50 cursor-not-allowed"
                             />
                         </div>
-                        
+
                         <div className="space-y-2">
                             <label className="text-sm font-medium flex items-center gap-2">
                                 <ImageIcon size={16} /> Category Image
                             </label>
-                            <Input 
+                            <Input
                                 type="file"
                                 accept="image/png, image/jpeg, image/jpg, image/webp"
                                 className="cursor-pointer file:text-blue-600 file:font-semibold file:bg-blue-50 hover:file:bg-blue-100"
-                                {...register("image")} 
+                                {...register("image")}
                             />
                         </div>
                     </div>
@@ -185,8 +185,8 @@ const CategoryDialog = ({ open, onOpenChange, parentId = null }) => {
                     {/* Description Textarea */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Description</label>
-                        <Textarea 
-                            {...register("description")} 
+                        <Textarea
+                            {...register("description")}
                             placeholder="Short description..."
                             className="resize-none"
                             rows={3}
@@ -214,29 +214,29 @@ const CategoryCard = ({ category, level = 0 }) => {
     const hasChildren = category.subcategories && category.subcategories.length > 0;
 
     // Ensure image path is correct (sometimes backend sends relative paths)
-    const imageUrl = category.image?.startsWith('http') 
-        ? category.image 
-        : category.image 
+    const imageUrl = category.image?.startsWith('http')
+        ? category.image
+        : category.image
             ? `${process.env.NEXT_PUBLIC_API_URL || ''}${category.image}`
             : null;
 
     return (
         <Card className={`overflow-hidden transition-all duration-300 ${isOpen ? 'ring-2 ring-blue-500 shadow-lg' : 'hover:shadow-md'} border-slate-200 dark:border-slate-800`}>
             {/* Card Main Content */}
-            <div 
+            <div
                 className="cursor-pointer group"
                 onClick={() => hasChildren && setIsOpen(!isOpen)}
             >
                 {/* Image Header Container */}
                 <div className="relative h-40 w-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center overflow-hidden">
                     {imageUrl ? (
-                        <img 
-                            src={imageUrl} 
-                            alt={category.name} 
+                        <img
+                            src={imageUrl}
+                            alt={category.name}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             onError={(e) => {
-                                e.target.onerror = null; 
-                                e.target.src='https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image'; // Fallback image
+                                e.target.onerror = null;
+                                e.target.src = 'https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image'; // Fallback image
                             }}
                         />
                     ) : (
@@ -245,12 +245,12 @@ const CategoryCard = ({ category, level = 0 }) => {
                             <span className="text-xs font-medium">No Image Available</span>
                         </div>
                     )}
-                    
+
                     {/* Badge for Order/Level */}
                     <div className="absolute top-2 right-2">
-                         <Badge variant="secondary" className="bg-white/90 dark:bg-slate-800/90 shadow-sm backdrop-blur-sm text-xs">
+                        <Badge variant="secondary" className="bg-white/90 dark:bg-slate-800/90 shadow-sm backdrop-blur-sm text-xs">
                             Order: {category.display_order !== undefined ? category.display_order : 0}
-                         </Badge>
+                        </Badge>
                     </div>
                 </div>
 
@@ -270,16 +270,16 @@ const CategoryCard = ({ category, level = 0 }) => {
                             </button>
                         )}
                     </div>
-                    
+
                     <div className="flex items-center gap-3 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-muted-foreground">
                         <Badge variant={hasChildren ? "default" : "outline"} className={`text-[10px] ${!hasChildren && "opacity-70"}`}>
                             {hasChildren ? `${category.subcategories.length} SUB-CATEGORIES` : 'NO SUB-CATEGORIES'}
                         </Badge>
                         {category.productCount !== undefined && category.productCount > 0 && (
-                             <span className="flex items-center gap-1">
-                                 <span className="h-1 w-1 rounded-full bg-slate-300 inline-block"></span> 
-                                 {category.productCount} Products
-                             </span>
+                            <span className="flex items-center gap-1">
+                                <span className="h-1 w-1 rounded-full bg-slate-300 inline-block"></span>
+                                {category.productCount} Products
+                            </span>
                         )}
                     </div>
                 </div>
@@ -319,7 +319,7 @@ const CategoriesPage = () => {
     }, [fetchCategories]);
 
     // Simple search filter (top level only for cleaner UI, or adjust as needed)
-    const filteredCategories = categories ? categories.filter(cat => 
+    const filteredCategories = categories ? categories.filter(cat =>
         cat.name?.toLowerCase().includes(searchTerm.toLowerCase())
     ) : [];
 
@@ -330,7 +330,7 @@ const CategoriesPage = () => {
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3 text-slate-800 dark:text-slate-100">
                         <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                             <Layers className="h-6 w-6 md:h-8 md:w-8" />
+                            <Layers className="h-6 w-6 md:h-8 md:w-8" />
                         </div>
                         Categories
                     </h1>
@@ -388,9 +388,9 @@ const CategoriesPage = () => {
             )}
 
             {/* Add Category Modal */}
-            <CategoryDialog 
-                open={isCreateOpen} 
-                onOpenChange={setIsCreateOpen} 
+            <CategoryDialog
+                open={isCreateOpen}
+                onOpenChange={setIsCreateOpen}
             />
         </div>
     );
