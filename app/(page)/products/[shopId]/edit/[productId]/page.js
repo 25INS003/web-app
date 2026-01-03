@@ -11,7 +11,6 @@ import SelectCategory from "@/components/Dropdowns/selectCategory";
 // --- Icons ---
 import {
   ArrowLeft,
-  X,
   Loader2,
   Save,
   ImagePlus,
@@ -30,6 +29,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -41,9 +47,10 @@ const productSchema = z.object({
   description: z.string().optional(),
   brand: z.string().optional(),
   category_id: z.string().min(1, "Category is required"),
-  // Keep unit for schema validation, even if not shown in UI
+  // Cost must be an integer (handled via coerce to number, then int check)
+  costPrice: z.coerce.number().int("Cost must be an integer").min(1, "Cost is required"),
   unit: z.enum(["piece", "kg", "gram", "liter", "pair", "set", "loaf", "dozen", "meter", "yard", "bottle", "pack"]),
-  is_active: z.boolean().default(true),
+  is_available: z.boolean().default(true),
 });
 
 const EditProductPage = () => {
@@ -58,7 +65,7 @@ const EditProductPage = () => {
     uploadProductImages,
     isLoading: storeLoading
   } = useProductStore();
-  console.log("Current Product in Store:", currentProduct);
+
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -74,7 +81,8 @@ const EditProductPage = () => {
       description: "",
       brand: "",
       unit: "piece",
-      is_active: true,
+      costPrice: 0,
+      is_available: true,
       category_id: "",
     },
   });
@@ -83,7 +91,7 @@ const EditProductPage = () => {
   useEffect(() => {
     const init = async () => {
       if (shopId && productId) {
-        await getProductDetails(shopId, productId);
+        await getProductDetails(shopId , productId );
         setIsInitializing(false);
       }
     };
@@ -97,18 +105,25 @@ const EditProductPage = () => {
         ? currentProduct.category_id?._id
         : currentProduct.category_id;
 
+      // Parse cost logic: If DB has "100/piece", extract 100. If DB has 100, use 100.
+      let parsedCost = 0;
+      if (currentProduct.costPrice) {
+        parsedCost = parseInt(currentProduct.costPrice.toString());
+      }
+
       form.reset({
         name: currentProduct.name || "",
         description: currentProduct.description || "",
         brand: currentProduct.brand || "",
         unit: currentProduct.unit || "piece",
-        is_active: !!currentProduct.is_active,
+        costPrice: parsedCost,
+        is_available: !!currentProduct.is_available,
         category_id: catId || "",
       });
 
       // Handle Single Image: Take the first one if array exists
-      if (currentProduct.main_image?.url) {
-        setExistingImage(currentProduct.main_image.url);
+      if (currentProduct.images && currentProduct.images.length > 0) {
+        setExistingImage(currentProduct.images[0]);
       }
     }
   }, [currentProduct, isInitializing, form]);
@@ -125,12 +140,10 @@ const EditProductPage = () => {
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Clear previous preview if exists
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       
       setNewImageFile(file);
       setPreviewUrl(URL.createObjectURL(file));
-      // Start "fresh" by ignoring the old server image visually
       setExistingImage(null); 
     }
   };
@@ -144,19 +157,18 @@ const EditProductPage = () => {
   const onSubmit = async (values) => {
     setIsSubmitting(true);
     try {
-      // Logic: If we have an existing image, send it. If we have a new file, we upload it separately.
-      // If user removed everything, images array is empty.
-      const imagesPayload = existingImage ? [existingImage] : [];
-
+      // 1. Format Cost: "integer + unit" string (e.g., "100/piece")
+      const formattedCostString = `${values.costPrice} ${values.unit}`;
+      
       const payload = {
         ...values,
-        images: imagesPayload, 
+        cost_against: formattedCostString, // Overwrite number with string format
+        unit: values.unit,              // Ensure unit is sent separately too
       };
 
       const success = await updateProduct(shopId, productId, payload);
 
       if (success) {
-        // If there is a NEW file, upload it now
         if (newImageFile) {
           const formData = new FormData();
           formData.append("file", newImageFile); 
@@ -187,7 +199,6 @@ const EditProductPage = () => {
     );
   }
 
-  // Determine what to show in the image box
   const activeImage = previewUrl || existingImage;
 
   return (
@@ -222,6 +233,8 @@ const EditProductPage = () => {
                       </FormItem>
                     )}
                   />
+
+                  {/* Brand & Category Row */}
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -245,6 +258,51 @@ const EditProductPage = () => {
                       )}
                     />
                   </div>
+
+                  {/* Cost & Unit Row */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="costPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cost Against</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="e.g. 150" 
+                              {...field} 
+                              className="dark:bg-slate-900" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unit</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="dark:bg-slate-900">
+                                <SelectValue placeholder="Select unit" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {["piece", "kg", "gram", "liter", "pair", "set", "loaf", "dozen", "meter", "yard", "bottle", "pack"].map((u) => (
+                                <SelectItem key={u} value={u}>{u}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
                     name="description"
@@ -259,7 +317,7 @@ const EditProductPage = () => {
                   />
                   <FormField
                     control={form.control}
-                    name="is_active"
+                    name="is_available"
                     render={({ field }) => (
                       <FormItem className="flex items-center space-x-2 space-y-0 border rounded-md p-3 dark:border-slate-700">
                         <FormControl>
@@ -299,7 +357,6 @@ const EditProductPage = () => {
                             <Trash2 className="h-5 w-5" />
                           </Button>
                         </div>
-                        {/* Status Badge */}
                         <div className="absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium bg-black/60 text-white backdrop-blur-sm">
                           {previewUrl ? "New Upload" : "Saved"}
                         </div>
