@@ -6,6 +6,7 @@ import apiClient from "@/api/apiClient";
 export const useProductStore = create((set, get) => ({
   // ================= STATE =================
   products: [],
+  currentVariants: [],
   currentProduct: null,
 
   pagination: {
@@ -72,7 +73,6 @@ export const useProductStore = create((set, get) => ({
       );
 
       const { products, pagination } = response.data.data;
-      console.log("Products Store State:", { products, pagination });
       set({ products, pagination, isLoading: false });
 
         
@@ -124,13 +124,11 @@ export const useProductStore = create((set, get) => ({
 
   /**
    * Upload Multiple Product Images
-   * Matches frontend: formData.append("images", file)
+   * Matches frontend: formData.append("image", file)
    */
   uploadProductImages: async (shopId, productId, formData) => {
     set({ isLoading: true, error: null });
     try {
-      // NOTE: Ensure your backend has a route for POST /:shopId/products/:productId/images
-      // handling upload.array("images")
       const response = await apiClient.post(
         `/shops/${shopId}/products/${productId}/main-img`,
         formData,
@@ -138,9 +136,6 @@ export const useProductStore = create((set, get) => ({
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
-
-      // Backend should return the updated product (with new image URLs)
-      // Adapt this based on whether your backend returns { product: ... } or just the product
       const updatedProduct = response.data.data?.product || response.data.data;
 
       set((state) => ({
@@ -271,7 +266,7 @@ export const useProductStore = create((set, get) => ({
       const response = await apiClient.get(
         `/shops/${shopId}/products/${productId}`
       );
-      set({ currentProduct: response.data.data, isLoading: false });
+      set({ currentProduct: response.data.data.product, currentVariants: response.data.data.variants, isLoading: false });
     } catch (err) {
       set({
         error: err.response?.data?.message || "Could not load product",

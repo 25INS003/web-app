@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -11,12 +11,11 @@ import SelectCategory from "@/components/Dropdowns/selectCategory";
 // --- Icons ---
 import {
   ArrowLeft,
-  Upload,
   X,
   Loader2,
   Save,
-  ImageIcon,
-  Plus
+  ImagePlus,
+  Trash2
 } from "lucide-react";
 
 // --- Shadcn UI ---
@@ -26,22 +25,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -51,12 +41,9 @@ const productSchema = z.object({
   description: z.string().optional(),
   brand: z.string().optional(),
   category_id: z.string().min(1, "Category is required"),
-  price: z.coerce.number().min(0, "Price cannot be negative"),
-  discounted_price: z.coerce.number().min(0).optional(),
-  stock_quantity: z.coerce.number().min(0, "Stock cannot be negative"),
-  min_stock_alert: z.coerce.number().min(1).default(5),
-  unit: z.enum(["piece", "kg", "gram", "liter", "pair", "set", "loaf"]),
-  is_available: z.boolean().default(true),
+  // Keep unit for schema validation, even if not shown in UI
+  unit: z.enum(["piece", "kg", "gram", "liter", "pair", "set", "loaf", "dozen", "meter", "yard", "bottle", "pack"]),
+  is_active: z.boolean().default(true),
 });
 
 const EditProductPage = () => {
@@ -71,14 +58,14 @@ const EditProductPage = () => {
     uploadProductImages,
     isLoading: storeLoading
   } = useProductStore();
-
+  console.log("Current Product in Store:", currentProduct);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Image Management State
-  const [existingImages, setExistingImages] = useState([]);
-  const [newImageFiles, setNewImageFiles] = useState([]);
-  const [newImagePreviews, setNewImagePreviews] = useState([]);
+  // --- Single Image State ---
+  const [existingImage, setExistingImage] = useState(null);
+  const [newImageFile, setNewImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   const form = useForm({
     resolver: zodResolver(productSchema),
@@ -86,15 +73,13 @@ const EditProductPage = () => {
       name: "",
       description: "",
       brand: "",
-      price: 0,
-      stock_quantity: 0,
-      min_stock_alert: 5,
       unit: "piece",
-      is_available: true,
+      is_active: true,
       category_id: "",
     },
   });
 
+  // Fetch Product Data
   useEffect(() => {
     const init = async () => {
       if (shopId && productId) {
@@ -105,90 +90,81 @@ const EditProductPage = () => {
     init();
   }, [shopId, productId, getProductDetails]);
 
+  // Populate Form
   useEffect(() => {
     if (!isInitializing && currentProduct) {
-      // Handle Category safely
       const catId = typeof currentProduct.category_id === 'object'
         ? currentProduct.category_id?._id
         : currentProduct.category_id;
 
       form.reset({
-        // Use logical OR (||) to ensure no value is ever undefined/null
         name: currentProduct.name || "",
         description: currentProduct.description || "",
         brand: currentProduct.brand || "",
-        price: currentProduct.price ?? 0,
-        discounted_price: currentProduct.discounted_price ?? 0,
-        stock_quantity: currentProduct.stock_quantity ?? 0,
-        min_stock_alert: currentProduct.min_stock_alert ?? 5,
         unit: currentProduct.unit || "piece",
-        is_available: !!currentProduct.is_available,
+        is_active: !!currentProduct.is_active,
         category_id: catId || "",
       });
 
-      setExistingImages(currentProduct.images || []);
+      // Handle Single Image: Take the first one if array exists
+      if (currentProduct.main_image?.url) {
+        setExistingImage(currentProduct.main_image.url);
+      }
     }
   }, [currentProduct, isInitializing, form]);
 
-  // Clean up object URLs to avoid memory leaks
+  // Cleanup Preview URL
   useEffect(() => {
     return () => {
-      newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
-  }, [newImagePreviews]);
+  }, [previewUrl]);
 
   // --- Handlers ---
 
-  const handleNewImageChange = (e) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      const totalImages = existingImages.length + newImageFiles.length + files.length;
-
-      if (totalImages > 5) {
-        toast.error("Maximum 5 images allowed");
-        return;
-      }
-
-      const newPreviews = files.map((file) => URL.createObjectURL(file));
-      setNewImageFiles((prev) => [...prev, ...files]);
-      setNewImagePreviews((prev) => [...prev, ...newPreviews]);
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Clear previous preview if exists
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      
+      setNewImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      // Start "fresh" by ignoring the old server image visually
+      setExistingImage(null); 
     }
   };
 
-  const removeNewImage = (index) => {
-    URL.revokeObjectURL(newImagePreviews[index]); // Cleanup
-    setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
-    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const removeExistingImage = (index) => {
-    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveImage = () => {
+    setNewImageFile(null);
+    setPreviewUrl(null);
+    setExistingImage(null);
   };
 
   const onSubmit = async (values) => {
     setIsSubmitting(true);
     try {
-      // 1. Prepare payload with "Kept" images
+      // Logic: If we have an existing image, send it. If we have a new file, we upload it separately.
+      // If user removed everything, images array is empty.
+      const imagesPayload = existingImage ? [existingImage] : [];
+
       const payload = {
         ...values,
-        images: existingImages, // Tells backend to keep these, remove others
+        images: imagesPayload, 
       };
 
       const success = await updateProduct(shopId, productId, payload);
 
       if (success) {
-        // 2. If metadata update succeeded, upload NEW files
-        if (newImageFiles.length > 0) {
+        // If there is a NEW file, upload it now
+        if (newImageFile) {
           const formData = new FormData();
-          newImageFiles.forEach((file) => {
-            formData.append("images", file); // Key must match your backend Multer/upload config
-          });
-
+          formData.append("file", newImageFile); 
           await uploadProductImages(shopId, productId, formData);
         }
 
         toast.success("Product updated successfully");
-        router.push(`/products/${shopId}/view/${productId}`);
+        router.push(`/products`);
         router.refresh();
       }
     } catch (error) {
@@ -205,11 +181,14 @@ const EditProductPage = () => {
         <Skeleton className="h-10 w-1/3" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Skeleton className="md:col-span-2 h-[500px]" />
-          <Skeleton className="h-[500px]" />
+          <Skeleton className="h-[200px]" />
         </div>
       </div>
     );
   }
+
+  // Determine what to show in the image box
+  const activeImage = previewUrl || existingImage;
 
   return (
     <div className="container mx-auto p-6 max-w-5xl dark:text-slate-100">
@@ -219,7 +198,7 @@ const EditProductPage = () => {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Edit Product</h1>
-          <p className="text-sm text-muted-foreground">Manage details and media for this item.</p>
+          <p className="text-sm text-muted-foreground">Manage details and main image.</p>
         </div>
       </div>
 
@@ -227,8 +206,8 @@ const EditProductPage = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
+            {/* Left Column: Form Fields */}
             <div className="md:col-span-2 space-y-6">
-              {/* Product Info */}
               <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader><CardTitle>General Information</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
@@ -278,138 +257,9 @@ const EditProductPage = () => {
                       </FormItem>
                     )}
                   />
-                </CardContent>
-              </Card>
-
-              {/* Enhanced Media Card */}
-              <Card className="dark:bg-slate-800 dark:border-slate-700">
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle>Product Images</CardTitle>
-                    <span className="text-xs text-muted-foreground">
-                      {existingImages.length + newImageFiles.length} / 5 Images
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-
-                    {/* Existing Images */}
-                    {existingImages.map((src, index) => (
-                      <div key={`old-${index}`} className="relative group aspect-square rounded-md overflow-hidden border bg-slate-100 dark:bg-slate-900">
-                        <img src={src} alt="Existing" className="w-full h-full object-cover" />
-                        <div className="absolute top-1 left-1 bg-black/60 text-[10px] text-white px-1.5 rounded">Saved</div>
-                        <button
-                          type="button"
-                          onClick={() => removeExistingImage(index)}
-                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-
-                    {/* New Previews */}
-                    {newImagePreviews.map((src, index) => (
-                      <div key={`new-${index}`} className="relative group aspect-square rounded-md overflow-hidden border-2 border-primary/50">
-                        <img src={src} alt="Preview" className="w-full h-full object-cover" />
-                        <div className="absolute top-1 left-1 bg-primary text-[10px] text-white px-1.5 rounded">New</div>
-                        <button
-                          type="button"
-                          onClick={() => removeNewImage(index)}
-                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-
-                    {/* Upload Trigger */}
-                    {existingImages.length + newImageFiles.length < 5 && (
-                      <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed rounded-md cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors border-slate-300 dark:border-slate-700">
-                        <Plus className="h-6 w-6 text-muted-foreground mb-1" />
-                        <span className="text-[10px] font-medium text-muted-foreground">Upload</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          onChange={handleNewImageChange}
-                        />
-                      </label>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Sidebar Controls */}
-            <div className="space-y-6">
-              <Card className="dark:bg-slate-800 dark:border-slate-700">
-                <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Base Price (₹)</FormLabel>
-                        <Input type="number" {...field} className="dark:bg-slate-900" />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="discounted_price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sale Price (Optional)</FormLabel>
-                        <Input type="number" {...field} className="dark:bg-slate-900" />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              <Card className="dark:bg-slate-800 dark:border-slate-700">
-                <CardHeader><CardTitle>Inventory</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="stock_quantity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Stock</FormLabel>
-                          <Input type="number" {...field} className="dark:bg-slate-900" />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="unit"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Unit</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="dark:bg-slate-900">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {["piece", "kg", "gram", "liter", "pair", "set"].map(u => (
-                                <SelectItem key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="is_available"
+                    name="is_active"
                     render={({ field }) => (
                       <FormItem className="flex items-center space-x-2 space-y-0 border rounded-md p-3 dark:border-slate-700">
                         <FormControl>
@@ -419,6 +269,65 @@ const EditProductPage = () => {
                       </FormItem>
                     )}
                   />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column: Single Image Upload */}
+            <div className="md:col-span-1">
+              <Card className="dark:bg-slate-800 dark:border-slate-700 h-full">
+                <CardHeader>
+                  <CardTitle>Front Image</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center gap-4">
+                    
+                    {activeImage ? (
+                      <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 group">
+                        <img 
+                          src={activeImage} 
+                          alt="Product Front" 
+                          className="w-full h-full object-cover" 
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button 
+                            type="button" 
+                            variant="destructive" 
+                            size="icon"
+                            onClick={handleRemoveImage}
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </Button>
+                        </div>
+                        {/* Status Badge */}
+                        <div className="absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium bg-black/60 text-white backdrop-blur-sm">
+                          {previewUrl ? "New Upload" : "Saved"}
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <ImagePlus className="w-10 h-10 mb-3 text-slate-400" />
+                          <p className="mb-2 text-sm text-slate-500 dark:text-slate-400">
+                            <span className="font-semibold">Click to upload</span>
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Front view only
+                          </p>
+                        </div>
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
+                      </label>
+                    )}
+
+                    <div className="text-xs text-muted-foreground text-center">
+                      Upload a single clear image representing your product.
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>

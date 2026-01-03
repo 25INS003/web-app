@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form"; // 1. Added useFieldArray
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useParams, useRouter } from "next/navigation";
@@ -11,11 +11,12 @@ import SelectCategory from "@/components/Dropdowns/selectCategory";
 // --- Icons ---
 import {
   ArrowLeft,
-  Upload,
   X,
   Loader2,
   Save,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Plus,    // Added
+  Trash2   // Added
 } from "lucide-react";
 
 // --- Shadcn UI ---
@@ -25,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
-  FormDescription, // Added if needed
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -43,31 +44,31 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
-// --- Validation Schema (Matched to API) ---
+// --- Validation Schema ---
 const productSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().optional(),
   brand: z.string().optional(),
   category_id: z.string().min(1, "Category is required"),
-  
+
   // Pricing
   price: z.coerce.number().min(0, "Price cannot be negative"),
   compare_at_price: z.coerce.number().min(0).optional(),
   cost_price: z.coerce.number().min(0).optional(),
-  
+
   // Inventory
   stock_quantity: z.coerce.number().min(0, "Stock cannot be negative"),
   sku: z.string().optional(),
   barcode: z.string().optional(),
   unit: z.enum(["piece", "kg", "gram", "liter", "pair", "set", "loaf", "dozen", "meter", "yard", "bottle", "pack"]),
-  
+
   // Status
   is_active: z.boolean().default(true),
-  
-  // Meta
+
+  // Meta - UPDATED VALIDATION
   attributes: z.array(z.object({
-    name: z.string(),
-    value: z.string()
+    name: z.string().min(1, "Attribute name is required"), // Key (e.g., Color)
+    value: z.string().min(1, "Attribute value is required") // Value (e.g., Red)
   })).optional(),
 });
 
@@ -78,7 +79,6 @@ const AddProductPage = () => {
 
   const { createProduct, uploadProductImages, isLoading } = useProductStore();
 
-  // Changed to single file state
   const [mainImageFile, setMainImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,11 +98,16 @@ const AddProductPage = () => {
       barcode: "",
       unit: "piece",
       is_active: true,
-      attributes: [],
+      attributes: [], // Default empty array
     },
   });
 
-  // --- Single Image Handler ---
+  // 2. Setup useFieldArray for dynamic attributes
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "attributes",
+  });
+
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -118,55 +123,27 @@ const AddProductPage = () => {
 
   const onSubmit = async (values) => {
     setIsSubmitting(true);
-
     try {
-      /* --------------------------------
-        1. Prepare Payload matching API
-      -------------------------------- */
-      // Zod handles coercion, but we ensure structure here
       const productData = {
         ...values,
-        shop_id: shopId, // explicit shop assignment if API needs it in body
+        shop_id: shopId,
       };
 
-      /* --------------------------------
-        2. Create Product
-      -------------------------------- */
       const response = await createProduct(shopId, productData);
-      console.log("Created Product Response:", response);
 
-      // Adjust check based on your actual API response structure
-      // Typically: response.data.product._id OR response.product._id
       const createdProduct = response?.data?.product || response?.product || response?.data;
-      
-      if (!createdProduct || !createdProduct._id && !createdProduct.product_id) {
+
+      if (!createdProduct || (!createdProduct._id && !createdProduct.product_id)) {
         toast.error("Product created but ID missing. Check console.");
         return;
       }
 
       const productId = createdProduct.product_id || createdProduct._id;
-      console.log("New Product ID:", productId);
 
-      /* --------------------------------
-        3. Upload Main Image (If selected)
-      -------------------------------- */
       if (mainImageFile) {
         const formData = new FormData();
-        // Assuming backend handles 'images' array even for single file, 
-        // or specifically looks for 'images' key
-        formData.append("file", mainImageFile); 
-
-        const uploadSuccess = await uploadProductImages(
-          shopId,
-          productId,
-          formData
-        );
-
-        if (!uploadSuccess) {
-          toast.warning("Product created, but main image failed to upload.");
-          router.push(`/products`);
-          return;
-        }
+        formData.append("file", mainImageFile);
+        await uploadProductImages(shopId, productId, formData);
       }
 
       toast.success("Product created successfully!");
@@ -182,7 +159,6 @@ const AddProductPage = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-5xl dark:text-slate-100">
-      {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="dark:hover:bg-slate-800">
           <ArrowLeft className="h-5 w-5 dark:text-slate-200" />
@@ -197,9 +173,9 @@ const AddProductPage = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            {/* Left Column: General Info & Image */}
+            {/* Left Column */}
             <div className="md:col-span-2 space-y-6">
-              
+
               {/* Basic Details */}
               <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader>
@@ -260,10 +236,10 @@ const AddProductPage = () => {
                       <FormItem>
                         <FormLabel className="dark:text-slate-300">Description</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Product features and details..." 
-                            className="resize-none min-h-[120px] dark:bg-slate-900 dark:border-slate-700" 
-                            {...field} 
+                          <Textarea
+                            placeholder="Product features and details..."
+                            className="resize-none min-h-[120px] dark:bg-slate-900 dark:border-slate-700"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -273,7 +249,68 @@ const AddProductPage = () => {
                 </CardContent>
               </Card>
 
-              {/* Main Image Upload - RESTRICTED TO SINGLE IMAGE */}
+              {/* NEW SECTION: Attributes */}
+              <Card className="dark:bg-slate-800 dark:border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="dark:text-slate-100">Product Attributes</CardTitle>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => append({ name: "", value: "" })}
+                    className="dark:bg-slate-900 dark:border-slate-600"
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add Attribute
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                  {fields.length === 0 && (
+                    <div className="text-center py-4 text-sm text-muted-foreground border border-dashed rounded-lg dark:border-slate-700">
+                      No attributes added yet. Add details like Color, Size, or Material.
+                    </div>
+                  )}
+
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="flex items-start gap-4 animate-in fade-in slide-in-from-top-2">
+                      <FormField
+                        control={form.control}
+                        name={`attributes.${index}.name`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input placeholder="Name (e.g. Color)" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`attributes.${index}.value`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input placeholder="Value (e.g. Red)" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="mt-0.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Main Image Upload */}
               <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader>
                   <CardTitle className="dark:text-slate-100">Main Image</CardTitle>
@@ -297,9 +334,6 @@ const AddProductPage = () => {
                           <ImageIcon className="w-10 h-10 mb-3 text-slate-400" />
                           <p className="mb-2 text-sm text-slate-500 dark:text-slate-400">
                             <span className="font-semibold">Click to upload</span> main image
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            SVG, PNG, JPG or GIF
                           </p>
                         </div>
                         <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
@@ -332,33 +366,33 @@ const AddProductPage = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <FormField
-                        control={form.control}
-                        name="compare_at_price"
-                        render={({ field }) => (
+                      control={form.control}
+                      name="compare_at_price"
+                      render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="dark:text-slate-300 text-xs">Compare At (MRP)</FormLabel>
-                            <FormControl>
+                          <FormLabel className="dark:text-slate-300 text-xs">Compare At (MRP)</FormLabel>
+                          <FormControl>
                             <Input type="number" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
-                            </FormControl>
-                            <FormMessage />
+                          </FormControl>
+                          <FormMessage />
                         </FormItem>
-                        )}
+                      )}
                     />
-                     <FormField
-                        control={form.control}
-                        name="cost_price"
-                        render={({ field }) => (
+                    <FormField
+                      control={form.control}
+                      name="cost_price"
+                      render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="dark:text-slate-300 text-xs">Cost Price</FormLabel>
-                            <FormControl>
+                          <FormLabel className="dark:text-slate-300 text-xs">Cost Price</FormLabel>
+                          <FormControl>
                             <Input type="number" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
-                            </FormControl>
-                            <FormMessage />
+                          </FormControl>
+                          <FormMessage />
                         </FormItem>
-                        )}
+                      )}
                     />
                   </div>
                 </CardContent>

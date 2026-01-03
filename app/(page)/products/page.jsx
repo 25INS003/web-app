@@ -270,7 +270,7 @@ const ProductsListPage = () => {
                                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem asChild><Link href={`/products/${shopId}/view/${p._id}`}><Eye className="mr-2 h-4 w-4" /> View</Link></DropdownMenuItem>
-                                                    <DropdownMenuItem asChild><Link href={`/products/${shopId}/inventory/${p._id}`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
+                                                    <DropdownMenuItem asChild><Link href={`/products/${shopId}/edit/${p._id}`}><Edit className="mr-2 h-4 w-4" /> Edit</Link></DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem asChild>
                                                         <button
