@@ -52,6 +52,13 @@ const productSchema = z.object({
   unit: z.enum(["piece", "kg", "gram", "liter", "pair", "set", "loaf", "dozen", "meter", "yard", "bottle", "pack"]),
   is_available: z.boolean().default(true),
 });
+const formatPrice = (amount) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  }).format(amount || 0);
+};
 
 const EditProductPage = () => {
   const params = useParams();
@@ -81,7 +88,7 @@ const EditProductPage = () => {
       description: "",
       brand: "",
       unit: "piece",
-      costPrice: 0,
+      costPrice: 1,
       is_available: true,
       category_id: "",
     },
@@ -91,7 +98,7 @@ const EditProductPage = () => {
   useEffect(() => {
     const init = async () => {
       if (shopId && productId) {
-        await getProductDetails(shopId , productId );
+        await getProductDetails(shopId, productId);
         setIsInitializing(false);
       }
     };
@@ -106,7 +113,7 @@ const EditProductPage = () => {
         : currentProduct.category_id;
 
       // Parse cost logic: If DB has "100/piece", extract 100. If DB has 100, use 100.
-      let parsedCost = 0;
+      let parsedCost = 1;
       if (currentProduct.costPrice) {
         parsedCost = parseInt(currentProduct.costPrice.toString());
       }
@@ -117,13 +124,13 @@ const EditProductPage = () => {
         brand: currentProduct.brand || "",
         unit: currentProduct.unit || "piece",
         costPrice: parsedCost,
-        is_available: !!currentProduct.is_available,
+        is_available: currentProduct.is_available,
         category_id: catId || "",
       });
-
+      console.log("Populated form with:", currentProduct);
       // Handle Single Image: Take the first one if array exists
-      if (currentProduct.images && currentProduct.images.length > 0) {
-        setExistingImage(currentProduct.images[0]);
+      if (currentProduct.main_image && currentProduct.main_image?.url) {
+        setExistingImage(currentProduct.main_image.url);
       }
     }
   }, [currentProduct, isInitializing, form]);
@@ -141,10 +148,10 @@ const EditProductPage = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
-      
+
       setNewImageFile(file);
       setPreviewUrl(URL.createObjectURL(file));
-      setExistingImage(null); 
+      setExistingImage(null);
     }
   };
 
@@ -159,7 +166,7 @@ const EditProductPage = () => {
     try {
       // 1. Format Cost: "integer + unit" string (e.g., "100/piece")
       const formattedCostString = `${values.costPrice} ${values.unit}`;
-      
+
       const payload = {
         ...values,
         cost_against: formattedCostString, // Overwrite number with string format
@@ -171,7 +178,7 @@ const EditProductPage = () => {
       if (success) {
         if (newImageFile) {
           const formData = new FormData();
-          formData.append("file", newImageFile); 
+          formData.append("file", newImageFile);
           await uploadProductImages(shopId, productId, formData);
         }
 
@@ -268,11 +275,11 @@ const EditProductPage = () => {
                         <FormItem>
                           <FormLabel>Cost Against</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="e.g. 150" 
-                              {...field} 
-                              className="dark:bg-slate-900" 
+                            <Input
+                              type="number"
+                              placeholder="e.g. 150"
+                              {...field}
+                              className="dark:bg-slate-900"
                             />
                           </FormControl>
                           <FormMessage />
@@ -333,24 +340,39 @@ const EditProductPage = () => {
 
             {/* Right Column: Single Image Upload */}
             <div className="md:col-span-1">
+
+
               <Card className="dark:bg-slate-800 dark:border-slate-700 h-full">
-                <CardHeader>
-                  <CardTitle>Front Image</CardTitle>
-                </CardHeader>
+
                 <CardContent>
+                  <h1 className="mb-4">
+                    <CardTitle>Selling Price</CardTitle>
+                  </h1>
+                  <div className="flex items-baseline gap-2 mb-4 px-1">
+                    <span className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+                      {formatPrice(currentProduct?.price || 0)}
+                    </span>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {"per " + currentProduct.cost_against}
+                    </span>
+                  </div>
+                  <br />
+                  <h1 className="mb-4">
+                    <CardTitle>Front Image</CardTitle>
+                  </h1>
                   <div className="flex flex-col items-center gap-4">
-                    
+
                     {activeImage ? (
                       <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 group">
-                        <img 
-                          src={activeImage} 
-                          alt="Product Front" 
-                          className="w-full h-full object-cover" 
+                        <img
+                          src={activeImage}
+                          alt="Product Front"
+                          className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button 
-                            type="button" 
-                            variant="destructive" 
+                          <Button
+                            type="button"
+                            variant="destructive"
                             size="icon"
                             onClick={handleRemoveImage}
                           >
@@ -372,9 +394,9 @@ const EditProductPage = () => {
                             Front view only
                           </p>
                         </div>
-                        <input 
-                          type="file" 
-                          className="hidden" 
+                        <input
+                          type="file"
+                          className="hidden"
                           accept="image/*"
                           onChange={handleImageChange}
                         />

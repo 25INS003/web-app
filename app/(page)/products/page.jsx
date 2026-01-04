@@ -190,7 +190,6 @@ const ProductsListPage = () => {
                             className="pl-9"
                         />
                     </div>
-                    {/* ... (Other Select inputs from previous code) ... */}
 
                     <Select value={tempFilters.is_active} onValueChange={(v) => setTempFilters({ ...tempFilters, is_active: v })}>
                         <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>

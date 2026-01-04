@@ -55,6 +55,7 @@ const productSchema = z.object({
   price: z.coerce.number().min(0, "Price cannot be negative"),
   compare_at_price: z.coerce.number().min(0).optional(),
   cost_price: z.coerce.number().min(0).optional(),
+  cost_against: z.number().min(0).optional(),
 
   // Inventory
   stock_quantity: z.coerce.number().min(0, "Stock cannot be negative"),
