@@ -156,9 +156,11 @@ const ViewProductPage = () => {
 
     // Images: Combine Product Main Image + Variant Images for the gallery
     const galleryImages = [
-        ...(currentProduct.main_image?.url ? [currentProduct.main_image.url] : []),
-        ...(currentProduct.images || [])
-    ].filter(Boolean);
+        currentProduct.main_image?.url,
+        ...(currentProduct.images || []).map((img) => img.url)
+    ].filter(Boolean); // Removes null, undefined, or empty strings
+
+    // 3. Create unique Set from the strings
     const uniqueImages = [...new Set(galleryImages)];
 
     return (

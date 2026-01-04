@@ -69,7 +69,7 @@ const VariantList = ({ variants = [], onEdit, onDelete }) => {
                     {variants.map((variant) => {
                         const isLowStock = variant.stock_quantity <= variant.low_stock_threshold;
                         const isOutOfStock = variant.stock_quantity <= 0;
-                        const mainImage = variant.images?.[0] || null;
+                        const mainImage = variant.images?.[0]?.url || null;
 
                         return (
                             <TableRow key={variant._id} className="group">
