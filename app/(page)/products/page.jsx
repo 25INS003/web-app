@@ -7,6 +7,8 @@ import { useShopStore } from "@/store/shopStore";
 import GlobalSelectShop from "@/components/Dropdowns/selectShop0";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import Image from "next/image";
+
 
 import {
     Plus,
@@ -248,9 +250,14 @@ const ProductsListPage = () => {
                                 const isActive = p.is_active;
                                 return (
                                     <TableRow key={p._id} className={!isActive ? "bg-slate-50/60 opacity-75" : ""}>
-                                        <TableCell>
-                                            <div className="h-10 w-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
-                                                {p.main_image?.url ? <img src={p.main_image.url} className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-slate-400" />}
+                                        <TableCell >
+                                            <div className="h-10 w-10 relative rounded bg-slate-100 flex items-center justify-center overflow-hidden">
+                                                {p.main_image?.url ? <Image
+                                                    src={p.main_image.url}
+                                                    alt="product image"
+                                                    fill
+                                                    className="object-cover"
+                                                /> : <ImageIcon className="h-4 w-4 text-slate-400" />}
                                             </div>
                                         </TableCell>
                                         <TableCell>

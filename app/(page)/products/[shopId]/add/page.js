@@ -95,6 +95,7 @@ const AddProductPage = () => {
       compare_at_price: 0,
       cost_price: 0,
       stock_quantity: 0,
+      costPrice: 1,
       sku: "",
       barcode: "",
       unit: "piece",
@@ -125,8 +126,10 @@ const AddProductPage = () => {
   const onSubmit = async (values) => {
     setIsSubmitting(true);
     try {
+      const formattedCostString = `${values.costPrice} ${values.unit}`;
       const productData = {
         ...values,
+        cost_against: formattedCostString,
         shop_id: shopId,
       };
 
@@ -396,6 +399,48 @@ const AddProductPage = () => {
                       )}
                     />
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="costPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cost Against *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="e.g. 150"
+                              {...field}
+                              className="dark:bg-slate-900"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unit *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="dark:bg-slate-900">
+                                <SelectValue placeholder="Select unit" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {["piece", "kg", "gram", "liter", "pair", "set", "loaf", "dozen", "meter", "yard", "bottle", "pack"].map((u) => (
+                                <SelectItem key={u} value={u}>{u}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </CardContent>
               </Card>
 
@@ -411,32 +456,10 @@ const AddProductPage = () => {
                       name="stock_quantity"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="dark:text-slate-300">Quantity *</FormLabel>
+                          <FormLabel className="dark:text-slate-300">Stock Quantity *</FormLabel>
                           <FormControl>
                             <Input type="number" {...field} className="dark:bg-slate-900 dark:border-slate-700" />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="unit"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="dark:text-slate-300">Unit</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="dark:bg-slate-900 dark:border-slate-700">
-                                <SelectValue placeholder="Unit" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
-                              {["piece", "kg", "gram", "liter", "pair", "set", "dozen", "pack"].map((u) => (
-                                <SelectItem key={u} value={u} className="capitalize">{u}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}

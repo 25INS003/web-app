@@ -42,7 +42,7 @@ export default function ViewPage() {
                         </p>
                     </div>
                     <div className="flex gap-2 items-center">
-                        <Link href={`/variants/${productId}/add`} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20">
+                        <Link href={`products/${shopId}/add`} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20">
                             <Plus className="h-4 w-4" /> Add
                         </Link>
                     </div>
