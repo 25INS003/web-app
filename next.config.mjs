@@ -8,6 +8,12 @@ const nextConfig = {
                 port: '8016',
                 pathname: '/**',
             },
+            {
+                protocol: 'https',
+                hostname: 'randomuser.me',
+                port: '',
+                pathname: '/**',
+            },
         ],
     },
 };
