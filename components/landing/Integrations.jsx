@@ -57,14 +57,14 @@ export default function Integrations() {
     }, [isSectionVisible]);
 
     return (
-        <section id="integrations" ref={containerRef} className="w-full bg-slate-50 dark:bg-slate-950 px-6 py-24 md:py-40 relative">
+        <section id="integrations" ref={containerRef} className="w-full bg-slate-50 dark:bg-slate-950 px-4 sm:px-6 py-16 sm:py-24 md:py-40 relative">
             <div className="container mx-auto max-w-6xl">
-                 <div className="text-center mb-24 md:mb-40">
+                 <div className="text-center mb-16 sm:mb-24 md:mb-40">
                     <motion.h2 
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white leading-tight mb-6"
+                        className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white leading-tight mb-4 sm:mb-6"
                     >
                         Seamless Intelligence <br />
                         <span className="text-primary">at every step.</span>

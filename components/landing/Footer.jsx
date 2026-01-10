@@ -11,7 +11,7 @@ export const CTA = () => {
     const iconRef = React.useRef(null);
 
     return (
-        <section className="w-full relative overflow-hidden bg-slate-950 py-40 text-center px-6">
+        <section className="w-full relative overflow-hidden bg-slate-950 py-20 sm:py-40 text-center px-4 sm:px-6">
             {/* Background Effects */}
             <div className="absolute inset-0 w-full h-full">
                 {/* Grid Pattern */}
@@ -45,7 +45,7 @@ export const CTA = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                     viewport={{ once: true }}
-                    className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-8 leading-[1.1]"
+                    className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6 sm:mb-8 leading-[1.15] sm:leading-[1.1]"
                 >
                     Ready to manage your
                     <br />
@@ -61,7 +61,7 @@ export const CTA = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                     viewport={{ once: true }}
-                    className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed mb-12"
+                    className="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-12"
                 >
                     Join thousands of shop providers who are streamlining their inventory and sales with our powerful administration tools.
                 </motion.p>
@@ -72,12 +72,12 @@ export const CTA = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                     viewport={{ once: true }}
-                    className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
+                    className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-16"
                 >
                     <Button
                         asChild
                         size="lg"
-                        className="rounded-full h-16 px-10 text-lg font-bold bg-gradient-to-r from-primary via-purple-500 to-primary bg-[length:200%_100%] hover:bg-right text-white shadow-2xl shadow-primary/30 transition-all duration-500 hover:scale-105 active:scale-95 border border-white/10"
+                        className="w-full sm:w-auto rounded-full h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg font-bold bg-gradient-to-r from-primary via-purple-500 to-primary bg-[length:200%_100%] hover:bg-right text-white shadow-2xl shadow-primary/30 transition-all duration-500 hover:scale-105 active:scale-95 border border-white/10"
                         onMouseEnter={() => iconRef.current?.startAnimation()}
                         onMouseLeave={() => iconRef.current?.stopAnimation()}
                     >
@@ -90,7 +90,7 @@ export const CTA = () => {
                         asChild
                         variant="ghost"
                         size="lg"
-                        className="rounded-full h-16 px-10 text-lg font-medium bg-white/5 backdrop-blur-sm border border-slate-700 text-white hover:bg-white/10 hover:border-slate-600 transition-all"
+                        className="w-full sm:w-auto rounded-full h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg font-medium bg-white/5 backdrop-blur-sm border border-slate-700 text-white hover:bg-white/10 hover:border-slate-600 transition-all"
                     >
                         <Link href="/login">Log in to existing account</Link>
                     </Button>
@@ -124,7 +124,7 @@ export const Footer = () => {
     };
 
     return (
-        <footer className="bg-slate-950 text-slate-400 pt-20 pb-8 px-6">
+        <footer className="bg-slate-950 text-slate-400 pt-16 sm:pt-20 pb-6 sm:pb-8 px-4 sm:px-6">
             {/* Main Footer Content */}
             <div className="container mx-auto max-w-7xl">
                 
@@ -134,11 +134,11 @@ export const Footer = () => {
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-100px" }}
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 pb-16 border-b border-slate-800/50"
+                    className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-8 pb-12 sm:pb-16 border-b border-slate-800/50"
                 >
                     
                     {/* Brand Column */}
-                    <motion.div variants={itemVariants} className="lg:col-span-4">
+                    <motion.div variants={itemVariants} className="col-span-2 md:col-span-2 lg:col-span-4">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="bg-gradient-to-br from-primary to-purple-600 text-white p-3 rounded-2xl rounded-tr-sm shadow-lg shadow-primary/20">
                                 <SparklesIcon size={24} className="text-white" />

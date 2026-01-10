@@ -12,15 +12,15 @@ export default function Hero() {
     const [activeOrderView, setActiveOrderView] = useState(1); // 0 = completed, 1 = pending
 
     return (
-        <section id="hero" className="relative w-full min-h-screen pt-32 pb-20 px-6 lg:px-12 overflow-hidden bg-slate-50 dark:bg-slate-950">
+        <section id="hero" className="relative w-full min-h-screen pt-24 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-12 overflow-hidden bg-slate-50 dark:bg-slate-950">
             
             {/* Background Gradient Effects */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px]" />
-                <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-[120px]" />
+                <div className="absolute top-1/4 -left-32 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-primary/10 rounded-full blur-[120px]" />
+                <div className="absolute bottom-0 right-0 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-purple-500/10 rounded-full blur-[120px]" />
             </div>
 
-            <div className="container mx-auto max-w-7xl grid lg:grid-cols-2 gap-16 items-center relative z-10">
+            <div className="container mx-auto max-w-7xl grid lg:grid-cols-2 gap-10 lg:gap-16 items-center relative z-10">
                 
                 {/* Left Content */}
                 <motion.div 
@@ -33,13 +33,13 @@ export default function Hero() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2 }}
-                        className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-primary/10 border border-primary/20"
+                        className="inline-flex items-center gap-2 mb-6 sm:mb-8 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 border border-primary/20"
                     >
                         <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        <span className="text-primary text-sm font-semibold">Admin Access Only</span>
+                        <span className="text-primary text-xs sm:text-sm font-semibold">Admin Access Only</span>
                     </motion.div>
 
-                    <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.05] mb-8">
+                    <h1 className="text-3xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.1] sm:leading-[1.05] mb-6 sm:mb-8">
                         Nedyway{" "}
                         <span className="bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
                             Portal
@@ -48,27 +48,27 @@ export default function Hero() {
                         & Administration
                     </h1>
 
-                    <p className="text-xl text-slate-600 dark:text-slate-400 mb-10 leading-relaxed max-w-lg">
+                    <p className="text-base sm:text-xl text-slate-600 dark:text-slate-400 mb-8 sm:mb-10 leading-relaxed max-w-lg">
                         The central command center for store owners and administrators. Manage products, inventory, orders, and analytics—all in one place.
                     </p>
                     
-                    <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                         <Button 
                             asChild 
                             size="lg" 
-                            className="rounded-full h-14 px-8 text-lg font-bold bg-primary hover:bg-primary/90 transition-all hover:-translate-y-1 shadow-lg shadow-primary/25"
+                            className="rounded-full h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg font-bold bg-primary hover:bg-primary/90 transition-all hover:-translate-y-1 shadow-lg shadow-primary/25"
                             onMouseEnter={() => iconRef.current?.startAnimation()}
                             onMouseLeave={() => iconRef.current?.stopAnimation()}
                         >
-                            <Link href="/dashboard" className="flex items-center">
-                                Go to Dashboard <MoveRightIcon ref={iconRef} className="ml-2" size={26} />
+                            <Link href="/dashboard" className="flex items-center justify-center">
+                                Go to Dashboard <MoveRightIcon ref={iconRef} className="ml-2" size={22} />
                             </Link>
                         </Button>
                         <Button 
                             asChild 
                             variant="ghost" 
                             size="lg" 
-                            className="rounded-full h-14 px-8 text-lg font-medium hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
+                            className="rounded-full h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg font-medium hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
                         >
                             <Link href="/login">Sign in / Switch Account</Link>
                         </Button>
@@ -79,30 +79,30 @@ export default function Hero() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.8 }}
-                        className="flex items-center gap-8 mt-12 pt-8 border-t border-slate-200 dark:border-slate-800"
+                        className="flex items-center gap-4 sm:gap-8 mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-200 dark:border-slate-800"
                     >
                         <div>
-                            <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                            <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
                                 <CountUp from={0} to={500} duration={2} separator="," />
                                 <span>+</span>
                             </div>
-                            <div className="text-sm text-slate-500">Total Shops</div>
+                            <div className="text-xs sm:text-sm text-slate-500">Total Shops</div>
                         </div>
-                        <div className="w-px h-10 bg-slate-200 dark:bg-slate-800" />
+                        <div className="w-px h-8 sm:h-10 bg-slate-200 dark:bg-slate-800" />
                         <div>
-                            <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                            <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
                                 <CountUp from={0} to={4800} duration={2} separator="," />
                                 <span>+</span>
                             </div>
-                            <div className="text-sm text-slate-500">Total Products</div>
+                            <div className="text-xs sm:text-sm text-slate-500">Total Products</div>
                         </div>
-                        <div className="w-px h-10 bg-slate-200 dark:bg-slate-800" />
+                        <div className="w-px h-8 sm:h-10 bg-slate-200 dark:bg-slate-800" />
                         <div>
-                            <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                            <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
                                 <CountUp from={0} to={99.9} duration={2} />
                                 <span>%</span>
                             </div>
-                            <div className="text-sm text-slate-500">Uptime</div>
+                            <div className="text-xs sm:text-sm text-slate-500">Uptime</div>
                         </div>
                     </motion.div>
                 </motion.div>

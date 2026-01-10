@@ -59,7 +59,7 @@ const firstRow = reviews.slice(0, reviews.length / 2);
 const secondRow = reviews.slice(reviews.length / 2);
 
 const ReviewCard = ({ review }) => (
-    <div className="flex-shrink-0 w-[400px] p-6 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 mx-4">
+    <div className="flex-shrink-0 w-[280px] sm:w-[400px] p-4 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 mx-2 sm:mx-4">
         <div className="flex gap-1 mb-4">
             {[...Array(5)].map((_, i) => (
                 <StarIcon key={i} size={16} className="fill-yellow-400 text-yellow-400" />
@@ -87,11 +87,11 @@ const ReviewCard = ({ review }) => (
 
 export default function Reviews() {
     return (
-        <section id="reviews" className="w-full py-24 bg-white dark:bg-slate-950 overflow-hidden relative flex flex-col gap-8">
+        <section id="reviews" className="w-full py-16 sm:py-24 bg-white dark:bg-slate-950 overflow-hidden relative flex flex-col gap-6 sm:gap-8">
             <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-white dark:from-slate-950 dark:via-transparent dark:to-slate-950 z-10 pointer-events-none" />
             
-            <div className="container mx-auto px-6 mb-4 text-center">
-                <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Trusted by Market Leaders</h2>
+            <div className="container mx-auto px-4 sm:px-6 mb-4 text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-3 sm:mb-4">Trusted by Market Leaders</h2>
                 <p className="text-slate-500 max-w-xl mx-auto">See how top retailers are scaling their operations with Nedyway.</p>
             </div>
 

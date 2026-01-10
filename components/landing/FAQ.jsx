@@ -9,7 +9,7 @@ const AccordionItem = ({ question, answer, isOpen, onClick }) => (
             onClick={onClick}
             className="w-full py-6 flex items-center justify-between text-left focus:outline-none group"
         >
-            <span className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors pr-8">
+            <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors pr-6 sm:pr-8">
                 {question}
             </span>
             {/* Animated Plus/Minus Icon */}
@@ -72,14 +72,14 @@ export default function FAQ() {
     ];
 
     return (
-        <section id="faq" className="w-full py-24 bg-slate-50 dark:bg-slate-950">
-            <div className="container mx-auto max-w-6xl px-6 grid md:grid-cols-12 gap-12">
+        <section id="faq" className="w-full py-16 sm:py-24 bg-slate-50 dark:bg-slate-950">
+            <div className="container mx-auto max-w-6xl px-4 sm:px-6 grid md:grid-cols-12 gap-8 sm:gap-12">
                 <div className="md:col-span-4">
                     <motion.h2 
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-4xl font-extrabold text-slate-900 dark:text-white mb-6"
+                        className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 sm:mb-6"
                     >
                         Frequently asked questions
                     </motion.h2>
