@@ -13,8 +13,8 @@ export default function HomePage() {
         <main className="min-h-screen w-full flex flex-col font-sans">
             <Navbar />
             <Hero />
-            <Reviews />
             <Features />
+            <Reviews />
             <Integrations />
             <FAQ />
             <CTA />

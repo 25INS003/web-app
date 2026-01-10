@@ -353,15 +353,17 @@ const PhoneIcon = forwardRef(
   };
 
   const pulseVariants = {
-   normal: { opacity: 0, scale: 0.3 },
-   animate: { opacity: [0, 0.25, 0], scale: [0.3, 1.5], transition: { duration: 0.9 * duration, ease: "easeOut" } },
+   normal: { opacity: 0, scale: 1 },
+   animate: { opacity: [0, 0.3, 0], scale: [1, 1.8, 2], transition: { duration: 0.9 * duration, ease: "easeOut" } },
   };
 
   return (
    <motion.div className={cn("inline-flex items-center justify-center", className)} onMouseEnter={handleEnter} onMouseLeave={handleLeave} {...props}>
     <motion.svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-     <motion.circle cx="12" cy="12" r="10" fill="none" variants={pulseVariants} initial="normal" animate={controls} />
+     {/* Phone path first so it renders correctly on initial load */}
      <motion.path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" variants={phoneVariants} initial="normal" animate={controls} style={{ transformBox: "fill-box", transformOrigin: "center" }} />
+     {/* Pulse circle on top - starts invisible */}
+     <motion.circle cx="12" cy="12" r="8" fill="none" strokeWidth="1" variants={pulseVariants} initial="normal" animate={controls} />
     </motion.svg>
    </motion.div>
   );

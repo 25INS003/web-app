@@ -14,8 +14,8 @@ export default function Navbar() {
     const navLinks = [
         { name: "Home", href: "#hero" },
         { name: "Features", href: "#features" },
-        { name: "Workflow", href: "#integrations" },
         { name: "Reviews", href: "#reviews" },
+        { name: "Workflow", href: "#integrations" },
         { name: "FAQ's", href: "#faq" },
     ];
 
