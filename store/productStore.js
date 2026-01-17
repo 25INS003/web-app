@@ -32,13 +32,15 @@ export const useProductStore = create((set, get) => ({
   isLoading: false,
   error: null,
 
+  resetProduct: () => set({ currentProduct: null, currentVariants: [] }),
+
   // ================= ACTIONS =================
 
   setFilters: (newParams, shopId = null) => {
     set((state) => ({
-      queryParams: { 
-        ...state.queryParams, 
-        ...newParams 
+      queryParams: {
+        ...state.queryParams,
+        ...newParams
       },
     }));
 
@@ -75,7 +77,7 @@ export const useProductStore = create((set, get) => ({
       const { products, pagination } = response.data.data;
       set({ products, pagination, isLoading: false });
 
-        
+
     } catch (err) {
       set({
         error: err.response?.data?.message || "Failed to fetch products",
@@ -112,7 +114,7 @@ export const useProductStore = create((set, get) => ({
       }));
 
       // Return structure matches frontend: product.product._id
-      return { product: newProduct }; 
+      return { product: newProduct };
     } catch (err) {
       set({
         error: err.response?.data?.message || "Failed to create product",
@@ -184,11 +186,11 @@ export const useProductStore = create((set, get) => ({
     }
   },
 
-  softDeleteProduct: async (shopId, productId, action=false) => {
+  softDeleteProduct: async (shopId, productId, action = false) => {
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.put(
-        `/shops/${shopId}/products/${productId}/status`,{ is_active: action }
+        `/shops/${shopId}/products/${productId}/status`, { is_active: action }
       );
       const updatedProduct = response.data.data;
 
@@ -212,7 +214,7 @@ export const useProductStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.put(
-        `/shops/${shopId}/products/${productId}/status`,{ is_active: true }
+        `/shops/${shopId}/products/${productId}/status`, { is_active: true }
       );
       const updatedProduct = response.data.data;
 
@@ -257,16 +259,39 @@ export const useProductStore = create((set, get) => ({
 
   getProductDetails: async (shopId, productId) => {
     set({ isLoading: true, error: null });
-    const cached = get().products.find((p) => p._id === productId);
-    if (cached) {
-      set({ currentProduct: cached, isLoading: false });
+    const cachedProduct = get().products.find((p) => p._id === productId);
+
+    if (cachedProduct && cachedProduct.variants && cachedProduct.variants.length > 0) {
+      set({
+        currentProduct: cachedProduct,
+        currentVariants: cachedProduct.variants, 
+        isLoading: false
+      });
       return;
     }
+
     try {
       const response = await apiClient.get(
         `/shops/${shopId}/products/${productId}`
       );
-      set({ currentProduct: response.data.data.product, currentVariants: response.data.data.variants, isLoading: false });
+
+      const { product, variants } = response.data.data;
+
+      // 2. MERGE: Combine the product info with its variants
+      const fullProductDetail = { ...product, variants: variants };
+
+      set((state) => ({
+        // Map through the existing list and update ONLY the matching product
+        products: state.products.map((p) =>
+          p._id === productId ? fullProductDetail : p
+        ),
+
+        // We still update these so your Detail View component works immediately
+        currentProduct: fullProductDetail,
+        currentVariants: variants,
+        isLoading: false,
+      }));
+
     } catch (err) {
       set({
         error: err.response?.data?.message || "Could not load product",

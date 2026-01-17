@@ -28,13 +28,13 @@ export function proxy(request) {
       pathname.startsWith(path)
   );
 
-  // console.log(`Checking: ${pathname} | Token: ${token ? "YES" : "NO"} | Public? ${isPublicPath} | Role: ${userRole || "NONE"}`);
+  console.log(`Checking: ${pathname} | Token: ${token ? "YES" : "NO"} | Public? ${isPublicPath} | Role: ${userRole || "NONE"}`);
 
   // 2. PROTECT ROUTES
   // If no token, and it's NOT a public path, Redirect to login
   if (!token && !isPublicPath) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    // loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 

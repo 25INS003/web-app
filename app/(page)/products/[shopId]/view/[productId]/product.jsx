@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image"; // Import Next.js Image
+import Image from "next/image"; 
 import { useParams, useRouter } from "next/navigation";
 import { useProductStore } from "@/store/productStore";
+import { useVariantStore } from "@/store/productVariantStore";
 // --- Icons ---
 import {
     ArrowLeft,
@@ -14,7 +15,8 @@ import {
     ImageIcon,
     ShoppingCart,
     Settings,
-    Box
+    Box,
+    Check
 } from "lucide-react";
 
 // --- Shadcn UI ---
@@ -65,17 +67,22 @@ const formatPrice = (amount) => {
     }).format(amount || 0);
 };
 
-const ViewProductPage = () => {
-    const params = useParams();
+const ViewProductPage = ({ shopId, productId }) => {
     const router = useRouter();
-    const { shopId, productId } = params;
 
     const {
         currentProduct,
         currentVariants,
         getProductDetails,
+        resetProduct,
         isLoading
     } = useProductStore();
+
+    // We don't strictly need detailed variant fetch if currentVariants contains basic info,
+    // but keeping the hook if you use it for other logic.
+    const {
+        isLoading: isStoreLoading,
+    } = useVariantStore();
 
     const [isInitializing, setIsInitializing] = useState(true);
     const [selectedVariant, setSelectedVariant] = useState(null);
@@ -84,19 +91,27 @@ const ViewProductPage = () => {
 
     // --- 1. Fetch Product Data ---
     useEffect(() => {
-        const init = () => {
-            if (shopId && productId) {
-                getProductDetails(shopId, productId);
+        if (!shopId || !productId) return;
+        let isMounted = true;
+        const fetchData = async () => {
+            setIsInitializing(true);
+            await getProductDetails(shopId, productId);
+            if (isMounted) {
                 setIsInitializing(false);
             }
         };
-        init();
-    }, [shopId, productId, getProductDetails]);
+        fetchData();
+        return () => {
+            isMounted = false;
+            resetProduct();
+        };
+    }, [shopId, productId, getProductDetails, resetProduct]);
 
     // --- 2. Set Default Variant ---
     useEffect(() => {
+        // Only set default if we have products and no variant is currently selected
         if (currentProduct && currentVariants?.length > 0 && !selectedVariant) {
-            const defaultVar = currentVariants.find(v => v.is_default) || currentVariants[0];
+            const defaultVar = currentVariants.find(v => v._id === currentProduct.default_variant_id) || currentVariants[0];
             setSelectedVariant(defaultVar);
         }
     }, [currentProduct, currentVariants, selectedVariant]);
@@ -104,6 +119,7 @@ const ViewProductPage = () => {
     // --- 3. Handle Image Selection ---
     useEffect(() => {
         if (selectedVariant) {
+            // Priority: Variant Image -> Product Main Image
             const img = selectedVariant.images?.[0] || currentProduct?.main_image?.url || null;
             setActiveImage(img);
         } else if (currentProduct) {
@@ -157,10 +173,11 @@ const ViewProductPage = () => {
     // Images: Combine Product Main Image + Variant Images for the gallery
     const galleryImages = [
         currentProduct.main_image?.url,
-        ...(currentProduct.images || []).map((img) => img.url)
-    ].filter(Boolean); // Removes null, undefined, or empty strings
+        ...(currentProduct.images || []).map((img) => img.url),
+        // Add current variant images if they exist
+        ...(selectedVariant?.images || [])
+    ].filter(Boolean);
 
-    // 3. Create unique Set from the strings
     const uniqueImages = [...new Set(galleryImages)];
 
     return (
@@ -187,7 +204,7 @@ const ViewProductPage = () => {
                                 className="text-slate-600 dark:text-slate-300"
                             >
                                 <Settings className="w-4 h-4 mr-2" />
-                                Edit Product Details
+                                Edit Product
                             </Button>
                         </div>
                     </div>
@@ -217,14 +234,13 @@ const ViewProductPage = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                    {/* --- Left Column: Images & Variants --- */}
+                    {/* --- Left Column: Images & Tabs --- */}
                     <div className="lg:col-span-2 space-y-8">
 
                         {/* Image Gallery */}
                         <Card className="border-0 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
                             <CardContent className="p-0">
                                 <div className="grid grid-cols-1 md:grid-cols-5 min-h-[450px]">
-
                                     {/* Thumbnails */}
                                     <div className="order-2 md:order-1 col-span-1 p-4 flex md:flex-col gap-3 overflow-auto bg-slate-50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800">
                                         {uniqueImages.length > 0 ? uniqueImages.map((src, idx) => (
@@ -238,7 +254,6 @@ const ViewProductPage = () => {
                                                         : "border-transparent hover:border-slate-300"
                                                 )}
                                             >
-                                                {/* Optimized Thumbnail Image */}
                                                 <Image
                                                     src={src}
                                                     alt={`Thumbnail ${idx + 1}`}
@@ -248,7 +263,7 @@ const ViewProductPage = () => {
                                                 />
                                             </button>
                                         )) : (
-                                            <div className="text-xs text-center text-slate-400 py-4">No gallery images</div>
+                                            <div className="text-xs text-center text-slate-400 py-4">No images</div>
                                         )}
                                     </div>
 
@@ -256,10 +271,9 @@ const ViewProductPage = () => {
                                     <div className="order-1 md:order-2 col-span-1 md:col-span-4 relative bg-white dark:bg-slate-900 flex items-center justify-center p-8 h-[450px]">
                                         {activeImage ? (
                                             <div className="relative w-full h-full">
-                                                {/* Optimized Main Image */}
                                                 <Image
                                                     src={activeImage}
-                                                    alt={currentProduct.name || "Product Image"}
+                                                    alt={currentProduct.name}
                                                     fill
                                                     className="object-contain transition-all duration-300"
                                                     priority
@@ -283,11 +297,11 @@ const ViewProductPage = () => {
                             </CardContent>
                         </Card>
 
-                        {/* --- Tabs --- */}
+                        {/* Tabs */}
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                             <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent dark:border-slate-800">
-                                <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600">Product Overview</TabsTrigger>
-                                <TabsTrigger value="details" className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600">Additional Details</TabsTrigger>
+                                <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600">Overview</TabsTrigger>
+                                <TabsTrigger value="details" className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600">System Details</TabsTrigger>
                             </TabsList>
                             <div className="pt-6">
                                 <TabsContent value="overview" className="space-y-6">
@@ -300,25 +314,25 @@ const ViewProductPage = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <DisplayField label="Created At" value={new Date(currentProduct.created_at).toLocaleDateString()} />
                                         <DisplayField label="Last Updated" value={new Date(currentProduct.updated_at).toLocaleDateString()} />
+                                        <DisplayField label="Total Variants" value={currentVariants?.length || 0} />
                                     </div>
                                 </TabsContent>
                             </div>
                         </Tabs>
                     </div>
 
-                    {/* --- Right Column: Variant Specifics --- */}
+                    {/* --- Right Column: Variant Selector & Details --- */}
                     <div className="space-y-6">
-                        <Card className="border-t-4 border-t-blue-600 shadow-lg dark:bg-slate-800 dark:border-slate-700">
+                        <Card className="border-t-4 border-t-blue-600 shadow-lg dark:bg-slate-800 dark:border-slate-700 sticky top-8">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-lg font-medium text-slate-500 dark:text-slate-400">
-                                    Product Details
+                                    Selected Variant Details
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="p-6 space-y-6">
 
-                                {/* Price Section */}
+                                {/* 1. Pricing */}
                                 <div>
-                                    <h2 className="mb-4 text-slate-700 dark:text-slate-300 font-medium"> Default Variant price</h2>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-4xl font-bold text-slate-900 dark:text-slate-100">
                                             {formatPrice(displayPrice)}
@@ -337,7 +351,50 @@ const ViewProductPage = () => {
 
                                 <Separator />
 
-                                {/* Variant SKU & ID */}
+                                {/* 2. Variant Selector Grid */}
+                                {currentVariants?.length > 1 && (
+                                    <div className="space-y-3">
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                            Available Variants ({currentVariants.length})
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {currentVariants.map((variant) => {
+                                                const isSelected = selectedVariant?._id === variant._id;
+                                                return (
+                                                    <button
+                                                        key={variant._id}
+                                                        onClick={() => setSelectedVariant(variant)}
+                                                        className={cn(
+                                                            "relative flex flex-col items-start p-3 rounded-lg border text-left transition-all hover:bg-slate-50 dark:hover:bg-slate-800",
+                                                            isSelected
+                                                                ? "border-blue-600 bg-blue-50/50 dark:bg-blue-900/10 ring-1 ring-blue-600"
+                                                                : "border-slate-200 dark:border-slate-700"
+                                                        )}
+                                                    >
+                                                        {isSelected && (
+                                                            <div className="absolute top-2 right-2 text-blue-600">
+                                                                <Check className="w-4 h-4" />
+                                                            </div>
+                                                        )}
+                                                        {/* Assuming variant has a name, otherwise fallback to SKU or generic name */}
+                                                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate w-full pr-4">
+                                                            {variant.name || variant.sku || "Variant"}
+                                                        </span>
+                                                        <span className="text-xs text-slate-500 mt-1">
+                                                            {formatPrice(variant.price)}
+                                                        </span>
+                                                        {variant.stock_quantity <= 0 && (
+                                                            <span className="text-[10px] text-red-500 font-medium mt-1">Out of Stock</span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                                {currentVariants?.length > 1 && <Separator />}
+
+                                {/* 3. SKU & IDs */}
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-slate-500 flex items-center gap-2"><Tag className="w-4 h-4" /> SKU</span>
@@ -353,7 +410,7 @@ const ViewProductPage = () => {
 
                                 <Separator />
 
-                                {/* Stock Section */}
+                                {/* 4. Stock Status */}
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center mb-1">
                                         <span className="text-sm font-medium flex items-center gap-2">
@@ -370,32 +427,38 @@ const ViewProductPage = () => {
                                         value={isOutOfStock ? 0 : isLowStock ? 10 : 100}
                                         className={cn("h-2", isLowStock ? "bg-amber-100 [&>div]:bg-amber-500" : "bg-green-100 [&>div]:bg-green-500")}
                                     />
-                                    {isLowStock && (
+                                    {isLowStock && !isOutOfStock && (
                                         <div className="text-xs text-amber-600 flex items-center gap-1 mt-1">
-                                            <AlertTriangle className="w-3 h-3" /> Low stock alert (Threshold: {lowStockThreshold})
+                                            <AlertTriangle className="w-3 h-3" /> Low stock alert
                                         </div>
                                     )}
                                 </div>
+
+                                {/* 5. Attributes (Optional: If your variant object has specific attributes) */}
+                                {selectedVariant?.attributes && Object.keys(selectedVariant.attributes).length > 0 && (
+                                    <>
+                                        <Separator />
+                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                            {Object.entries(selectedVariant.attributes).map(([key, val]) => (
+                                                <div key={key} className="bg-slate-50 dark:bg-slate-800 p-2 rounded">
+                                                    <span className="text-slate-500 block text-xs capitalize">{key}</span>
+                                                    <span className="font-medium text-slate-900 dark:text-slate-100">{val}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* 6. Actions */}
+                                <div className="pt-4 space-y-2">
+                                    <Button className="w-full" disabled={isOutOfStock}>
+                                        <ShoppingCart className="w-4 h-4 mr-2" />
+                                        {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                                    </Button>
+                                </div>
+
                             </CardContent>
                         </Card>
-
-                        {/* Summary Widget */}
-                        <div className="bg-blue-50 dark:bg-slate-800/50 border border-blue-100 dark:border-slate-700 rounded-xl p-5">
-                            <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                                <ShoppingCart className="w-4 h-4 text-blue-600" />
-                                Product Performance
-                            </h4>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-xs text-slate-500 uppercase tracking-wider">Total Sold</p>
-                                    <p className="text-xl font-bold mt-1">{currentProduct.total_sold || 0}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-slate-500 uppercase tracking-wider">Rating</p>
-                                    <p className="text-xl font-bold mt-1">{currentProduct.rating || 0}/5</p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                 </div>

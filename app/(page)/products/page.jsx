@@ -256,6 +256,7 @@ const ProductsListPage = () => {
                                                     src={p.main_image.url}
                                                     alt="product image"
                                                     fill
+                                                    sizes="150px"
                                                     className="object-cover"
                                                 /> : <ImageIcon className="h-4 w-4 text-slate-400" />}
                                             </div>
