@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useProductStore } from "@/store/productStore";
@@ -16,7 +16,9 @@ import {
     ShoppingCart,
     Settings,
     Box,
-    Check
+    Check,
+    Receipt,
+    ImageOff
 } from "lucide-react";
 
 // --- Shadcn UI ---
@@ -90,6 +92,13 @@ const ViewProductPage = () => {
     const [selectedVariant, setSelectedVariant] = useState(null);
     const [activeImage, setActiveImage] = useState(null);
     const [activeTab, setActiveTab] = useState("overview");
+    const [failedImages, setFailedImages] = useState(new Set());
+
+    // Handle image load error
+    const handleImageError = useCallback((src) => {
+        console.error("❌ IMAGE LOAD FAILED:", src);
+        setFailedImages(prev => new Set(prev).add(src));
+    }, []);
 
     // --- 1. Fetch Product Data ---
     useEffect(() => {
@@ -122,10 +131,26 @@ const ViewProductPage = () => {
     useEffect(() => {
         if (selectedVariant) {
             // Priority: Variant Image -> Product Main Image
-            const img = selectedVariant.images?.[0] || currentProduct?.main_image?.url || null;
-            setActiveImage(img);
+            // Handle both string URLs and image objects with .url property
+            const variantImg = selectedVariant.images?.[0];
+            const imgUrl = typeof variantImg === 'string' ? variantImg : variantImg?.url;
+            const finalImg = imgUrl || currentProduct?.main_image?.url || null;
+            
+            // DEBUG: Log image URLs
+            console.log("🖼️ DEBUG IMAGE URLs:", {
+                variantName: selectedVariant?.name,
+                variantImages: selectedVariant?.images,
+                firstVariantImg: variantImg,
+                extractedUrl: imgUrl,
+                productMainImage: currentProduct?.main_image?.url,
+                finalActiveImage: finalImg
+            });
+            
+            setActiveImage(finalImg && finalImg.trim() !== '' ? finalImg : null);
         } else if (currentProduct) {
-            setActiveImage(currentProduct.main_image?.url);
+            const mainImg = currentProduct.main_image?.url;
+            console.log("🖼️ DEBUG - Using product main image:", mainImg);
+            setActiveImage(mainImg && mainImg.trim() !== '' ? mainImg : null);
         }
     }, [selectedVariant, currentProduct]);
 
@@ -175,10 +200,10 @@ const ViewProductPage = () => {
     // Images: Combine Product Main Image + Variant Images for the gallery
     const galleryImages = [
         currentProduct.main_image?.url,
-        ...(currentProduct.images || []).map((img) => img.url),
-        // Add current variant images if they exist
-        ...(selectedVariant?.images || [])
-    ].filter(Boolean);
+        ...(currentProduct.images || []).map((img) => img?.url),
+        // Add current variant images if they exist (extract .url from image objects)
+        ...(selectedVariant?.images || []).map((img) => typeof img === 'string' ? img : img?.url)
+    ].filter((url) => url && url.trim() !== ''); // Filter out null, undefined, and empty strings
 
     const uniqueImages = [...new Set(galleryImages)];
 
@@ -253,16 +278,24 @@ const ViewProductPage = () => {
                                                     "relative flex-shrink-0 w-16 h-16 md:w-full md:h-20 rounded-md overflow-hidden border-2 transition-all",
                                                     activeImage === src
                                                         ? "border-blue-600 ring-2 ring-blue-100"
-                                                        : "border-transparent hover:border-slate-300"
+                                                        : "border-transparent hover:border-slate-300",
+                                                    failedImages.has(src) && "border-red-300 bg-red-50"
                                                 )}
                                             >
-                                                <Image
-                                                    src={src}
-                                                    alt={`Thumbnail ${idx + 1}`}
-                                                    fill
-                                                    className="object-cover"
-                                                    sizes="(max-width: 768px) 100vw, 150px"
-                                                />
+                                                {failedImages.has(src) ? (
+                                                    <div className="flex items-center justify-center w-full h-full bg-red-50 dark:bg-red-900/20">
+                                                        <ImageOff className="w-6 h-6 text-red-400" />
+                                                    </div>
+                                                ) : (
+                                                    <Image
+                                                        src={src}
+                                                        alt={`Thumbnail ${idx + 1}`}
+                                                        fill
+                                                        className="object-cover"
+                                                        sizes="(max-width: 768px) 100vw, 150px"
+                                                        onError={() => handleImageError(src)}
+                                                    />
+                                                )}
                                             </button>
                                         )) : (
                                             <div className="text-xs text-center text-slate-400 py-4">No images</div>
@@ -271,7 +304,7 @@ const ViewProductPage = () => {
 
                                     {/* Main Display */}
                                     <div className="order-1 md:order-2 col-span-1 md:col-span-4 relative bg-white dark:bg-slate-900 flex items-center justify-center p-8 h-[450px]">
-                                        {activeImage ? (
+                                        {activeImage && !failedImages.has(activeImage) ? (
                                             <div className="relative w-full h-full">
                                                 <Image
                                                     src={activeImage}
@@ -280,12 +313,23 @@ const ViewProductPage = () => {
                                                     className="object-contain transition-all duration-300"
                                                     priority
                                                     sizes="(max-width: 768px) 100vw, 800px"
+                                                    onError={() => handleImageError(activeImage)}
                                                 />
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center text-slate-300">
-                                                <ImageIcon className="w-20 h-20 mb-2 opacity-50" />
-                                                <p>No Image Available</p>
+                                                {failedImages.has(activeImage) ? (
+                                                    <>
+                                                        <ImageOff className="w-20 h-20 mb-2 text-red-400" />
+                                                        <p className="text-red-500 font-medium">Image Failed to Load</p>
+                                                        <p className="text-xs text-slate-400 mt-1 max-w-xs text-center break-all">{activeImage}</p>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <ImageIcon className="w-20 h-20 mb-2 opacity-50" />
+                                                        <p>No Image Available</p>
+                                                    </>
+                                                )}
                                             </div>
                                         )}
 
@@ -476,7 +520,51 @@ const ViewProductPage = () => {
                                     </>
                                 )}
 
-                                {/* 6. Actions */}
+                                {/* 6. GST / Tax Section */}
+                                {(() => {
+                                    // Normalize tax data - handle both array and object formats
+                                    let taxArray = [];
+                                    if (selectedVariant?.tax) {
+                                        if (Array.isArray(selectedVariant.tax)) {
+                                            taxArray = selectedVariant.tax.filter(t => t && (t.name || t.rate !== undefined));
+                                        } else if (typeof selectedVariant.tax === 'object' && selectedVariant.tax !== null) {
+                                            const entries = selectedVariant.tax instanceof Map 
+                                                ? Array.from(selectedVariant.tax.entries())
+                                                : Object.entries(selectedVariant.tax);
+                                            taxArray = entries.map(([name, rate]) => ({ name, rate: Number(rate) || 0 }));
+                                        }
+                                    }
+                                    
+                                    if (taxArray.length === 0) return null;
+                                    
+                                    return (
+                                        <>
+                                            <Separator />
+                                            <div className="space-y-3">
+                                                <div className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-400">
+                                                    <Receipt className="w-4 h-4" />
+                                                    GST / Tax Breakdown
+                                                </div>
+                                                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 space-y-2">
+                                                    {taxArray.map((t, idx) => (
+                                                        <div key={idx} className="flex justify-between items-center">
+                                                            <span className="text-sm text-slate-600 dark:text-slate-300">{t.name}</span>
+                                                            <span className="font-semibold text-amber-700 dark:text-amber-400">{t.rate}%</span>
+                                                        </div>
+                                                    ))}
+                                                    <div className="pt-2 border-t border-amber-200 dark:border-amber-700/50 flex justify-between items-center">
+                                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Total Tax</span>
+                                                        <span className="font-bold text-amber-800 dark:text-amber-300">
+                                                            {taxArray.reduce((sum, t) => sum + (t.rate || 0), 0)}%
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+
+                                {/* 7. Actions */}
                                 <div className="pt-4 space-y-2">
                                     <Button className="w-full" disabled={isOutOfStock}>
                                         <ShoppingCart className="w-4 h-4 mr-2" />

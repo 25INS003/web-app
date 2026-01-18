@@ -555,10 +555,10 @@ export default function VariantDetailParams() {
               <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Media</h3>
 
               {/* Existing Images */}
-              {formData.images.length > 0 ? (
+              {formData.images.filter(img => img?.url && img.url.trim() !== '').length > 0 ? (
                 <div className="mb-6">
                   <div className="grid grid-cols-3 gap-2">
-                    {formData.images.map((img, index) => (
+                    {formData.images.filter(img => img?.url && img.url.trim() !== '').map((img, index) => (
                       <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group bg-gray-100">
                         <img
                           src={img.url}

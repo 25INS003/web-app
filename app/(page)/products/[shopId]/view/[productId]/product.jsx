@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useProductStore } from "@/store/productStore";
 import { useVariantStore } from "@/store/productVariantStore";
+import VariantList from "./variant";
 // --- Icons ---
 import {
     ArrowLeft,
@@ -16,7 +17,8 @@ import {
     ShoppingCart,
     Settings,
     Box,
-    Check
+    Check,
+    Receipt
 } from "lucide-react";
 
 // --- Shadcn UI ---
@@ -120,10 +122,18 @@ const ViewProductPage = ({ shopId, productId }) => {
     useEffect(() => {
         if (selectedVariant) {
             // Priority: Variant Image -> Product Main Image
-            const img = selectedVariant.images?.[0] || currentProduct?.main_image?.url || null;
+            // Treat empty strings as falsy
+            const variantImg = selectedVariant.images?.[0]?.url;
+            const productImg = currentProduct?.main_image?.url;
+            const img = (variantImg && variantImg.trim() !== '') 
+                ? variantImg 
+                : (productImg && productImg.trim() !== '') 
+                    ? productImg 
+                    : null;
             setActiveImage(img);
         } else if (currentProduct) {
-            setActiveImage(currentProduct.main_image?.url);
+            const productImg = currentProduct.main_image?.url;
+            setActiveImage((productImg && productImg.trim() !== '') ? productImg : null);
         }
     }, [selectedVariant, currentProduct]);
 
@@ -171,14 +181,47 @@ const ViewProductPage = ({ shopId, productId }) => {
     const isOutOfStock = stockQty <= 0;
 
     // Images: Combine Product Main Image + Variant Images for the gallery
+    // Helper to validate URLs
+    const isValidUrl = (url) => url && typeof url === 'string' && url.trim() !== '';
+    
+    // Create a mapping of image URL to variant for bi-directional sync
+    const imageToVariantMap = {};
+    
+    // Add product main image (no variant association)
+    const productMainImage = currentProduct.main_image?.url;
+    
+    // Add variant images with their variant association
+    currentVariants?.forEach(variant => {
+        (variant.images || []).forEach(img => {
+            if (isValidUrl(img.url)) {
+                imageToVariantMap[img.url] = variant;
+            }
+        });
+    });
+    
     const galleryImages = [
-        currentProduct.main_image?.url,
+        productMainImage,
         ...(currentProduct.images || []).map((img) => img.url),
-        // Add current variant images if they exist
-        ...(selectedVariant?.images || [])
-    ].filter(Boolean);
+        // Add ALL variant images (not just selected variant)
+        ...(currentVariants || []).flatMap(v => (v.images || []).map(img => img.url))
+    ].filter(isValidUrl); // Filter out null, undefined, and empty strings
 
     const uniqueImages = [...new Set(galleryImages)];
+    
+    // Only use validated images for rendering
+    const validImages = uniqueImages.filter(isValidUrl);
+    
+    console.log("DEBUG: validImages =", validImages, "uniqueImages =", uniqueImages);
+    
+    // Handler for thumbnail click - selects image and corresponding variant
+    const handleImageClick = (src) => {
+        setActiveImage(src);
+        // If this image belongs to a variant, select that variant
+        const variant = imageToVariantMap[src];
+        if (variant) {
+            setSelectedVariant(variant);
+        }
+    };
 
     return (
         <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-12">
@@ -243,10 +286,10 @@ const ViewProductPage = ({ shopId, productId }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-5 min-h-[450px]">
                                     {/* Thumbnails */}
                                     <div className="order-2 md:order-1 col-span-1 p-4 flex md:flex-col gap-3 overflow-auto bg-slate-50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800">
-                                        {uniqueImages.length > 0 ? uniqueImages.map((src, idx) => (
+                                        {validImages.length > 0 ? validImages.map((src, idx) => (
                                             <button
                                                 key={`${src}-${idx}`}
-                                                onClick={() => setActiveImage(src)}
+                                                onClick={() => handleImageClick(src)}
                                                 className={cn(
                                                     "relative flex-shrink-0 w-16 h-16 md:w-full md:h-20 rounded-md overflow-hidden border-2 transition-all",
                                                     activeImage === src
@@ -269,7 +312,7 @@ const ViewProductPage = ({ shopId, productId }) => {
 
                                     {/* Main Display */}
                                     <div className="order-1 md:order-2 col-span-1 md:col-span-4 relative bg-white dark:bg-slate-900 flex items-center justify-center p-8 h-[450px]">
-                                        {activeImage ? (
+                                        {activeImage && activeImage.trim() !== '' ? (
                                             <div className="relative w-full h-full">
                                                 <Image
                                                     src={activeImage}
@@ -297,11 +340,16 @@ const ViewProductPage = ({ shopId, productId }) => {
                             </CardContent>
                         </Card>
 
+
+
+
+
                         {/* Tabs */}
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                             <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent dark:border-slate-800">
                                 <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600">Overview</TabsTrigger>
                                 <TabsTrigger value="details" className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600">System Details</TabsTrigger>
+                                <TabsTrigger value="variants" className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600">Variants</TabsTrigger>
                             </TabsList>
                             <div className="pt-6">
                                 <TabsContent value="overview" className="space-y-6">
@@ -315,6 +363,24 @@ const ViewProductPage = ({ shopId, productId }) => {
                                         <DisplayField label="Created At" value={new Date(currentProduct.created_at).toLocaleDateString()} />
                                         <DisplayField label="Last Updated" value={new Date(currentProduct.updated_at).toLocaleDateString()} />
                                         <DisplayField label="Total Variants" value={currentVariants?.length || 0} />
+                                    </div>
+                                </TabsContent>
+                                <TabsContent value="variants">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-lg font-medium">Manage Variants</h3>
+                                            <Button 
+                                                onClick={() => router.push(`/variants/${currentProduct._id}/add`)}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                            >
+                                                <Box className="w-4 h-4 mr-2" />
+                                                Add Variant
+                                            </Button>
+                                        </div>
+                                        <VariantList 
+                                            variants={currentVariants} 
+                                            shopId={shopId} // Pass down if needed
+                                        />
                                     </div>
                                 </TabsContent>
                             </div>
@@ -337,7 +403,7 @@ const ViewProductPage = ({ shopId, productId }) => {
                                         <span className="text-4xl font-bold text-slate-900 dark:text-slate-100">
                                             {formatPrice(displayPrice)}
                                         </span>
-                                        <span className="text-sm text-slate-500"> per {currentProduct.cost_against}</span>
+                                        <span className="text-sm text-slate-500"> per {selectedVariant?.per_unit_qty || 1} {selectedVariant?.unit || 'piece'}</span>
                                     </div>
                                     {hasDiscount && (
                                         <div className="mt-2 flex items-center gap-2 text-sm bg-green-50 dark:bg-green-900/20 p-2 rounded-md w-fit">
@@ -434,17 +500,29 @@ const ViewProductPage = ({ shopId, productId }) => {
                                     )}
                                 </div>
 
-                                {/* 5. Attributes (Optional: If your variant object has specific attributes) */}
-                                {selectedVariant?.attributes && Object.keys(selectedVariant.attributes).length > 0 && (
+                                {/* 5. Attributes (Handles both array [{name, value}] and object {key: value} formats) */}
+                                {selectedVariant?.attributes && (
+                                    Array.isArray(selectedVariant.attributes) 
+                                        ? selectedVariant.attributes.length > 0 
+                                        : Object.keys(selectedVariant.attributes).length > 0
+                                ) && (
                                     <>
                                         <Separator />
                                         <div className="grid grid-cols-2 gap-2 text-sm">
-                                            {Object.entries(selectedVariant.attributes).map(([key, val]) => (
-                                                <div key={key} className="bg-slate-50 dark:bg-slate-800 p-2 rounded">
-                                                    <span className="text-slate-500 block text-xs capitalize">{key}</span>
-                                                    <span className="font-medium text-slate-900 dark:text-slate-100">{val}</span>
-                                                </div>
-                                            ))}
+                                            {Array.isArray(selectedVariant.attributes) 
+                                                ? selectedVariant.attributes.map((attr, idx) => (
+                                                    <div key={idx} className="bg-slate-50 dark:bg-slate-800 p-2 rounded">
+                                                        <span className="text-slate-500 block text-xs capitalize">{attr.name}</span>
+                                                        <span className="font-medium text-slate-900 dark:text-slate-100">{attr.value}</span>
+                                                    </div>
+                                                ))
+                                                : Object.entries(selectedVariant.attributes).map(([key, val]) => (
+                                                    <div key={key} className="bg-slate-50 dark:bg-slate-800 p-2 rounded">
+                                                        <span className="text-slate-500 block text-xs capitalize">{key}</span>
+                                                        <span className="font-medium text-slate-900 dark:text-slate-100">{val}</span>
+                                                    </div>
+                                                ))
+                                            }
                                         </div>
                                     </>
                                 )}
@@ -459,6 +537,60 @@ const ViewProductPage = ({ shopId, productId }) => {
 
                             </CardContent>
                         </Card>
+
+                        {/* GST / Tax Card */}
+                        {(() => {
+                            // Normalize tax data - handle both array and object formats
+                            let taxArray = [];
+                            console.log("selectedVariant?.tax:", selectedVariant?.tax, "type:", typeof selectedVariant?.tax);
+                            if (selectedVariant?.tax) {
+                                if (Array.isArray(selectedVariant.tax)) {
+                                    taxArray = selectedVariant.tax.filter(t => t?.name && t?.rate !== undefined);
+                                } else if (typeof selectedVariant.tax === 'object' && selectedVariant.tax !== null) {
+                                    // Old Map/Object format: { "IGST": 18 }
+                                    taxArray = Object.entries(selectedVariant.tax).map(([name, rate]) => ({ name, rate }));
+                                }
+                            }
+                            console.log("taxArray:", taxArray);
+                            return taxArray.length > 0 && (
+                                <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 dark:border dark:border-amber-800/30">
+                                    <CardHeader className="pb-3">
+                                        <CardTitle className="text-base flex items-center gap-2 text-amber-800 dark:text-amber-300">
+                                            <Receipt className="w-5 h-5" />
+                                            GST / Tax Breakdown
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="pt-0">
+                                        <div className="space-y-3">
+                                            {taxArray.map((t, idx) => (
+                                                <div key={idx} className="flex justify-between items-center p-3 bg-white/60 dark:bg-slate-800/60 rounded-lg border border-amber-200/50 dark:border-amber-700/30">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                                                        <span className="font-medium text-slate-700 dark:text-slate-200">{t.name}</span>
+                                                    </div>
+                                                    <span className="text-lg font-bold text-amber-700 dark:text-amber-400">{t.rate}%</span>
+                                                </div>
+                                            ))}
+                                            {/* Total Tax Summary */}
+                                            <div className="mt-2 pt-3 border-t border-amber-200 dark:border-amber-700/50">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-slate-600 dark:text-slate-400">Total Tax Rate</span>
+                                                    <span className="text-xl font-bold text-amber-800 dark:text-amber-300">
+                                                        {taxArray.reduce((sum, t) => sum + (t.rate || 0), 0)}%
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center mt-1">
+                                                    <span className="text-sm text-slate-600 dark:text-slate-400">Tax Amount (on ₹{displayPrice})</span>
+                                                    <span className="text-lg font-semibold text-green-700 dark:text-green-400">
+                                                        ₹{((displayPrice * taxArray.reduce((sum, t) => sum + (t.rate || 0), 0)) / 100).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })()}
                     </div>
 
                 </div>

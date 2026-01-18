@@ -155,10 +155,7 @@ export const useVariantStore = create((set, get) => ({
 
             const response = await apiClient.post(
                 `/variants/${variantId}/images`,
-                formData,
-                {
-                    headers: { "Content-Type": "multipart/form-data" },
-                }
+                formData
             );
 
             // Update state with new image data
@@ -188,10 +185,7 @@ export const useVariantStore = create((set, get) => ({
 
             const response = await apiClient.put(
                 `/variants/${variantId}/images/main`,
-                formData,
-                {
-                    headers: { "Content-Type": "multipart/form-data" },
-                }
+                formData
             );
 
             const updatedVariant = response.data.data;

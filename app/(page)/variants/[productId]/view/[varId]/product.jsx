@@ -104,10 +104,15 @@ const ViewProductPage = () => {
     // --- 3. Handle Image Selection ---
     useEffect(() => {
         if (selectedVariant) {
-            const img = selectedVariant.images?.[0] || currentProduct?.main_image?.url || null;
+            const variantImageUrl = selectedVariant.images?.[0]?.url;
+            const productImageUrl = currentProduct?.main_image?.url;
+            const img = (variantImageUrl && variantImageUrl.trim() !== '') ? variantImageUrl : 
+                        (productImageUrl && productImageUrl.trim() !== '') ? productImageUrl : null;
             setActiveImage(img);
-        } else if (currentProduct) {
-            setActiveImage(currentProduct.main_image?.url);
+        } else if (currentProduct?.main_image?.url && currentProduct.main_image.url.trim() !== '') {
+            setActiveImage(currentProduct.main_image.url);
+        } else {
+            setActiveImage(null);
         }
     }, [selectedVariant, currentProduct]);
 
@@ -155,9 +160,13 @@ const ViewProductPage = () => {
     const isOutOfStock = stockQty <= 0;
 
     // Images: Combine Product Main Image + Variant Images for the gallery
+    const mainImageUrl = currentProduct.main_image?.url;
+    const additionalImages = (currentProduct.images || [])
+        .map(img => typeof img === 'string' ? img : img?.url)
+        .filter(url => url && url.trim() !== '');
     const galleryImages = [
-        ...(currentProduct.main_image?.url ? [currentProduct.main_image.url] : []),
-        ...(currentProduct.images || [])
+        ...(mainImageUrl && mainImageUrl.trim() !== '' ? [mainImageUrl] : []),
+        ...additionalImages
     ].filter(Boolean);
     const uniqueImages = [...new Set(galleryImages)];
 

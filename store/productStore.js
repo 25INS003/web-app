@@ -279,7 +279,7 @@ export const useProductStore = create((set, get) => ({
 
       // 2. MERGE: Combine the product info with its variants
       const fullProductDetail = { ...product, variants: variants };
-
+      console.log(fullProductDetail);
       set((state) => ({
         // Map through the existing list and update ONLY the matching product
         products: state.products.map((p) =>

@@ -95,8 +95,13 @@ const VariantList = ({ variants = [], onEdit, onDelete }) => {
                                 {/* --- 2. Identity Column --- */}
                                 <TableCell>
                                     <div className="flex flex-col gap-1">
+                                        {/* Added Variant Name Display */}
+                                        <div className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+                                            {variant.name || "Unnamed Variant"}
+                                        </div>
+
                                         <div className="flex items-center gap-2">
-                                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                                            <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                                                 {variant.sku || "No SKU"}
                                             </span>
                                             {variant.is_default && (
@@ -107,7 +112,7 @@ const VariantList = ({ variants = [], onEdit, onDelete }) => {
                                         </div>
                                         
                                         {/* Dynamic Attributes Mapping */}
-                                        <div className="flex flex-wrap gap-1">
+                                        <div className="flex flex-wrap gap-1 mt-1">
                                             {variant.attributes && variant.attributes.length > 0 ? (
                                                 variant.attributes.map((attr, idx) => (
                                                     <span 

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, Children, isValidElement } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -54,20 +54,26 @@ export function TabsTab({ value, children, className }) {
 }
 
 export function TabsPanels({ children, className }) {
+    const { activeTab } = useContext(TabsContext);
+    
+    // Find the active panel among children
+    let activePanel = null;
+    Children.forEach(children, (child) => {
+        if (isValidElement(child) && child.props.value === activeTab) {
+            activePanel = child;
+        }
+    });
+    
     return (
         <div className={cn("relative overflow-hidden", className)}>
              <AnimatePresence mode="wait" initial={false}>
-                 {children}
+                 {activePanel}
              </AnimatePresence>
         </div>
     )
 }
 
 export function TabsPanel({ value, children, className }) {
-    const { activeTab } = useContext(TabsContext);
-    
-    if (activeTab !== value) return null;
-    
     return (
         <motion.div
             key={value}
@@ -81,3 +87,4 @@ export function TabsPanel({ value, children, className }) {
         </motion.div>
     )
 }
+

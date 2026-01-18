@@ -248,22 +248,27 @@ const ProductsListPage = () => {
                         ) : (
                             products.map((p) => {
                                 const isActive = p.is_active;
+                                const hasValidImage = p.main_image?.url && p.main_image.url.trim() !== '';
                                 return (
                                     <TableRow key={p._id} className={!isActive ? "bg-slate-50/60 opacity-75" : ""}>
                                         <TableCell >
-                                            <div className="h-10 w-10 relative rounded bg-slate-100 flex items-center justify-center overflow-hidden">
-                                                {p.main_image?.url ? <Image
-                                                    src={p.main_image.url}
-                                                    alt="product image"
-                                                    fill
-                                                    sizes="150px"
-                                                    className="object-cover"
-                                                /> : <ImageIcon className="h-4 w-4 text-slate-400" />}
-                                            </div>
+                                            <Link href={`/products/${shopId}/view/${p._id}`} className="cursor-pointer block">
+                                                <div className="h-10 w-10 relative rounded bg-slate-100 flex items-center justify-center overflow-hidden hover:ring-2 hover:ring-blue-400 transition-all">
+                                                    {hasValidImage ? <Image
+                                                        src={p.main_image.url}
+                                                        alt="product image"
+                                                        fill
+                                                        sizes="150px"
+                                                        className="object-cover"
+                                                    /> : <ImageIcon className="h-4 w-4 text-slate-400" />}
+                                                </div>
+                                            </Link>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="font-semibold">{p.name}</div>
-                                            <div className="text-xs text-slate-500">{p.brand} {p.unit ? `• ${p.unit}` : ''}</div>
+                                            <Link href={`/products/${shopId}/view/${p._id}`} className="cursor-pointer block hover:text-blue-600 transition-colors">
+                                                <div className="font-semibold">{p.name}</div>
+                                                <div className="text-xs text-slate-500">{p.brand} {p.unit ? `• ${p.unit}` : ''}</div>
+                                            </Link>
                                         </TableCell>
                                         <TableCell><Badge variant="outline">{p.category_id?.name || "N/A"}</Badge></TableCell>
                                         <TableCell>₹{p.price?.toLocaleString()}</TableCell>

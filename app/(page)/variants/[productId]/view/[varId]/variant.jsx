@@ -68,16 +68,17 @@ const VariantList = ({ variants = [], onEdit, onDelete }) => {
                     {variants.map((variant) => {
                         const isLowStock = variant.stock_quantity <= variant.low_stock_threshold;
                         const isOutOfStock = variant.stock_quantity <= 0;
-                        const mainImage = variant.images?.[0] || null;
+                        const mainImageUrl = variant.images?.[0]?.url;
+                        const hasValidImage = mainImageUrl && mainImageUrl.trim() !== '';
 
                         return (
                             <TableRow key={variant._id} className="group">
                                 {/* --- 1. Image Column --- */}
                                 <TableCell>
                                     <div className="relative w-12 h-12 rounded-md overflow-hidden bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
-                                        {mainImage ? (
+                                        {hasValidImage ? (
                                             <Image 
-                                                src={mainImage} 
+                                                src={mainImageUrl} 
                                                 alt={variant.sku}
                                                 fill
                                                 className="object-cover"

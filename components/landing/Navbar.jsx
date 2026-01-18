@@ -5,11 +5,18 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { AnimatedMenuIcon } from "@/components/ui/animated-menu-icon";
+import { Sun, Moon } from "lucide-react";
 
 export default function Navbar() {
     const [hoveredTab, setHoveredTab] = useState(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const { theme, setTheme } = useTheme();
+
+    const toggleTheme = () => {
+        setTheme(theme === 'dark' ? 'light' : 'dark');
+    };
 
     const navLinks = [
         { name: "Home", href: "#hero" },
@@ -147,6 +154,18 @@ export default function Navbar() {
                     className="hidden md:flex items-center gap-3 relative z-10"
                     onMouseLeave={() => setHoveredTab(null)}
                 >
+                    {/* Theme Toggle Button */}
+                    <button
+                        onClick={toggleTheme}
+                        className="p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                        aria-label="Toggle theme"
+                    >
+                        {theme === 'dark' ? (
+                            <Sun className="w-5 h-5" />
+                        ) : (
+                            <Moon className="w-5 h-5" />
+                        )}
+                    </button>
                      <Link 
                         href="/login" 
                         className={`relative text-sm font-medium px-4 py-2 transition-colors ${
@@ -245,6 +264,17 @@ export default function Navbar() {
 
                         {/* Mobile Menu Actions */}
                         <div className="p-4 space-y-3">
+                            {/* Theme Toggle - Mobile */}
+                            <button
+                                onClick={toggleTheme}
+                                className="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-slate-300 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200 border border-slate-800 gap-2"
+                            >
+                                {theme === 'dark' ? (
+                                    <><Sun className="w-5 h-5" /> Light Mode</>
+                                ) : (
+                                    <><Moon className="w-5 h-5" /> Dark Mode</>
+                                )}
+                            </button>
                             <Link 
                                 href="/login"
                                 onClick={() => setIsMobileMenuOpen(false)}
