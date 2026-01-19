@@ -7,7 +7,7 @@ import * as z from "zod";
 import { useParams, useRouter } from "next/navigation";
 import { useProductStore } from "@/store/productStore";
 import { useVariantStore } from "@/store/productVariantStore";
-import SelectCategory from "@/components/Dropdowns/selectCategory";
+import CascadingCategorySelect from "@/components/Dropdowns/CascadingCategorySelect";
 
 // --- Icons ---
 import {
@@ -430,10 +430,11 @@ const AddProductPage = () => {
                         <FormItem>
                           <FormLabel>Category *</FormLabel>
                           <FormControl>
-                            <SelectCategory
+                            <CascadingCategorySelect
                               value={field.value}
-                              onCateSelect={(id) => field.onChange(id)}
+                              onCategorySelect={(id) => field.onChange(id)}
                               isInvalid={!!form.formState.errors.category_id}
+                              placeholder="Select Category..."
                             />
                           </FormControl>
                           <FormMessage />

@@ -3,14 +3,18 @@
 import React, { useEffect, useState } from "react";
 import { useCategoryStore } from "@/store/categoryStore";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import {
     Layers,
     Plus,
     Search,
-    ChevronDown,
-    ChevronUp,
+    ChevronRight,
     ImageIcon,
-    Loader2
+    Loader2,
+    FolderTree,
+    Edit,
+    MoreVertical,
+    Trash2
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,9 +29,14 @@ import {
     DialogFooter,
     DialogDescription
 } from "@/components/ui/dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
-// Using sonner or your preferred toast provider is recommended here for error feedback
-// import { toast } from "sonner"; 
+import { toast } from "sonner"; 
 
 // Helper to flatten categories for the "Parent" select dropdown
 const flattenCategories = (categories, level = 0) => {
@@ -147,10 +156,9 @@ const CategoryDialog = ({ open, onOpenChange, parentId = null }) => {
                             {...register("parent_id")}
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
-                            <option value="">None</option>
+                            <option value="">None (Root Category)</option>
                             {flatCategories.map((cat) => (
                                 <option key={cat._id} value={cat._id}>
-                                    {/* Visual indentation for hierarchy */}
                                     {'\u00A0\u00A0'.repeat(cat.level)} {cat.name} (Order: {cat.display_order || 0})
                                 </option>
                             ))}
@@ -158,7 +166,6 @@ const CategoryDialog = ({ open, onOpenChange, parentId = null }) => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        {/* Order Number (Read Only) */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Order Number</label>
                             <Input
@@ -182,7 +189,6 @@ const CategoryDialog = ({ open, onOpenChange, parentId = null }) => {
                         </div>
                     </div>
 
-                    {/* Description Textarea */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Description</label>
                         <Textarea
@@ -207,26 +213,202 @@ const CategoryDialog = ({ open, onOpenChange, parentId = null }) => {
 };
 
 // ==========================================
-// Category Card Component (Recursive)
+// Edit Category Dialog
 // ==========================================
-const CategoryCard = ({ category, level = 0 }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const hasChildren = category.subcategories && category.subcategories.length > 0;
+const EditCategoryDialog = ({ open, onOpenChange, category, onSuccess }) => {
+    const { updateCategory, isLoading } = useCategoryStore();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [removeImage, setRemoveImage] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
 
-    // Ensure image path is correct (sometimes backend sends relative paths)
-    const imageUrl = category.image?.startsWith('http')
-        ? category.image
-        : category.image
-            ? `${process.env.NEXT_PUBLIC_API_URL || ''}${category.image}`
-            : null;
+    const { register, handleSubmit, reset, formState: { errors } } = useForm({
+        defaultValues: {
+            name: category?.name || "",
+            description: category?.description || "",
+            display_order: category?.display_order || 0,
+        }
+    });
+
+    // Reset form when category changes
+    useEffect(() => {
+        if (category) {
+            reset({
+                name: category.name || "",
+                description: category.description || "",
+                display_order: category.display_order || 0,
+            });
+            // Set existing image as preview
+            setImagePreview(category.image_url || category.image || null);
+            setRemoveImage(false);
+            setSelectedFile(null);
+        }
+    }, [category, reset]);
+
+    const handleImageChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+                setRemoveImage(false);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setImagePreview(null);
+        setRemoveImage(true);
+        setSelectedFile(null);
+    };
+
+    const onSubmit = async (data) => {
+        if (!category?._id) return;
+        
+        setIsSubmitting(true);
+        try {
+            // Use FormData for file uploads
+            const formData = new FormData();
+            formData.append("name", data.name.trim());
+            formData.append("description", data.description?.trim() || "");
+            formData.append("display_order", (parseInt(data.display_order) || 0).toString());
+
+            // Handle image - use selectedFile state instead of form data
+            if (selectedFile) {
+                formData.append("image", selectedFile);
+            } else if (removeImage) {
+                formData.append("remove_image", "true");
+            }
+
+            await updateCategory(category._id, formData);
+
+            toast.success("Category updated successfully!");
+            onOpenChange(false);
+            onSuccess?.();
+        } catch (error) {
+            console.error("Failed to update category", error);
+            toast.error(error.message || "Failed to update category");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
-        <Card className={`overflow-hidden transition-all duration-300 ${isOpen ? 'ring-2 ring-blue-500 shadow-lg' : 'hover:shadow-md'} border-slate-200 dark:border-slate-800`}>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Edit className="h-5 w-5 text-blue-500" />
+                        Edit Category
+                    </DialogTitle>
+                    <DialogDescription>
+                        Update category information
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Category Name *</label>
+                        <Input
+                            {...register("name", { required: "Name is required" })}
+                            placeholder="e.g. Electronics"
+                        />
+                        {errors.name && <span className="text-red-500 text-xs">{errors.name.message}</span>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Description</label>
+                        <Textarea
+                            {...register("description")}
+                            placeholder="Short description..."
+                            className="resize-none"
+                            rows={3}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Display Order</label>
+                            <Input
+                                type="number"
+                                {...register("display_order")}
+                                min={0}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium flex items-center gap-2">
+                                <ImageIcon className="h-4 w-4" /> Image (Optional)
+                            </label>
+                            <Input
+                                type="file"
+                                accept="image/png, image/jpeg, image/jpg, image/webp"
+                                className="cursor-pointer file:text-blue-600 file:font-semibold file:bg-blue-50 hover:file:bg-blue-100 text-xs"
+                                onChange={handleImageChange}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Image Preview */}
+                    {imagePreview && !removeImage && (
+                        <div className="relative w-full h-32 rounded-lg overflow-hidden border bg-slate-50">
+                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-2 right-2 h-6 w-6"
+                                onClick={handleRemoveImage}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        </div>
+                    )}
+
+                    <DialogFooter className="gap-2 sm:gap-0 pt-4">
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={isSubmitting || isLoading}>
+                            {(isSubmitting || isLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Changes
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+// ==========================================
+// Category Card Component (Clickable - navigates to detail page)
+// ==========================================
+const CategoryCard = ({ category, onEdit }) => {
+    const router = useRouter();
+    const { categories } = useCategoryStore();
+    
+    // Count subcategories from flat list
+    const subcategoryCount = categories.filter(
+        (cat) => cat.parent_category_id === category._id
+    ).length;
+
+    // Ensure image path is correct
+    const imageUrl = category.image_url || category.image;
+
+    const handleEditClick = (e) => {
+        e.stopPropagation(); // Prevent card navigation
+        onEdit?.(category);
+    };
+
+    return (
+        <Card 
+            className="overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:ring-2 hover:ring-blue-500/50 group border-slate-200 dark:border-slate-800"
+            onClick={() => router.push(`/categories/${category._id}`)}
+        >
             {/* Card Main Content */}
-            <div
-                className="cursor-pointer group"
-                onClick={() => hasChildren && setIsOpen(!isOpen)}
-            >
+            <div className="group">
                 {/* Image Header Container */}
                 <div className="relative h-40 w-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center overflow-hidden">
                     {imageUrl ? (
@@ -236,7 +418,7 @@ const CategoryCard = ({ category, level = 0 }) => {
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             onError={(e) => {
                                 e.target.onerror = null;
-                                e.target.src = 'https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image'; // Fallback image
+                                e.target.src = 'https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image';
                             }}
                         />
                     ) : (
@@ -246,17 +428,39 @@ const CategoryCard = ({ category, level = 0 }) => {
                         </div>
                     )}
 
-                    {/* Badge for Order/Level */}
+                    {/* Badge for Order */}
                     <div className="absolute top-2 right-2">
                         <Badge variant="secondary" className="bg-white/90 dark:bg-slate-800/90 shadow-sm backdrop-blur-sm text-xs">
                             Order: {category.display_order !== undefined ? category.display_order : 0}
                         </Badge>
                     </div>
+
+                    {/* Edit Button - Top Left */}
+                    <div className="absolute top-2 left-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button 
+                                    variant="secondary" 
+                                    size="icon" 
+                                    className="h-8 w-8 bg-white/90 dark:bg-slate-800/90 shadow-sm backdrop-blur-sm hover:bg-white dark:hover:bg-slate-700"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem onClick={handleEditClick}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit Category
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </div>
 
                 <div className="p-4">
                     <div className="flex justify-between items-start gap-2">
-                        <div>
+                        <div className="flex-1 min-w-0">
                             <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 line-clamp-1">
                                 {category.name}
                             </h3>
@@ -264,64 +468,50 @@ const CategoryCard = ({ category, level = 0 }) => {
                                 {category.description || "No description provided."}
                             </p>
                         </div>
-                        {hasChildren && (
-                            <button className="text-slate-400 hover:text-blue-500 transition-colors p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex-shrink-0 mt-1">
-                                {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                            </button>
-                        )}
+                        <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-500 transition-colors flex-shrink-0 mt-1" />
                     </div>
 
                     <div className="flex items-center gap-3 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-muted-foreground">
-                        <Badge variant={hasChildren ? "default" : "outline"} className={`text-[10px] ${!hasChildren && "opacity-70"}`}>
-                            {hasChildren ? `${category.subcategories.length} SUB-CATEGORIES` : 'NO SUB-CATEGORIES'}
+                        <Badge variant={subcategoryCount > 0 ? "default" : "outline"} className={`text-[10px] ${subcategoryCount === 0 && "opacity-70"}`}>
+                            {subcategoryCount > 0 ? `${subcategoryCount} SUBCATEGORIES` : 'NO SUBCATEGORIES'}
                         </Badge>
-                        {category.productCount !== undefined && category.productCount > 0 && (
-                            <span className="flex items-center gap-1">
-                                <span className="h-1 w-1 rounded-full bg-slate-300 inline-block"></span>
-                                {category.productCount} Products
-                            </span>
-                        )}
+                        <span className="text-blue-600 dark:text-blue-400 font-medium group-hover:underline">
+                            Click to view →
+                        </span>
                     </div>
                 </div>
             </div>
-
-            {/* Child Categories (Opened inside) */}
-            {isOpen && hasChildren && (
-                <div className="bg-slate-50/80 dark:bg-slate-900/50 border-t p-4 space-y-4 animate-in slide-in-from-top-1 duration-200">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Layers size={14} className="text-blue-500" />
-                        <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                            Inside: {category.name}
-                        </p>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 pl-2 border-l-2 border-blue-200 dark:border-blue-800">
-                        {category.subcategories.map((child) => (
-                            <CategoryCard key={child._id} category={child} level={level + 1} />
-                        ))}
-                    </div>
-                </div>
-            )}
         </Card>
     );
 };
 
 // ==========================================
-// Main Categories Page
+// Main Categories Page (Shows only ROOT categories)
 // ==========================================
 const CategoriesPage = () => {
     const { categories, fetchCategories, isLoading } = useCategoryStore();
     const [searchTerm, setSearchTerm] = useState("");
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState(null);
 
     useEffect(() => {
         // Ensure data is fetched on mount
         fetchCategories();
     }, [fetchCategories]);
 
-    // Simple search filter (top level only for cleaner UI, or adjust as needed)
-    const filteredCategories = categories ? categories.filter(cat =>
+    // Filter to show only ROOT categories (no parent_category_id)
+    const rootCategories = categories ? categories.filter(cat => !cat.parent_category_id) : [];
+
+    // Simple search filter on root categories
+    const filteredCategories = rootCategories.filter(cat =>
         cat.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) : [];
+    );
+
+    const handleEditCategory = (category) => {
+        setEditingCategory(category);
+        setIsEditOpen(true);
+    };
 
     return (
         <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
@@ -330,18 +520,18 @@ const CategoriesPage = () => {
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3 text-slate-800 dark:text-slate-100">
                         <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                            <Layers className="h-6 w-6 md:h-8 md:w-8" />
+                            <FolderTree className="h-6 w-6 md:h-8 md:w-8" />
                         </div>
                         Categories
                     </h1>
                     <p className="text-sm text-muted-foreground mt-2 md:ml-14 max-w-2xl">
-                        Organize your products into hierarchical categories. Click on a category card to view its sub-categories.
+                        Organize your products into hierarchical categories. <strong>Click on a category card</strong> to view and create subcategories.
                     </p>
                 </div>
 
                 <Button onClick={() => setIsCreateOpen(true)} size="lg" className="shadow-sm w-full md:w-auto">
                     <Plus className="mr-2 h-5 w-5" />
-                    Add New Category
+                    Add Root Category
                 </Button>
             </div>
 
@@ -350,29 +540,34 @@ const CategoriesPage = () => {
                 <div className="relative w-full sm:max-w-md">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search root categories..."
+                        placeholder="Search categories..."
                         className="pl-10 bg-white dark:bg-slate-900"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <Badge variant="outline" className="hidden sm:flex px-3 py-1 h-9 items-center gap-1 text-sm">
-                    Total Categories: {filteredCategories.length}
-                </Badge>
+                <div className="flex gap-2">
+                    <Badge variant="outline" className="px-3 py-1 h-9 flex items-center gap-1 text-sm">
+                        Root: {filteredCategories.length}
+                    </Badge>
+                    <Badge variant="secondary" className="px-3 py-1 h-9 flex items-center gap-1 text-sm">
+                        Total: {categories?.length || 0}
+                    </Badge>
+                </div>
             </div>
 
             {/* Categories Grid */}
             {isLoading && filteredCategories.length === 0 ? (
                 <div className="flex flex-col justify-center items-center h-64 gap-4 text-muted-foreground">
                     <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
-                    <p>Loading categories hierarchy...</p>
+                    <p>Loading categories...</p>
                 </div>
             ) : filteredCategories.length === 0 ? (
                 <div className="text-center py-16 px-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
-                    <Layers className="h-16 w-16 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+                    <FolderTree className="h-16 w-16 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
                     <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">No Categories Found</h3>
                     <p className="text-muted-foreground mt-2 mb-6 max-w-sm mx-auto">
-                        {searchTerm ? `No results for "${searchTerm}"` : "Get started by adding your first product category."}
+                        {searchTerm ? `No results for "${searchTerm}"` : "Get started by adding your first category."}
                     </p>
                     <Button onClick={() => setIsCreateOpen(true)} variant="outline">
                         <Plus className="mr-2 h-4 w-4" />
@@ -382,7 +577,11 @@ const CategoriesPage = () => {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-8">
                     {filteredCategories.map((category) => (
-                        <CategoryCard key={category._id} category={category} />
+                        <CategoryCard 
+                            key={category._id} 
+                            category={category} 
+                            onEdit={handleEditCategory}
+                        />
                     ))}
                 </div>
             )}
@@ -391,6 +590,13 @@ const CategoriesPage = () => {
             <CategoryDialog
                 open={isCreateOpen}
                 onOpenChange={setIsCreateOpen}
+            />
+
+            {/* Edit Category Modal */}
+            <EditCategoryDialog
+                open={isEditOpen}
+                onOpenChange={setIsEditOpen}
+                category={editingCategory}
             />
         </div>
     );
