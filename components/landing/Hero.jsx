@@ -123,7 +123,7 @@ export default function Hero() {
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.5 }}
                             whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                            className="bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-800 relative group"
+                            className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl dark:shadow-2xl border border-slate-200 dark:border-slate-800 relative group"
                         >
                             {/* Star badge */}
                             <motion.div 
@@ -134,9 +134,9 @@ export default function Hero() {
                                 ★
                             </motion.div>
                             
-                            <div className="text-sm text-slate-400 mb-2">Products Managed</div>
+                            <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">Products Managed</div>
                             <div className="flex items-end gap-3 mb-5">
-                                <span className="text-4xl font-bold text-white">4.8k</span>
+                                <span className="text-4xl font-bold text-slate-900 dark:text-white">4.8k</span>
                                 <span className="text-sm font-bold text-green-400 mb-1 bg-green-400/10 px-2 py-0.5 rounded-full">+320</span>
                             </div>
                             {/* Mini Bar Chart */}
@@ -147,7 +147,7 @@ export default function Hero() {
                                         initial={{ height: 0 }}
                                         animate={{ height: `${height}%` }}
                                         transition={{ delay: 0.8 + i * 0.08, duration: 0.4 }}
-                                        className={`flex-1 rounded-md ${i === 5 ? 'bg-primary' : i === 6 ? 'bg-purple-500' : 'bg-slate-700'}`}
+                                        className={`flex-1 rounded-md ${i === 5 ? 'bg-primary' : i === 6 ? 'bg-purple-500' : 'bg-slate-200 dark:bg-slate-700'}`}
                                     />
                                 ))}
                             </div>
@@ -159,11 +159,11 @@ export default function Hero() {
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.6 }}
                             whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                            className="bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-800 group"
+                            className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl dark:shadow-2xl border border-slate-200 dark:border-slate-800 group"
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 className="text-base font-semibold text-white mb-2">
+                                    <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-2">
                                         {activeOrderView === 0 ? "Completed" : "Total Orders"}
                                     </h3>
                                     <div className="flex items-center gap-2">
@@ -189,7 +189,7 @@ export default function Hero() {
                             {/* Donut Chart */}
                             <div className="relative w-24 h-24 mx-auto mb-3">
                                 <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                                    <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="10" className="text-slate-800" />
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="10" className="text-slate-200 dark:text-slate-800" />
                                     <motion.circle 
                                         cx="50" cy="50" r="40" fill="none" strokeWidth="10" 
                                         className="text-primary"
@@ -206,7 +206,7 @@ export default function Hero() {
                                         initial={{ opacity: 0, scale: 0.8 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ duration: 0.3 }}
-                                        className="text-xl font-bold text-white"
+                                        className="text-xl font-bold text-slate-900 dark:text-white"
                                     >
                                         {activeOrderView === 0 ? "1.1k" : "1.5k"}
                                     </motion.span>
@@ -223,10 +223,10 @@ export default function Hero() {
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.7 }}
                             whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                            className="col-span-2 bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-800 group"
+                            className="col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl dark:shadow-2xl border border-slate-200 dark:border-slate-800 group"
                         >
                             <div className="flex items-center justify-between mb-4">
-                                <div className="text-base font-semibold text-white">Monthly Performance</div>
+                                <div className="text-base font-semibold text-slate-900 dark:text-white">Monthly Performance</div>
                                 <div className="flex items-center gap-2 text-xs text-slate-500">
                                     <span className="flex items-center gap-1">
                                         <div className="w-2 h-2 rounded-full bg-primary" />
@@ -238,7 +238,7 @@ export default function Hero() {
                                 <svg viewBox="0 0 400 70" className="w-full h-full" preserveAspectRatio="none">
                                     {/* Grid Lines */}
                                     {[17, 35, 52].map((y) => (
-                                        <line key={y} x1="0" y1={y} x2="400" y2={y} stroke="currentColor" strokeWidth="0.5" className="text-slate-800" />
+                                        <line key={y} x1="0" y1={y} x2="400" y2={y} stroke="currentColor" strokeWidth="0.5" className="text-slate-200 dark:text-slate-800" />
                                     ))}
                                     {/* Gradient Fill */}
                                     <defs>

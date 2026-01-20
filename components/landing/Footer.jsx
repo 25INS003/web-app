@@ -11,7 +11,7 @@ export const CTA = () => {
     const iconRef = React.useRef(null);
 
     return (
-        <section className="w-full relative overflow-hidden bg-slate-950 py-20 sm:py-40 text-center px-4 sm:px-6">
+        <section className="w-full relative overflow-hidden bg-slate-100 dark:bg-slate-950 py-20 sm:py-40 text-center px-4 sm:px-6">
             {/* Background Effects */}
             <div className="absolute inset-0 w-full h-full">
                 {/* Grid Pattern */}
@@ -22,7 +22,7 @@ export const CTA = () => {
                 <div className="absolute right-1/4 top-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-purple-500/20 blur-[150px] opacity-30"></div>
                 
                 {/* Radial Gradient Overlay */}
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,#020617_70%)]"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,#f1f5f9_70%)] dark:bg-[radial-gradient(ellipse_at_center,transparent_0%,#020617_70%)]"></div>
             </div>
 
             <div className="relative z-10 max-w-5xl mx-auto">
@@ -45,7 +45,7 @@ export const CTA = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                     viewport={{ once: true }}
-                    className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6 sm:mb-8 leading-[1.15] sm:leading-[1.1]"
+                    className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-6 sm:mb-8 leading-[1.15] sm:leading-[1.1]"
                 >
                     Ready to manage your
                     <br />
@@ -61,7 +61,7 @@ export const CTA = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                     viewport={{ once: true }}
-                    className="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-12"
+                    className="text-base sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-12"
                 >
                     Join thousands of shop providers who are streamlining their inventory and sales with our powerful administration tools.
                 </motion.p>
@@ -90,7 +90,7 @@ export const CTA = () => {
                         asChild
                         variant="ghost"
                         size="lg"
-                        className="w-full sm:w-auto rounded-full h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg font-medium bg-white/5 backdrop-blur-sm border border-slate-700 text-white hover:bg-white/10 hover:border-slate-600 transition-all"
+                        className="w-full sm:w-auto rounded-full h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg font-medium bg-slate-200 dark:bg-white/5 backdrop-blur-sm border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-white/10 hover:border-slate-400 dark:hover:border-slate-600 transition-all"
                     >
                         <Link href="/login">Log in to existing account</Link>
                     </Button>
@@ -124,7 +124,7 @@ export const Footer = () => {
     };
 
     return (
-        <footer className="bg-slate-950 text-slate-400 pt-16 sm:pt-20 pb-6 sm:pb-8 px-4 sm:px-6">
+        <footer className="bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 pt-16 sm:pt-20 pb-6 sm:pb-8 px-4 sm:px-6">
             {/* Main Footer Content */}
             <div className="container mx-auto max-w-7xl">
                 
@@ -134,7 +134,7 @@ export const Footer = () => {
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-100px" }}
-                    className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-8 pb-12 sm:pb-16 border-b border-slate-800/50"
+                    className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-8 pb-12 sm:pb-16 border-b border-slate-200 dark:border-slate-800/50"
                 >
                     
                     {/* Brand Column */}
@@ -143,7 +143,7 @@ export const Footer = () => {
                             <div className="bg-gradient-to-br from-primary to-purple-600 text-white p-3 rounded-2xl rounded-tr-sm shadow-lg shadow-primary/20">
                                 <SparklesIcon size={24} className="text-white" />
                             </div>
-                            <span className="text-2xl font-bold text-white tracking-tight">Nedyway</span>
+                            <span className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Nedyway</span>
                         </div>
                         <p className="mb-8 max-w-sm text-base leading-relaxed text-slate-500">
                             The modern administration platform for shop providers. Manage inventory, track orders, and grow your business.
@@ -179,13 +179,13 @@ export const Footer = () => {
 
                     {/* Newsletter Column */}
                     <motion.div variants={itemVariants} className="lg:col-span-2">
-                        <h4 className="font-bold text-white mb-6 text-sm uppercase tracking-wider">Stay Updated</h4>
+                        <h4 className="font-bold text-slate-900 dark:text-white mb-6 text-sm uppercase tracking-wider">Stay Updated</h4>
                         <p className="text-sm text-slate-500 mb-4">Get the latest news and updates.</p>
                         <div className="space-y-3">
                             <input 
                                 type="email" 
                                 placeholder="Enter your email" 
-                                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all"
                             />
                             <button className="w-full bg-gradient-to-r from-primary to-purple-600 text-white text-sm font-bold px-4 py-3 rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-[0.98]">
                                 Subscribe
@@ -204,7 +204,7 @@ export const Footer = () => {
                 >
                     <div className="flex items-center gap-4">
                         <p className="text-sm text-slate-600">© 2024 Nedyway. All Rights Reserved.</p>
-                        <span className="hidden md:inline-block px-2 py-1 bg-slate-900 rounded-md text-xs text-slate-500 border border-slate-800">v2.1.0</span>
+                        <span className="hidden md:inline-block px-2 py-1 bg-slate-200 dark:bg-slate-900 rounded-md text-xs text-slate-500 border border-slate-300 dark:border-slate-800">v2.1.0</span>
                     </div>
                     <LayoutGroup>
                         <div 
@@ -246,13 +246,13 @@ const FooterColumn = ({ title, links }) => {
 
     return (
         <div>
-            <h4 className="font-bold text-white mb-6">{title}</h4>
+            <h4 className="font-bold text-slate-900 dark:text-white mb-6">{title}</h4>
             <ul className="flex flex-col gap-2 items-start" onMouseLeave={() => setHovered(null)}>
                 {links.map((link) => (
                     <li key={link} className="relative">
                         <a 
                             href="#" 
-                            className={`block px-3 py-2 -ml-3 text-sm transition-colors relative z-10 w-fit ${hovered === link ? "text-primary" : "text-slate-400 hover:text-primary"}`}
+                            className={`block px-3 py-2 -ml-3 text-sm transition-colors relative z-10 w-fit ${hovered === link ? "text-primary" : "text-slate-600 dark:text-slate-400 hover:text-primary"}`}
                             onMouseEnter={() => setHovered(link)}
                         >
                             {hovered === link && (
@@ -275,7 +275,7 @@ const FooterSocialLink = ({ icon, label }) => (
     <a 
         href="#" 
         aria-label={label}
-        className="h-12 w-12 flex items-center justify-center bg-slate-900 rounded-xl hover:bg-slate-800 border border-slate-800 hover:border-primary/50 text-slate-400 hover:text-primary transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 group"
+        className="h-12 w-12 flex items-center justify-center bg-slate-200 dark:bg-slate-900 rounded-xl hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 hover:border-primary/50 text-slate-600 dark:text-slate-400 hover:text-primary transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 group"
     >
         <span className="flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
             {icon}

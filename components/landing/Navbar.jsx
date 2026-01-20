@@ -92,7 +92,7 @@ export default function Navbar() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3, duration: 0.4 }}
-                    className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50" 
+                    className="absolute inset-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800/50" 
                 />
                 
                 {/* Logo */}
@@ -109,7 +109,7 @@ export default function Navbar() {
                             height={36} 
                             className="rounded-xl sm:w-10 sm:h-10"
                         />
-                        <span className="text-lg sm:text-xl font-bold tracking-tight text-white">Nedyway</span>
+                        <span className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">Nedyway</span>
                     </Link>
                 </motion.div>
 
@@ -129,7 +129,7 @@ export default function Navbar() {
                                 className={`relative px-4 py-2 text-sm font-medium transition-colors z-10 cursor-pointer ${
                                     hoveredTab === link.name 
                                         ? "text-primary" 
-                                        : "text-slate-400 hover:text-primary"
+                                        : "text-slate-600 dark:text-slate-400 hover:text-primary"
                                 }`}
                                 onMouseEnter={() => setHoveredTab(link.name)}
                             >
@@ -157,7 +157,7 @@ export default function Navbar() {
                     {/* Theme Toggle Button */}
                     <button
                         onClick={toggleTheme}
-                        className="p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                        className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-primary/10 transition-all duration-200"
                         aria-label="Toggle theme"
                     >
                         {theme === 'dark' ? (
@@ -171,7 +171,7 @@ export default function Navbar() {
                         className={`relative text-sm font-medium px-4 py-2 transition-colors ${
                             hoveredTab === "Login" 
                                 ? "text-primary" 
-                                : "text-slate-400 hover:text-primary"
+                                : "text-slate-600 dark:text-slate-400 hover:text-primary"
                         }`}
                         onMouseEnter={() => setHoveredTab("Login")}
                      >
@@ -197,7 +197,7 @@ export default function Navbar() {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="relative z-10 md:hidden p-2 text-white hover:text-primary transition-colors"
+                    className="relative z-10 md:hidden p-2 text-slate-900 dark:text-white hover:text-primary transition-colors"
                     aria-label="Toggle menu"
                 >
                     <AnimatedMenuIcon isOpen={isMobileMenuOpen} />
@@ -226,14 +226,14 @@ export default function Navbar() {
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
                         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 h-full w-[280px] bg-slate-950 border-l border-slate-800/50 z-50 md:hidden overflow-y-auto"
+                        className="fixed top-0 right-0 h-full w-[280px] bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800/50 z-50 md:hidden overflow-y-auto"
                     >
                         {/* Mobile Menu Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-slate-800/50">
-                            <span className="text-lg font-bold text-white">Menu</span>
+                        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800/50">
+                            <span className="text-lg font-bold text-slate-900 dark:text-white">Menu</span>
                             <button
                                 onClick={() => setIsMobileMenuOpen(false)}
-                                className="p-2 text-white hover:text-primary transition-colors"
+                                className="p-2 text-slate-900 dark:text-white hover:text-primary transition-colors"
                                 aria-label="Close menu"
                             >
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -252,7 +252,7 @@ export default function Navbar() {
                                     initial={{ x: 20, opacity: 0 }}
                                     animate={{ x: 0, opacity: 1 }}
                                     transition={{ delay: i * 0.05 }}
-                                    className="flex items-center px-4 py-3 text-base font-medium text-slate-300 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200"
+                                    className="flex items-center px-4 py-3 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200"
                                 >
                                     {link.name}
                                 </motion.a>
@@ -260,14 +260,14 @@ export default function Navbar() {
                         </div>
 
                         {/* Mobile Menu Divider */}
-                        <div className="mx-4 border-t border-slate-800/50" />
+                        <div className="mx-4 border-t border-slate-200 dark:border-slate-800/50" />
 
                         {/* Mobile Menu Actions */}
                         <div className="p-4 space-y-3">
                             {/* Theme Toggle - Mobile */}
                             <button
                                 onClick={toggleTheme}
-                                className="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-slate-300 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200 border border-slate-800 gap-2"
+                                className="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200 border border-slate-200 dark:border-slate-800 gap-2"
                             >
                                 {theme === 'dark' ? (
                                     <><Sun className="w-5 h-5" /> Light Mode</>
@@ -278,7 +278,7 @@ export default function Navbar() {
                             <Link 
                                 href="/login"
                                 onClick={() => setIsMobileMenuOpen(false)}
-                                className="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-slate-300 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200 border border-slate-800"
+                                className="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200 border border-slate-200 dark:border-slate-800"
                             >
                                 Login
                             </Link>
@@ -290,7 +290,7 @@ export default function Navbar() {
                         </div>
 
                         {/* Mobile Menu Footer */}
-                        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800/50">
+                        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-800/50">
                             <p className="text-xs text-slate-500 text-center">© 2024 Nedyway</p>
                         </div>
                     </motion.div>

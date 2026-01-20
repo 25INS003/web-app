@@ -105,7 +105,7 @@ export default function Integrations() {
                                 className="relative"
                             >
                                 {/* Main Card */}
-                                <div className="w-full bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl p-8 relative overflow-hidden">
+                                <div className="w-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-2xl p-8 relative overflow-hidden">
                                     
                                     {/* Background Gradient Blob */}
                                     <div className={cn("absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl opacity-20 transition-colors duration-700", features[activeFeature].bg.replace("/10", ""))} />
@@ -120,7 +120,7 @@ export default function Integrations() {
                                             )}>
                                                 Step 0{activeFeature + 1}
                                             </span>
-                                            <h3 className="text-3xl font-bold text-white">{features[activeFeature].title}</h3>
+                                            <h3 className="text-3xl font-bold text-slate-900 dark:text-white">{features[activeFeature].title}</h3>
                                         </div>
                                         <div className="px-3 py-1 bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold rounded-full">
                                             Active
@@ -136,18 +136,18 @@ export default function Integrations() {
                                                 isAnimated: true 
                                             })}
                                         </div>
-                                        <p className="text-slate-400 text-lg leading-relaxed">
+                                        <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
                                             {features[activeFeature].description}
                                         </p>
                                     </div>
 
                                     {/* Footer: Status Bar */}
-                                    <div className="relative z-10 bg-slate-950/50 rounded-xl p-4 border border-white/5">
+                                    <div className="relative z-10 bg-slate-100 dark:bg-slate-950/50 rounded-xl p-4 border border-slate-200 dark:border-white/5">
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-sm font-medium text-slate-400">System Status</span>
-                                            <span className="text-sm font-bold text-white">Optimal</span>
+                                            <span className="text-sm font-bold text-slate-900 dark:text-white">Optimal</span>
                                         </div>
-                                        <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                                        <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                                             <motion.div 
                                                 initial={{ width: 0 }}
                                                 animate={{ width: "100%" }}
