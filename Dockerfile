@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package*.json ./
 
 RUN --mount=type=cache,target=/root/.npm \
-  npm ci --silent
+  npm install --silent
 
 COPY . .
 
