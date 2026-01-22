@@ -8,12 +8,9 @@ WORKDIR /app
 # Copy necessary package files
 COPY package*.json ./
 
-
 RUN --mount=type=cache,target=/root/.npm \
   npm ci --silent
 
-# Copy all source code
-# Copy all source code
 COPY . .
 COPY .env ./
 
