@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import TotalProfitCard from "@/components/dashboard/TotalProfitCard";
 import BestSellingProducts from "@/components/dashboard/BestSellingProducts";
 import SalesPerformanceChart from "@/components/dashboard/SalesPerformanceChart";
@@ -8,45 +8,99 @@ import OrderStatusCard from "@/components/dashboard/OrderStatusCard";
 import TotalCustomersCard from "@/components/dashboard/TotalCustomersCard";
 import AvgOrderValueCard from "@/components/dashboard/AvgOrderValueCard";
 
-export default function DashboardPage() {
-  const router = useRouter(); 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    }
+  }
+};
 
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { 
+      type: "spring", 
+      stiffness: 100, 
+      damping: 15 
+    }
+  }
+};
+
+export default function DashboardPage() {
   return (
     <div className="min-h-screen">
-
       {/* Dashboard Content */}
-      <div className="p-4 transition-colors duration-300">
-        <div className="mb-3">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+      <motion.div 
+        className="p-4 md:p-6 transition-colors duration-300"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Header */}
+        <motion.div variants={itemVariants} className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
             Dashboard
           </h1>
-          <p className="text-slate-600 dark:text-gray-400 text-sm">
+          <p className="text-slate-600 dark:text-gray-400 text-sm mt-1">
             Welcome to your sales overview
           </p>
-        </div>
+        </motion.div>
 
         {/* Row 1: Profit + Top Products */}
-        <div className="grid grid-cols-12 gap-4 mb-3">
-          <div className="col-span-3">
+        <div className="grid grid-cols-12 gap-4 mb-4">
+          <motion.div 
+            variants={itemVariants} 
+            className="col-span-12 md:col-span-4 lg:col-span-3"
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+          >
             <TotalProfitCard />
-          </div>
-          <div className="col-span-9">
+          </motion.div>
+          <motion.div 
+            variants={itemVariants} 
+            className="col-span-12 md:col-span-8 lg:col-span-9"
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+          >
             <BestSellingProducts />
-          </div>
+          </motion.div>
         </div>
 
         {/* Row 2: Sales Performance Chart */}
-        <div className="mb-3">
+        <motion.div 
+          variants={itemVariants} 
+          className="mb-4"
+          whileHover={{ y: -4, transition: { duration: 0.2 } }}
+        >
           <SalesPerformanceChart />
-        </div>
+        </motion.div>
 
         {/* Row 3: Additional Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <OrderStatusCard />
-          <TotalCustomersCard />
-          <AvgOrderValueCard />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+          >
+            <OrderStatusCard />
+          </motion.div>
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+          >
+            <TotalCustomersCard />
+          </motion.div>
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+          >
+            <AvgOrderValueCard />
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

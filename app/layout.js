@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { UIProvider } from "@/store/uiStore";
 import { ThemeProvider } from "next-themes";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeInitializer } from "@/components/ThemeInitializer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,8 +29,10 @@ export default function RootLayout({ children }) {
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <UIProvider>
-            {children}
-            <Toaster position="bottom-right" richColors />
+            <ThemeInitializer>
+              {children}
+              <Toaster position="bottom-right" richColors />
+            </ThemeInitializer>
           </UIProvider>
         </ThemeProvider>
       </body>

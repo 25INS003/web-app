@@ -8,6 +8,7 @@ export const useProductStore = create((set, get) => ({
   products: [],
   currentVariants: [],
   currentProduct: null,
+  currentShopId: null, // Track which shop the products belong to
 
   pagination: {
     currentPage: 1,
@@ -75,7 +76,12 @@ export const useProductStore = create((set, get) => ({
       );
 
       const { products, pagination } = response.data.data;
-      set({ products, pagination, isLoading: false });
+      set({ 
+          products, 
+          pagination, 
+          isLoading: false,
+          currentShopId: shopId // Update the current shop ID
+      });
 
 
     } catch (err) {

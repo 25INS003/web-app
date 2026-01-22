@@ -81,6 +81,21 @@
   --foreground: oklch(0.141 0.005 285.823);
 }
 
+/* Fix: Prevent scrollbar from disappearing when dropdowns/modals open */
+html {
+  overflow-y: scroll;
+}
+
+body[data-scroll-locked] {
+  overflow: hidden !important;
+  padding-right: var(--scrollbar-width, 0px) !important;
+}
+
+/* Preserve scrollbar space to prevent layout shift */
+body {
+  scrollbar-gutter: stable;
+}
+
 .dark {
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);

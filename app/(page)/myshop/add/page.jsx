@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { useShopStore } from "@/store/shopStore";
 
 import {
@@ -15,26 +16,35 @@ import {
     Truck,
     Phone,
     Mail,
+    Building2,
+    Navigation
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-
 import SelectCategory from "@/components/Dropdowns/selectCategory";
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.05 }
+    }
+};
+
+const itemVariants = {
+    hidden: { y: 15, opacity: 0 },
+    visible: { 
+        y: 0, 
+        opacity: 1,
+        transition: { type: "spring", stiffness: 300, damping: 25 }
+    }
+};
 
 const AddShopPage = () => {
     const router = useRouter();
-    // Extract error from store to display server-side validation issues
     const { createNewShop, isLoading, error: storeError } = useShopStore();
-
     const [category, setCategory] = useState(null);
 
     const {
@@ -47,7 +57,7 @@ const AddShopPage = () => {
         defaultValues: {
             name: "",
             business_name: "",
-            categories: [], // Initialized as array
+            categories: [],
             delivery_radius_km: 5,
             preparation_time: 30,
             delivery_fee: 0,
@@ -57,16 +67,13 @@ const AddShopPage = () => {
         }
     });
 
-    // Sync the UI category selection with the form state
     useEffect(() => {
         if (category) {
-            // Schema expects an array of category IDs/Names
             setValue("categories", [category], { shouldValidate: true });
         }
     }, [category, setValue]);
 
     const onSubmit = async (data) => {
-        // Format the payload to ensure numbers are correctly typed
         const formattedData = {
             ...data,
             shop_lat: Number(data.shop_lat),
@@ -80,7 +87,6 @@ const AddShopPage = () => {
 
         const result = await createNewShop(formattedData);
 
-        // If the store returns the new shop object, it was successful
         if (result) {
             reset();
             setCategory(null);
@@ -89,188 +95,317 @@ const AddShopPage = () => {
     };
 
     return (
-        <div className="container mx-auto max-w-4xl p-6">
-            <Button
-                variant="ghost"
-                className="mb-4"
-                onClick={() => router.back()}
-            >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-            </Button>
+        <motion.div 
+            className="container mx-auto max-w-4xl p-6"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+        >
+            {/* Header */}
+            <motion.div variants={itemVariants} className="flex items-center gap-4 mb-8">
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => router.back()}
+                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                    <ArrowLeft className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                </motion.button>
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25">
+                            <Store className="h-5 w-5 text-white" />
+                        </div>
+                        Create New Shop
+                    </h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        Set up your business presence
+                    </p>
+                </div>
+            </motion.div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* --- Identity Section --- */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Store className="h-6 w-6" />
-                            Shop Identity
-                        </CardTitle>
-                        <CardDescription>Basic information about your business.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Shop Identity Section */}
+                <motion.div 
+                    variants={itemVariants}
+                    className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+                >
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-500/10">
+                            <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Shop Identity</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Basic information about your business</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Shop Display Name *</label>
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Shop Display Name *</label>
                                 <Input
                                     {...register("name", { required: "Name is required" })}
                                     placeholder="e.g. Fresh Mart"
+                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
                                 />
                                 {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Official Business Name</label>
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Official Business Name</label>
                                 <Input
                                     {...register("business_name")}
                                     placeholder="e.g. Fresh Mart Private Ltd"
+                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Category *</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Category *</label>
                             <SelectCategory value={category} onCateSelect={setCategory} />
-                            {/* Registering categories for validation */}
                             <input type="hidden" {...register("categories", { required: "Please select a category" })} />
                             {errors.categories && <p className="text-xs text-red-500">{errors.categories.message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Description</label>
-                            <Textarea {...register("description")} placeholder="Describe your shop..." rows={3} />
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
+                            <Textarea 
+                                {...register("description")} 
+                                placeholder="Describe your shop..." 
+                                rows={3}
+                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                            />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium flex items-center gap-1"><Phone size={14} /> Phone *</label>
-                                <Input {...register("phone", { required: "Phone is required" })} placeholder="10-digit number" />
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                    <Phone size={14} className="text-slate-400" /> Phone *
+                                </label>
+                                <Input 
+                                    {...register("phone", { required: "Phone is required" })} 
+                                    placeholder="10-digit number"
+                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium flex items-center gap-1"><Mail size={14} /> Email *</label>
-                                <Input type="email" {...register("email", { required: "Email is required" })} placeholder="shop@example.com" />
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                    <Mail size={14} className="text-slate-400" /> Email *
+                                </label>
+                                <Input 
+                                    type="email" 
+                                    {...register("email", { required: "Email is required" })} 
+                                    placeholder="shop@example.com"
+                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                />
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </motion.div>
 
-                {/* --- Location Section --- */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <MapPin className="h-6 w-6" />
-                            Location Details
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+                {/* Location Section */}
+                <motion.div 
+                    variants={itemVariants}
+                    className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+                >
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 rounded-lg bg-green-50 dark:bg-green-500/10">
+                            <MapPin className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Location Details</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Where customers can find you</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-5">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Address Line *</label>
-                            <Input {...register("address_line", { required: "Address is required" })} placeholder="Street, area, landmark" />
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Address Line *</label>
+                            <Input 
+                                {...register("address_line", { required: "Address is required" })} 
+                                placeholder="Street, area, landmark"
+                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                            />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <Input {...register("city", { required: "Required" })} placeholder="City" />
-                            <Input {...register("state", { required: "Required" })} placeholder="State" />
-                            <Input {...register("pincode", { required: "Required" })} placeholder="Pincode" />
+                            <Input 
+                                {...register("city", { required: "Required" })} 
+                                placeholder="City"
+                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                            />
+                            <Input 
+                                {...register("state", { required: "Required" })} 
+                                placeholder="State"
+                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                            />
+                            <Input 
+                                {...register("pincode", { required: "Required" })} 
+                                placeholder="Pincode"
+                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                            />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-muted-foreground">Latitude *</label>
-                                <Input step="any" type="number" {...register("shop_lat", { required: "Required" })} placeholder="0.0000" />
+                                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                                    <Navigation size={14} /> Latitude *
+                                </label>
+                                <Input 
+                                    step="any" 
+                                    type="number" 
+                                    {...register("shop_lat", { required: "Required" })} 
+                                    placeholder="0.0000"
+                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-muted-foreground">Longitude *</label>
-                                <Input step="any" type="number" {...register("shop_lng", { required: "Required" })} placeholder="0.0000" />
+                                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                                    <Navigation size={14} /> Longitude *
+                                </label>
+                                <Input 
+                                    step="any" 
+                                    type="number" 
+                                    {...register("shop_lng", { required: "Required" })} 
+                                    placeholder="0.0000"
+                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                />
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </motion.div>
 
-                {/* --- Operations & Delivery --- */}
+                {/* Operations & Delivery */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <Clock className="h-5 w-5" />
-                                Operations
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold">Opening Time *</label>
-                                    <Input type="time" {...register("opening_time", { required: "Required" })} />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold">Closing Time *</label>
-                                    <Input type="time" {...register("closing_time", { required: "Required" })} />
-                                </div>
+                    <motion.div 
+                        variants={itemVariants}
+                        className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+                    >
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-500/10">
+                                <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Prep Time (mins)</label>
-                                <Input type="number" {...register("preparation_time")} />
-                            </div>
-                        </CardContent>
-                    </Card>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Operations</h2>
+                        </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <Truck className="h-5 w-5" />
-                                Delivery Settings
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
+                        <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold">Radius (KM) *</label>
-                                    <Input type="number" {...register("delivery_radius_km", { required: true })} />
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Opening Time *</label>
+                                    <Input 
+                                        type="time" 
+                                        {...register("opening_time", { required: "Required" })}
+                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold">Delivery Fee</label>
-                                    <Input type="number" {...register("delivery_fee")} />
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Closing Time *</label>
+                                    <Input 
+                                        type="time" 
+                                        {...register("closing_time", { required: "Required" })}
+                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold">Min Order Amount</label>
-                                <Input type="number" {...register("min_order_amount")} />
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Prep Time (mins)</label>
+                                <Input 
+                                    type="number" 
+                                    {...register("preparation_time")}
+                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                />
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </motion.div>
+
+                    <motion.div 
+                        variants={itemVariants}
+                        className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+                    >
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-500/10">
+                                <Truck className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                            </div>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Delivery Settings</h2>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Radius (KM) *</label>
+                                    <Input 
+                                        type="number" 
+                                        {...register("delivery_radius_km", { required: true })}
+                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Delivery Fee</label>
+                                    <Input 
+                                        type="number" 
+                                        {...register("delivery_fee")}
+                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Min Order Amount</label>
+                                <Input 
+                                    type="number" 
+                                    {...register("min_order_amount")}
+                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                />
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
 
-                {/* Global Error Display from Store */}
+                {/* Error Display */}
                 {storeError && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                    <motion.div 
+                        variants={itemVariants}
+                        className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm"
+                    >
                         {storeError}
-                    </div>
+                    </motion.div>
                 )}
 
-                <div className="flex justify-end gap-3 pt-4">
+                {/* Action Buttons */}
+                <motion.div 
+                    variants={itemVariants}
+                    className="flex justify-end gap-3 pt-4"
+                >
                     <Button
                         type="button"
                         variant="outline"
                         onClick={() => router.push("/myshop")}
                         disabled={isLoading}
+                        className="rounded-xl border-slate-200 dark:border-slate-700"
                     >
                         Cancel
                     </Button>
 
-                    <Button type="submit" disabled={isLoading} className="min-w-[150px]">
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Creating...
-                            </>
-                        ) : (
-                            <>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Create Shop
-                            </>
-                        )}
-                    </Button>
-                </div>
+                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                        <Button 
+                            type="submit" 
+                            disabled={isLoading} 
+                            className="min-w-[150px] rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/25"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Creating...
+                                </>
+                            ) : (
+                                <>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Create Shop
+                                </>
+                            )}
+                        </Button>
+                    </motion.div>
+                </motion.div>
             </form>
-        </div>
+        </motion.div>
     );
 };
 

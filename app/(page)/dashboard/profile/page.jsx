@@ -1,54 +1,98 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { 
-  User, Building2, Phone, Mail, CreditCard, MapPin, 
-  Calendar, ArrowLeft, Edit, X, Camera, Upload, Loader2, Save
+import { motion } from 'framer-motion';
+import {
+  User, Building2, Phone, Mail, CreditCard, MapPin,
+  Calendar, ArrowLeft, Edit, X, Camera, Upload, Loader2, Save,
+  CheckCircle2, Shield, Sparkles
 } from 'lucide-react';
-import { useShopOwnerStore } from '@/store/shopOwnerStore'; // Adjust path as needed
+import { useShopOwnerStore } from '@/store/shopOwnerStore';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+// Animation Variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100, damping: 15 } }
+};
+
+// Reusable Info Field Component
+const InfoField = ({ icon: Icon, label, value, className = "" }) => (
+  <div className={`p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 ${className}`}>
+    <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-1.5">
+      {Icon && <Icon className="w-4 h-4" />}
+      {label}
+    </div>
+    <p className="font-semibold text-slate-900 dark:text-white">{value || "N/A"}</p>
+  </div>
+);
+
+// Reusable Input Field Component
+const FormInput = ({ label, value, onChange, type = "text", className = "" }) => (
+  <div className="w-full space-y-2">
+    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+      {label}
+    </label>
+    <Input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`rounded-xl dark:bg-slate-800 h-11 ${className}`}
+    />
+  </div>
+);
 
 export default function ShopOwnerProfilePage() {
-  // --- STORE ---
-  const { 
-    shopOwner: profile, // Alias to 'profile' to avoid confusion with nested 'shop_owner' property
-    isLoading, 
-    error: storeError, 
-    fetchShopOwnerProfile, 
+  const {
+    shopOwner: profile,
+    isLoading,
+    error: storeError,
+    fetchShopOwnerProfile,
     updateShopOwnerProfile,
     uploadShopOwnerProfileImage,
     clearError
   } = useShopOwnerStore();
 
-  // --- LOCAL STATE ---
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editedData, setEditedData] = useState(null); 
+  const [editedData, setEditedData] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
-  const [imageFile, setImageFile] = useState(null); 
+  const [imageFile, setImageFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
 
-  // --- INITIAL FETCH ---
   useEffect(() => {
     fetchShopOwnerProfile();
     return () => clearError();
   }, [fetchShopOwnerProfile, clearError]);
 
-  // --- DERIVED DATA ---
-  // The backend aggregation returns the User document with a nested 'shop_owner' object
   const userDetails = profile || {};
   const businessDetails = profile?.shop_owner || {};
 
-  // --- HANDLERS ---
-
   const handleEditClick = () => {
-    // Flatten data for the edit form as the API expects a single level object
     setEditedData({
-      // User Fields
       first_name: userDetails.first_name || "",
       last_name: userDetails.last_name || "",
       phone: userDetails.phone || "",
-      
-      // Shop Owner Fields
       business_name: businessDetails.business_name || "",
       gst_number: businessDetails.gst_number || "",
       business_address_line1: businessDetails.business_address_line1 || "",
@@ -59,7 +103,6 @@ export default function ShopOwnerProfilePage() {
       bank_account_number: businessDetails.bank_account_number || "",
       ifsc_code: businessDetails.ifsc_code || "",
     });
-    
     setPreviewImage(userDetails.profile_image || null);
     setIsEditMode(true);
   };
@@ -73,10 +116,7 @@ export default function ShopOwnerProfilePage() {
   };
 
   const handleInputChange = (field, value) => {
-    setEditedData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setEditedData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleImageChange = (e) => {
@@ -96,13 +136,10 @@ export default function ShopOwnerProfilePage() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      // 1. Upload Image if changed
       if (imageFile) {
         await uploadShopOwnerProfileImage(imageFile);
       }
-      // 2. Update Text Data
       await updateShopOwnerProfile(editedData);
-
       setIsEditMode(false);
       setImageFile(null);
       setEditedData(null);
@@ -113,7 +150,6 @@ export default function ShopOwnerProfilePage() {
     }
   };
 
-  // --- HELPERS ---
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-IN', {
@@ -127,392 +163,328 @@ export default function ShopOwnerProfilePage() {
     return accNum.slice(0, -4).replace(/./g, '•') + accNum.slice(-4);
   };
 
-  // --- RENDER ---
-
   if (isLoading && !profile) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-2 text-gray-600 dark:text-gray-400">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <p>Loading profile...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <motion.div
+          className="flex flex-col items-center gap-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
+          </div>
+          <p className="text-slate-500 dark:text-slate-400">Loading profile...</p>
+        </motion.div>
       </div>
     );
   }
 
   if (!profile && !isLoading) {
-     return (
-        <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-          <div className="text-red-500">Profile not found.</div>
-        </div>
-     );
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-red-500 text-lg font-medium">Profile not found.</div>
+      </div>
+    );
   }
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 py-6 px-4 transition-colors">
-      <div className="max-w-5xl mx-auto">
-        {/* Top Bar */}
-        <div className="mb-6 flex items-center justify-between">
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
-        </div>
+    <motion.div
+      className="py-6 px-4 max-w-5xl mx-auto"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Header */}
+      <motion.div variants={itemVariants} className="mb-6 flex items-center justify-between">
+        <Button
+          variant="ghost"
+          onClick={() => window.history.back()}
+          className="rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Button>
+      </motion.div>
 
-        {/* Global Error */}
-        {storeError && (
-            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex justify-between items-center">
-                <span>{storeError}</span>
-                <button onClick={clearError}><X className="w-4 h-4"/></button>
-            </div>
-        )}
+      {/* Global Error */}
+      {storeError && (
+        <motion.div
+          variants={itemVariants}
+          className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 rounded-xl flex justify-between items-center"
+        >
+          <span>{storeError}</span>
+          <button onClick={clearError} className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded-lg"><X className="w-4 h-4" /></button>
+        </motion.div>
+      )}
 
-        {/* Header Card (User Info) */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
-              <div className="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-white dark:border-gray-600 shadow-sm">
-                {userDetails.profile_image ? (
-                  <img 
-                    src={userDetails.profile_image} 
-                    alt="Profile" 
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <User className="w-12 h-12 text-gray-400 dark:text-gray-500" />
-                )}
-              </div>
-              
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2 justify-center sm:justify-start">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {userDetails.first_name} {userDetails.last_name}
-                  </h1>
-                  {userDetails.is_verified && (
-                    <span className="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded-full border border-green-200 dark:border-green-800">
-                      Verified
-                    </span>
-                  )}
-                  {businessDetails.is_approved && (
-                    <span className="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full border border-blue-200 dark:border-blue-800">
-                      Approved
-                    </span>
+      {/* Profile Header Card */}
+      <motion.div variants={itemVariants}>
+        <Card className="rounded-2xl border-slate-200 dark:border-slate-700 shadow-lg dark:bg-slate-900/50 overflow-hidden mb-6">
+          <div className="h-24 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+          <CardContent className="p-6 -mt-12">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
+                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-xl overflow-hidden">
+                  {userDetails.profile_image ? (
+                    <img
+                      src={userDetails.profile_image}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-10 h-10 text-slate-400" />
                   )}
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">
-                  {businessDetails.business_name || "Business Name Not Set"}
+
+                <div className="text-center sm:text-left pb-1">
+                  <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {userDetails.first_name} {userDetails.last_name}
+                    </h1>
+                    {userDetails.is_verified && (
+                      <Badge className="rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
+                        <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
+                      </Badge>
+                    )}
+                    {businessDetails.is_approved && (
+                      <Badge className="rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">
+                        <Shield className="w-3 h-3 mr-1" /> Approved
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 font-medium">
+                    {businessDetails.business_name || "Business Name Not Set"}
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-500">
+                    Member since {formatDate(userDetails.createdAt)}
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleEditClick}
+                className="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-500/25"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Profile
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Business Information */}
+      <motion.div variants={itemVariants}>
+        <Card className="rounded-2xl border-slate-200 dark:border-slate-700 shadow-sm dark:bg-slate-900/50 overflow-hidden mb-6">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-800/50 dark:to-slate-800/30">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-indigo-100 dark:bg-indigo-500/20">
+                <Building2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <CardTitle className="text-lg">Business Information</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InfoField label="Business Name" value={businessDetails.business_name} />
+              <InfoField label="GST Number" value={businessDetails.gst_number || 'Not provided'} />
+
+              <div className="md:col-span-2 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-1.5">
+                  <MapPin className="w-4 h-4" />
+                  Business Address
+                </div>
+                <p className="font-semibold text-slate-900 dark:text-white">
+                  {businessDetails.business_address_line1}
+                  {businessDetails.business_address_line2 && `, ${businessDetails.business_address_line2}`}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-500">
-                  Member since {formatDate(userDetails.createdAt)}
+                <p className="font-medium text-slate-700 dark:text-slate-300">
+                  {businessDetails.business_address_district}, {businessDetails.business_address_state} - {businessDetails.business_address_pincode}
                 </p>
               </div>
-            </div>
 
-            <button 
-              onClick={handleEditClick}
-              className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center gap-2 shadow-sm"
-            >
-              <Edit className="w-4 h-4" />
-              <span>Edit Profile</span>
-            </button>
-          </div>
-        </div>
+              <InfoField icon={Calendar} label="Business Since" value={formatDate(businessDetails.business_since)} />
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-        {/* Business Information */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            Business Information
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-              <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Business Name</label>
-              <p className="text-gray-900 dark:text-gray-100 font-medium">{businessDetails.business_name || "N/A"}</p>
+      {/* Contact Information */}
+      <motion.div variants={itemVariants}>
+        <Card className="rounded-2xl border-slate-200 dark:border-slate-700 shadow-sm dark:bg-slate-900/50 overflow-hidden mb-6">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-800/50 dark:to-slate-800/30">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-500/20">
+                <Phone className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <CardTitle className="text-lg">Contact Information</CardTitle>
             </div>
-            
-            <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-              <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">GST Number</label>
-              <p className="text-gray-900 dark:text-gray-100 font-medium">{businessDetails.gst_number || 'Not provided'}</p>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InfoField icon={Mail} label="Email" value={userDetails.email} />
+              <InfoField icon={Phone} label="Phone" value={userDetails.phone || 'Not provided'} />
             </div>
-            
-            <div className="md:col-span-2 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-              <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
-                <MapPin className="w-4 h-4" />
-                Business Address
-              </label>
-              <p className="text-gray-900 dark:text-gray-100 font-medium">
-                {businessDetails.business_address_line1}
-                {businessDetails.business_address_line2 && `, ${businessDetails.business_address_line2}`}
-              </p>
-              <p className="text-gray-900 dark:text-gray-100 font-medium">
-                {businessDetails.business_address_district}, {businessDetails.business_address_state} - {businessDetails.business_address_pincode}
-              </p>
-            </div>
-            
-            <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-              <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
-                <Calendar className="w-4 h-4" />
-                Business Since
-              </label>
-              <p className="text-gray-900 dark:text-gray-100 font-medium">{formatDate(businessDetails.business_since)}</p>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-        {/* Contact Information (User Schema) */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <Phone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            Contact Information
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-              <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
-                <Mail className="w-4 h-4" />
-                Email
-              </label>
-              <p className="text-gray-900 dark:text-gray-100 font-medium">{userDetails.email}</p>
+      {/* Banking Information */}
+      <motion.div variants={itemVariants}>
+        <Card className="rounded-2xl border-slate-200 dark:border-slate-700 shadow-sm dark:bg-slate-900/50 overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-800/50 dark:to-slate-800/30">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-500/20">
+                <CreditCard className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <CardTitle className="text-lg">Banking Information</CardTitle>
             </div>
-            
-            <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-              <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mb-1">
-                <Phone className="w-4 h-4" />
-                Phone
-              </label>
-              <p className="text-gray-900 dark:text-gray-100 font-medium">{userDetails.phone || 'Not provided'}</p>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InfoField label="Account Number" value={<span className="font-mono">{getMaskedAccount(businessDetails.bank_account_number)}</span>} />
+              <InfoField label="IFSC Code" value={<span className="font-mono">{businessDetails.ifsc_code || 'Not provided'}</span>} />
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-        {/* Banking Information */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            Banking Information
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-              <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Account Number</label>
-              <p className="text-gray-900 dark:text-gray-100 font-mono font-medium">
-                {getMaskedAccount(businessDetails.bank_account_number)}
-              </p>
+      {/* Edit Profile Dialog */}
+      <Dialog open={isEditMode} onOpenChange={setIsEditMode}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl dark:bg-slate-900">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl">Edit Profile</DialogTitle>
+                <DialogDescription>Update your business and personal information</DialogDescription>
+              </div>
             </div>
-            
-            <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-              <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">IFSC Code</label>
-              <p className="text-gray-900 dark:text-gray-100 font-mono font-medium">{businessDetails.ifsc_code || 'Not provided'}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+          </DialogHeader>
 
-      {/* --- EDIT MODAL --- */}
-      {isEditMode && editedData && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col transition-colors border border-gray-200 dark:border-gray-700">
-            {/* Modal Header */}
-            <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between rounded-t-xl">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Profile</h2>
-              <button
-                onClick={handleCancelEdit}
-                disabled={isSaving}
-                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-8 overflow-y-auto flex-1">
-              
-              {/* 1. Image Upload Section */}
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 border-b border-gray-200 dark:border-gray-700 pb-8">
+          {editedData && (
+            <div className="space-y-8 py-4">
+              {/* Profile Image Section */}
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b dark:border-slate-700">
                 <div className="relative group">
-                  <div className="w-32 h-32 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center overflow-hidden border-4 border-white dark:border-gray-600 shadow-lg">
+                  <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center overflow-hidden border-4 border-white dark:border-slate-800 shadow-xl">
                     {previewImage ? (
                       <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
-                      <User className="w-16 h-16 text-gray-400" />
+                      <User className="w-12 h-12 text-slate-400" />
                     )}
                   </div>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-1 right-1 bg-blue-600 dark:bg-blue-700 text-white p-2.5 rounded-full hover:bg-blue-700 transition-colors shadow-lg group-hover:scale-110 transform duration-200"
+                    className="absolute bottom-0 right-0 bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-2.5 rounded-xl shadow-lg hover:scale-105 transition-transform"
                   >
                     <Camera className="w-4 h-4" />
                   </button>
                 </div>
-                
+
                 <div className="flex-1 text-center sm:text-left space-y-3">
-                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Profile Picture</h3>
-                   <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
-                    />
-                    <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 text-sm font-medium"
-                        >
-                          <Upload className="w-4 h-4" /> Change Photo
-                        </button>
-                        {previewImage && (
-                          <button
-                            type="button"
-                            onClick={() => { setPreviewImage(null); setImageFile(null); }}
-                             className="px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-sm font-medium"
-                          >
-                            Remove
-                          </button>
-                        )}
-                    </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Profile Picture</h3>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="rounded-xl"
+                    >
+                      <Upload className="w-4 h-4 mr-2" /> Change Photo
+                    </Button>
+                    {previewImage && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => { setPreviewImage(null); setImageFile(null); }}
+                        className="rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* 2. Personal Information (User Schema) */}
+              {/* Personal Details */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Personal Details</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Personal Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <InputField 
-                      label="First Name" 
-                      value={editedData.first_name} 
-                      onChange={(v) => handleInputChange('first_name', v)} 
-                   />
-                   <InputField 
-                      label="Last Name" 
-                      value={editedData.last_name} 
-                      onChange={(v) => handleInputChange('last_name', v)} 
-                   />
-                   <InputField 
-                      label="Phone Number" 
-                      value={editedData.phone} 
-                      onChange={(v) => handleInputChange('phone', v)} 
-                      type="tel"
-                   />
+                  <FormInput label="First Name" value={editedData.first_name} onChange={(v) => handleInputChange('first_name', v)} />
+                  <FormInput label="Last Name" value={editedData.last_name} onChange={(v) => handleInputChange('last_name', v)} />
+                  <FormInput label="Phone Number" value={editedData.phone} onChange={(v) => handleInputChange('phone', v)} type="tel" />
                 </div>
               </div>
 
-              {/* 3. Business Information (ShopOwner Schema) */}
+              {/* Business Details */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Business Details</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Business Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField 
-                    label="Business Name *" 
-                    value={editedData.business_name} 
-                    onChange={(v) => handleInputChange('business_name', v)} 
-                  />
-                  <InputField 
-                    label="GST Number" 
-                    value={editedData.gst_number} 
-                    onChange={(v) => handleInputChange('gst_number', v)} 
-                  />
+                  <FormInput label="Business Name *" value={editedData.business_name} onChange={(v) => handleInputChange('business_name', v)} />
+                  <FormInput label="GST Number" value={editedData.gst_number} onChange={(v) => handleInputChange('gst_number', v)} />
                   <div className="md:col-span-2">
-                     <InputField 
-                        label="Address Line 1 *" 
-                        value={editedData.business_address_line1} 
-                        onChange={(v) => handleInputChange('business_address_line1', v)} 
-                     />
+                    <FormInput label="Address Line 1 *" value={editedData.business_address_line1} onChange={(v) => handleInputChange('business_address_line1', v)} />
                   </div>
                   <div className="md:col-span-2">
-                     <InputField 
-                        label="Address Line 2" 
-                        value={editedData.business_address_line2} 
-                        onChange={(v) => handleInputChange('business_address_line2', v)} 
-                     />
+                    <FormInput label="Address Line 2" value={editedData.business_address_line2} onChange={(v) => handleInputChange('business_address_line2', v)} />
                   </div>
-                  <InputField 
-                    label="State *" 
-                    value={editedData.business_address_state} 
-                    onChange={(v) => handleInputChange('business_address_state', v)} 
-                  />
-                  <InputField 
-                    label="District *" 
-                    value={editedData.business_address_district} 
-                    onChange={(v) => handleInputChange('business_address_district', v)} 
-                  />
-                  <InputField 
-                    label="Pincode *" 
-                    value={editedData.business_address_pincode} 
-                    onChange={(v) => handleInputChange('business_address_pincode', v)} 
-                  />
+                  <FormInput label="State *" value={editedData.business_address_state} onChange={(v) => handleInputChange('business_address_state', v)} />
+                  <FormInput label="District *" value={editedData.business_address_district} onChange={(v) => handleInputChange('business_address_district', v)} />
+                  <FormInput label="Pincode *" value={editedData.business_address_pincode} onChange={(v) => handleInputChange('business_address_pincode', v)} />
                 </div>
               </div>
 
-              {/* 4. Banking Information */}
+              {/* Banking Details */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Banking Details</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Banking Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField 
-                    label="Bank Account Number *" 
-                    value={editedData.bank_account_number} 
-                    onChange={(v) => handleInputChange('bank_account_number', v)} 
-                    className="font-mono"
-                  />
-                  <InputField 
-                    label="IFSC Code *" 
-                    value={editedData.ifsc_code} 
-                    onChange={(v) => handleInputChange('ifsc_code', v)} 
-                    className="font-mono uppercase"
-                  />
+                  <FormInput label="Bank Account Number *" value={editedData.bank_account_number} onChange={(v) => handleInputChange('bank_account_number', v)} className="font-mono" />
+                  <FormInput label="IFSC Code *" value={editedData.ifsc_code} onChange={(v) => handleInputChange('ifsc_code', v.toUpperCase())} className="font-mono" />
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Footer Buttons */}
-            <div className="flex-shrink-0 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-6 flex items-center justify-end gap-3 rounded-b-xl">
-              <button
-                onClick={handleCancelEdit}
-                disabled={isSaving}
-                className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveProfile}
-                disabled={isSaving}
-                className="px-6 py-2.5 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center gap-2 font-medium disabled:opacity-70 disabled:cursor-not-allowed shadow-md"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Saving Changes...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-5 h-5" />
-                    Save Profile
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={handleCancelEdit}
+              disabled={isSaving}
+              className="rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveProfile}
+              disabled={isSaving}
+              className="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-500/25"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Profile
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </motion.div>
   );
 }
-
-// Reusable Input Component for cleaner JSX
-const InputField = ({ label, value, onChange, type = "text", className = "" }) => (
-  <div className="w-full">
-    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-      {label}
-    </label>
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow ${className}`}
-    />
-  </div>
-);
