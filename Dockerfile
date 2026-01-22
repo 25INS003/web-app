@@ -12,13 +12,10 @@ RUN --mount=type=cache,target=/root/.npm \
   npm ci --silent
 
 COPY . .
-COPY .env ./
 
-# Next.js requires this variable at BUILD time to bake it into client bundles
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
-# Run the Next.js build command
 RUN npm run build
 
 # --- 2. RUN STAGE (Production) ---
