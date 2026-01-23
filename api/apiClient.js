@@ -2,7 +2,7 @@ import axios from "axios";
 import { useAuthStore } from "../store/authStore";
 import Routes from "./endpoints";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://nedyway.com/api/v1";
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
