@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4
 ARG NODE_ENV=production
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
 
 # --- 1. BUILD STAGE ---
 WORKDIR /app
@@ -8,8 +8,7 @@ WORKDIR /app
 # Copy necessary package files
 COPY package*.json ./
 
-RUN --mount=type=cache,target=/root/.npm \
-  npm install --silent
+RUN npm install --silent
 
 COPY . .
 
@@ -19,7 +18,7 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN npm run build
 
 # --- 2. RUN STAGE (Production) ---
-FROM node:20-alpine AS run
+FROM node:20-slim AS run
 WORKDIR /app
 
 ENV NODE_ENV=${NODE_ENV}
