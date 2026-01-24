@@ -98,19 +98,17 @@ const tableRowVariants = {
 };
 
 const ProductsListPage = () => {
-    const { currentShop } = useShopStore();
+    // Standardizing selectors for better reactivity
+    const currentShop = useShopStore((state) => state.currentShop);
     const shopId = currentShop?._id ?? null;
 
-    const {
-        products,
-        pagination,
-        isLoading,
-        setFilters,
-        deleteProduct,
-        softDeleteProduct,
-        currentShopId,
-        queryParams
-    } = useProductStore();
+    const products = useProductStore((state) => state.products);
+    const pagination = useProductStore((state) => state.pagination);
+    const isLoading = useProductStore((state) => state.isLoading);
+    const error = useProductStore((state) => state.error);
+    const currentShopId = useProductStore((state) => state.currentShopId);
+    const queryParams = useProductStore((state) => state.queryParams);
+    const { setFilters, deleteProduct, softDeleteProduct } = useProductStore();
 
     const [tempFilters, setTempFilters] = useState({
         search: "",
@@ -121,32 +119,29 @@ const ProductsListPage = () => {
     });
 
     useEffect(() => {
-        if (!shopId) return;
+        // Guard: Stop if no shop selected, or if already loading
+        if (!shopId || isLoading) return;
 
-        // OPTIMIZATION: If we already have data for this shop, sync local filters with store and SKIP fetch.
-        if (currentShopId === shopId && products.length > 0) {
-            setTempFilters({
-                search: queryParams.search || "",
-                is_available: queryParams.is_available || "true",
-                is_active: queryParams.is_active || "true",
-                inStock: queryParams.inStock === undefined ? "all" : queryParams.inStock,
-                sortBy: queryParams.sortBy || "created_at"
-            });
-            return; 
+        // Fetch fresh data if the shop ID has changed, 
+        // OR if the products list is empty (e.g. page refresh)
+        const needsFetch = currentShopId !== shopId || (products.length === 0 && !error);
+
+        if (needsFetch) {
+            const isNewShop = currentShopId !== shopId;
+            
+            const initialFilters = {
+                search: isNewShop ? "" : (queryParams.search || ""),
+                is_available: isNewShop ? "true" : (queryParams.is_available || "true"),
+                is_active: isNewShop ? "true" : (queryParams.is_active || "true"),
+                inStock: isNewShop ? "all" : (queryParams.inStock === undefined ? "all" : queryParams.inStock),
+                sortBy: isNewShop ? "created_at" : (queryParams.sortBy || "created_at"),
+                page: isNewShop ? 1 : (queryParams.page || 1)
+            };
+
+            setTempFilters(initialFilters);
+            setFilters(initialFilters, shopId);
         }
-
-        // Otherwise, fetch fresh data
-        const initialFilters = {
-            search: "",
-            is_available: "true",
-            is_active: "true",
-            inStock: "all",
-            sortBy: "created_at",
-            page: 1
-        };
-        setTempFilters(initialFilters);
-        setFilters(initialFilters, shopId);
-    }, [shopId, currentShopId, products.length, setFilters, queryParams.search, queryParams.is_available, queryParams.is_active, queryParams.inStock, queryParams.sortBy]);
+    }, [shopId, currentShopId, products.length, isLoading, error, setFilters]);
 
     const handleApplyFilters = () => {
         setFilters({
@@ -234,6 +229,7 @@ const ProductsListPage = () => {
 
     return (
         <motion.div 
+            key={shopId}
             className="min-h-screen p-4 md:p-6 space-y-6"
             variants={containerVariants}
             initial="hidden"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useShopStore } from '@/store/shopStore';
 import {
     DropdownMenu,
@@ -15,22 +15,22 @@ import { ChevronDown, Store, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function GlobalSelectShop({ onShopSelect, ShowLabel = true }) {
-    const {
-        myShops = [],
-        isLoading,
-        fetchMyShops,
-        currentShop,
-        setCurrentShop,
-    } = useShopStore();
+    const myShops = useShopStore((state) => state.myShops) || [];
+    const isLoading = useShopStore((state) => state.isLoading);
+    const fetchMyShops = useShopStore((state) => state.fetchMyShops);
+    const currentShop = useShopStore((state) => state.currentShop);
+    const setCurrentShop = useShopStore((state) => state.setCurrentShop);
 
     const [isOpen, setIsOpen] = useState(false);
+    const hasFetched = useRef(false);
 
     // Fetch shops on mount
     useEffect(() => {
-        if (typeof fetchMyShops === 'function') {
+        if (!hasFetched.current && typeof fetchMyShops === 'function' && !isLoading) {
+            hasFetched.current = true;
             fetchMyShops();
         }
-    }, [fetchMyShops]);
+    }, [fetchMyShops, isLoading]);
 
     /**
      * ✅ Selected shop derived safely

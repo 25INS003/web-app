@@ -25,15 +25,15 @@ export default function ShopOwnerDetailPage() {
         <div className="p-6 max-w-5xl mx-auto mb-10">
             <button
                 onClick={() => router.back()}
-                className="flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-6 transition-all group"
+                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white mb-6 transition-all group"
             >
                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Management List
             </button>
 
-            <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-slate-800 overflow-hidden">
                 {/* --- Hero Header --- */}
-                <div className="bg-slate-900 p-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="bg-slate-900 dark:bg-slate-950 p-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
                             <Building2 className="text-blue-400" size={28} />
@@ -62,19 +62,19 @@ export default function ShopOwnerDetailPage() {
                                 icon={<Receipt className="text-blue-600" />}
                                 label="GST Number"
                                 value={selectedOwner.gst_number || "Not Registered"}
-                                color="bg-blue-50"
+                                color="bg-blue-50 dark:bg-blue-500/10"
                             />
                             <InfoTile
                                 icon={<Calendar className="text-purple-600" />}
                                 label="In Business Since"
                                 value={new Date(selectedOwner.business_since).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                                color="bg-purple-50"
+                                color="bg-purple-50 dark:bg-purple-500/10"
                             />
                             <InfoTile
-                                icon={<Calendar className="text-slate-600" />}
+                                icon={<Calendar className="text-slate-600 dark:text-slate-400" />}
                                 label="Application Date"
                                 value={new Date(selectedOwner.createdAt).toLocaleDateString()}
-                                color="bg-slate-50"
+                                color="bg-slate-50 dark:bg-slate-800"
                             />
                         </div>
 
@@ -82,16 +82,16 @@ export default function ShopOwnerDetailPage() {
                         <div className="space-y-8">
                             <SectionTitle title="Operating Address" />
                             <div className="flex gap-4">
-                                <div className="p-3 h-fit bg-red-50 text-red-600 rounded-2xl"><MapPin size={24} /></div>
+                                <div className="p-3 h-fit bg-red-50 dark:bg-red-500/10 text-red-600 rounded-2xl"><MapPin size={24} /></div>
                                 <div>
-                                    <p className="font-semibold text-gray-800 leading-tight">
+                                    <p className="font-semibold text-gray-800 dark:text-white leading-tight">
                                         {selectedOwner.business_address_line1}
-                                        {selectedOwner.business_address_line2 && <span className="block text-gray-600 font-normal">{selectedOwner.business_address_line2}</span>}
+                                        {selectedOwner.business_address_line2 && <span className="block text-gray-600 dark:text-slate-400 font-normal">{selectedOwner.business_address_line2}</span>}
                                     </p>
-                                    <p className="text-gray-500 mt-2 text-sm uppercase tracking-wide">
+                                    <p className="text-gray-500 dark:text-slate-500 mt-2 text-sm uppercase tracking-wide">
                                         {selectedOwner.business_address_district}, {selectedOwner.business_address_state}
                                     </p>
-                                    <p className="text-gray-500 font-mono text-xs mt-1">
+                                    <p className="text-gray-500 dark:text-slate-500 font-mono text-xs mt-1">
                                         PIN: {selectedOwner.business_address_pincode}
                                     </p>
                                 </div>
@@ -101,31 +101,31 @@ export default function ShopOwnerDetailPage() {
                         {/* Column 3: Financials & Actions */}
                         <div className="space-y-8">
                             <SectionTitle title="Banking & Settlement" />
-                            <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                            <div className="bg-gray-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-gray-100 dark:border-slate-800">
                                 <div className="flex items-center gap-3 mb-4">
                                     <Landmark className="text-emerald-600" size={20} />
-                                    <span className="text-sm font-bold text-gray-700 uppercase">Bank Account</span>
+                                    <span className="text-sm font-bold text-gray-700 dark:text-slate-300 uppercase">Bank Account</span>
                                 </div>
                                 <div className="space-y-3">
                                     <div>
                                         <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Account Number</p>
-                                        <p className="font-mono text-gray-800 break-all">{selectedOwner.bank_account_number}</p>
+                                        <p className="font-mono text-gray-800 dark:text-white break-all">{selectedOwner.bank_account_number}</p>
                                     </div>
                                     <div>
                                         <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">IFSC Code</p>
-                                        <p className="font-mono text-gray-800">{selectedOwner.ifsc_code}</p>
+                                        <p className="font-mono text-gray-800 dark:text-white">{selectedOwner.ifsc_code}</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Verification Actions */}
-                            <div className="pt-4 border-t border-gray-100">
+                            <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
                                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-4 tracking-tighter">Decision Panel</h4>
                                 <button
                                     onClick={() => updateStatus(ownerId, !selectedOwner.is_approved)}
                                     className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${selectedOwner.is_approved
-                                            ? "bg-white border-2 border-red-100 text-red-600 hover:bg-red-50"
-                                            : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl shadow-emerald-200"
+                                            ? "bg-white dark:bg-slate-900 border-2 border-red-100 dark:border-red-900/30 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10"
+                                            : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl shadow-emerald-200 dark:shadow-none"
                                         }`}
                                 >
                                     {selectedOwner.is_approved ? <X size={20} /> : <Check size={20} />}
@@ -156,7 +156,7 @@ function InfoTile({ icon, label, value, color }) {
             <div className={`p-3 ${color} rounded-2xl`}>{icon}</div>
             <div>
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">{label}</p>
-                <p className="font-bold text-gray-800 leading-tight">{value}</p>
+                <p className="font-bold text-gray-800 dark:text-white leading-tight">{value}</p>
             </div>
         </div>
     );

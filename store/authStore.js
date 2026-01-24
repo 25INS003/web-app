@@ -82,7 +82,7 @@ export const useAuthStore = create(
             // ------------------------
             // LOGOUT
             // ------------------------
-            logout: async () => {
+            logout: async (redirectPath = "/login") => {
                 try {
                     // Remove client-side cookies
                     Cookies.remove("accessToken");
@@ -100,7 +100,7 @@ export const useAuthStore = create(
                         message: null
                     });
                     setTimeout(() => {
-                        window.location.replace("/login");
+                        window.location.replace(redirectPath);
                     }, 100);
 
                     // Call Backend to clear httpOnly cookies and session
@@ -108,7 +108,7 @@ export const useAuthStore = create(
 
                 } catch (error) {
                     setTimeout(() => {
-                        window.location.replace("/login");
+                        window.location.replace(redirectPath);
                     }, 100);
                     console.error("Logout error:", error);
 

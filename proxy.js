@@ -8,6 +8,7 @@ const publicPaths = [
   "/verify-otp",
   "/reset-password",
   "/unauthorized", 
+  "/admin/login", // Separate Admin Login
 ];
 
 const adminPaths = ["/admin","/verify-owner"]; 
@@ -33,6 +34,11 @@ export function proxy(request) {
   // 2. PROTECT ROUTES
   // If no token, and it's NOT a public path, Redirect to login
   if (!token && !isPublicPath) {
+    // If trying to access admin area, send to admin login
+    if (isAdminPath) {
+        return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+    
     const loginUrl = new URL("/login", request.url);
     // loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
@@ -41,7 +47,7 @@ export function proxy(request) {
   // 3. AUTH PAGE REDIRECT (If already logged in)
   if (token && (pathname === "/login" || pathname === "/register")) {
     if (userRole === "admin") {
-        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+        return NextResponse.redirect(new URL("/admin", request.url));
     }
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }

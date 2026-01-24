@@ -167,6 +167,24 @@ export default function Navbar() {
                         )}
                     </button>
                      <Link 
+                        href="/admin/login" 
+                        className={`relative text-sm font-medium px-4 py-2 transition-colors ${
+                            hoveredTab === "Admin" 
+                                ? "text-primary" 
+                                : "text-slate-600 dark:text-slate-400 hover:text-primary"
+                        }`}
+                        onMouseEnter={() => setHoveredTab("Admin")}
+                     >
+                        {hoveredTab === "Admin" && (
+                            <motion.span
+                                layoutId="nav-pill"
+                                className="absolute inset-0 rounded-lg -z-10 bg-primary/10"
+                                transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                            />
+                        )}
+                        Admin
+                     </Link>
+                     <Link 
                         href="/login" 
                         className={`relative text-sm font-medium px-4 py-2 transition-colors ${
                             hoveredTab === "Login" 
@@ -275,6 +293,13 @@ export default function Navbar() {
                                     <><Moon className="w-5 h-5" /> Dark Mode</>
                                 )}
                             </button>
+                            <Link 
+                                href="/admin/login"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200 border border-slate-200 dark:border-slate-800"
+                            >
+                                Admin Login
+                            </Link>
                             <Link 
                                 href="/login"
                                 onClick={() => setIsMobileMenuOpen(false)}

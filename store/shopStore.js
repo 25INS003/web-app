@@ -103,6 +103,79 @@ export const useShopStore = create((set, get) => ({
     }
   },
   
+  /**
+   * Soft deletes a shop (marks as inactive).
+   * Route: DELETE /shopowneruser/shops/:shopId (Logic remains same, conceptually "deactivate")
+   */
+  deactivateExistingShop: async (shopId) => {
+    set({ isLoading: true, error: null });
+    try {
+      await apiClient.delete(`/shopowneruser/shops/${shopId}`);
+      
+      set((state) => ({
+        myShops: state.myShops.map((shop) => 
+          shop._id === shopId ? { ...shop, shop_status: 'inactive' } : shop
+        ),
+        isLoading: false,
+      }));
+      
+      return { success: true, message: "Shop deactivated successfully" };
+    } catch (err) {
+      console.error(`Error deactivating shop ${shopId}:`, err);
+      const errorMessage = err.response?.data?.message || "Failed to deactivate shop.";
+      set({ error: errorMessage, isLoading: false });
+      return { success: false, message: errorMessage };
+    }
+  },
+
+  /**
+   * Activates a shop (marks as active).
+   * Route: PUT /shopowneruser/shops/:shopId/activate
+   */
+  activateExistingShop: async (shopId) => {
+    set({ isLoading: true, error: null });
+    try {
+      await apiClient.put(`/shopowneruser/shops/${shopId}/activate`);
+      
+      set((state) => ({
+        myShops: state.myShops.map((shop) => 
+          shop._id === shopId ? { ...shop, shop_status: 'active' } : shop
+        ),
+        isLoading: false,
+      }));
+      
+      return { success: true, message: "Shop activated successfully" };
+    } catch (err) {
+      console.error(`Error activating shop ${shopId}:`, err);
+      const errorMessage = err.response?.data?.message || "Failed to activate shop.";
+      set({ error: errorMessage, isLoading: false });
+      return { success: false, message: errorMessage };
+    }
+  },
+
+  /**
+   * Permanently deletes a shop and all related data.
+   * Route: DELETE /shopowneruser/shops/:shopId/permanent
+   */
+  permanentlyDeleteShop: async (shopId) => {
+    set({ isLoading: true, error: null });
+    try {
+      await apiClient.delete(`/shopowneruser/shops/${shopId}/permanent`);
+      
+      set((state) => ({
+        myShops: state.myShops.filter((shop) => shop._id !== shopId),
+        isLoading: false,
+      }));
+      
+      return { success: true, message: "Shop permanently deleted" };
+    } catch (err) {
+      console.error(`Error permanently deleting shop ${shopId}:`, err);
+      const errorMessage = err.response?.data?.message || "Failed to delete shop permanently.";
+      set({ error: errorMessage, isLoading: false });
+      return { success: false, message: errorMessage };
+    }
+  },
+
   setCurrentShop: (shop) => {
     set({ currentShop: shop });
   },
