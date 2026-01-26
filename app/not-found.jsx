@@ -1,9 +1,14 @@
+"use client";
+
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Home, AlertCircle, ArrowLeft } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function NotFound() {
+  const router = useRouter();
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
       <Card className="w-full max-w-md shadow-xl border dark:bg-slate-900 dark:border-slate-700">
@@ -34,14 +39,12 @@ export default function NotFound() {
         
         <CardFooter className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button 
-            asChild 
             variant="outline" 
             className="w-full sm:w-auto dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-100"
+            onClick={() => router.back()}
           >
-            <Link href="/" className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back
-            </Link>
           </Button>
           <Button asChild className="w-full sm:w-auto">
             <Link href="/" className="flex items-center gap-2">

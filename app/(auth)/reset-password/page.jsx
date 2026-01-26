@@ -37,7 +37,11 @@ export default function ResetPassword() {
         const res = await resetPassword(password);
         
         if (res.success) {
-            router.push("/login?reset=success");
+            if (res.userType === "admin") {
+                router.push("/admin/login");
+            } else {
+                router.push("/login?reset=success");
+            }
         }
     };
 

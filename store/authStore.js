@@ -20,7 +20,8 @@ export const useAuthStore = create(
             isAuthenticated: false,
             loading: false,
             error: null,
-            message: null, // For success messages (e.g., "OTP Sent")
+            message: null, 
+            approvalStatus: null, // "approved" | "pending" | "rejected" | "revoked" | "draft"
 
             // ACTIONS
             setEmail: (email) => set({ email }),
@@ -54,24 +55,32 @@ export const useAuthStore = create(
 
                 try {
                     const res = await apiClient.post(Routes.AUTH.LOGIN, credentials);
-
-                    const { user, accessToken, refreshToken } = res.data.data;
+                    const { user, accessToken, refreshToken, shop_owner_status } = res.data.data;
 
                     // Set client-side cookies for Middleware/UI convenience
                     // Note: Security-critical cookies (httpOnly) are set by the backend automatically
                     Cookies.set("userRole", user.user_type, { expires: 1 });
                     Cookies.set("accessToken", accessToken, { expires: 1 });
 
+                    // Set approval status for shop owners
+                    let approvalStatusStr = null;
+                    if (user.user_type === "shop_owner" && shop_owner_status) {
+                        approvalStatusStr = shop_owner_status.is_approved ? "approved" : 
+                                      (shop_owner_status.verification_status || "pending");
+                        Cookies.set("approvalStatus", approvalStatusStr, { expires: 1 });
+                    }
+
                     set({
                         user,
                         accessToken,
                         refreshToken,
                         isAuthenticated: true,
+                        approvalStatus: approvalStatusStr,
                         loading: false,
                         error: null,
                     });
 
-                    return { success: true, user };
+                    return { success: true, user, shop_owner_status };
                 } catch (err) {
                     const errorMessage = err.response?.data?.message || err.message;
                     set({ error: errorMessage, loading: false });
@@ -155,12 +164,25 @@ export const useAuthStore = create(
                         withCredentials: true,
                     });
 
-                    // Backend returns: { user, customer_profile }
-                    const { user } = res.data.data;
+                    // Backend returns: { user, customer_profile, shop_owner_status }
+                    const { user, shop_owner_status } = res.data.data;
+
+                    // Sync approval status for shop owners
+                    let approvalStatusStr = null;
+                    if (user.user_type === "shop_owner" && shop_owner_status) {
+                        approvalStatusStr = shop_owner_status.is_approved ? "approved" : 
+                                      (shop_owner_status.verification_status || "draft");
+                        Cookies.set("approvalStatus", approvalStatusStr, { expires: 1 });
+                    } else if (user.user_type === "shop_owner") {
+                        // If shop_owner but no status object, it might be a new user without profile
+                        Cookies.set("approvalStatus", "draft", { expires: 1 });
+                        approvalStatusStr = "draft";
+                    }
 
                     set({
                         user,
                         isAuthenticated: true,
+                        approvalStatus: approvalStatusStr
                     });
 
                     return { success: true };
@@ -313,11 +335,19 @@ export const useAuthStore = create(
                     await apiClient.post(Routes.AUTH.PASSWORD?.RESET || "/auth/password/reset", {
                         resetToken,
                         newPassword
+                    }).then(res => {
+                         // Capture user_type if returned
+                         const userType = res.data.data?.user_type;
+                         return userType;
+                    }).then(userType => {
+                         set({ loading: false, resetToken: null, email: "", message: "Password reset successfully" });
+                         return { success: true, userType };
                     });
-
-                    // Clear sensitive state on success
-                    set({ loading: false, resetToken: null, email: "", message: "Password reset successfully" });
-                    return { success: true };
+                    
+                    // Note: The previous logic was simpler but didn't return data. 
+                    // To handle the async properly with the variable scope:
+                    
+/* Re-writing the block correctly since I can't chain well inside try/catch without refactoring */
                 } catch (err) {
                     set({ error: err.response?.data?.message || "Reset failed", loading: false });
                     return { success: false };

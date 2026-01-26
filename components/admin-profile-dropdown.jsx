@@ -27,8 +27,8 @@ export default function AdminProfileDropdown({ className = "" }) {
   const handleToggle = () => setOpen((v) => !v);
 
   const handleLogout = async () => {
-    await logout();
-    router.push("/admin/login");
+    await logout("/admin/login");
+    // router.push("/admin/login"); // handled by store
   };
 
   const menuItems = [

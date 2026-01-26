@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { SparklesIcon } from "@/components/ui/animated-icons";
+import { Home } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsList, TabsTab, TabsPanels, TabsPanel } from "@/components/ui/animated-tabs";
 import LoginForm from "@/components/auth/LoginForm";
@@ -63,13 +65,20 @@ export default function AuthPage() {
                         <div className="my-auto w-full max-w-md mx-auto">
                             
                             {/* Header */}
-                            <div className="mb-6">
-                                <div className="flex items-center gap-2 mb-2">
+                            <div className="mb-6 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
                                     <div className="h-8 w-8 bg-slate-900 dark:bg-white rounded-lg flex items-center justify-center text-white dark:text-slate-900 shadow-md">
                                         <SparklesIcon size={18} />
                                     </div>
                                     <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Provider Portal</h1>
                                 </div>
+                                <Link 
+                                    href="/" 
+                                    className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-full transition-colors"
+                                    title="Back to Home"
+                                >
+                                    <Home size={20} />
+                                </Link>
                             </div>
 
                              {/* Tabs Container */}

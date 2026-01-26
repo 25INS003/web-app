@@ -1,4 +1,3 @@
-// proxy.js
 import { NextResponse } from "next/server";
 
 const publicPaths = [
@@ -8,19 +7,20 @@ const publicPaths = [
   "/verify-otp",
   "/reset-password",
   "/unauthorized", 
-  "/admin/login", // Separate Admin Login
+  "/admin/login",
 ];
 
-const adminPaths = ["/admin","/verify-owner"]; 
+const adminPaths = ["/admin", "/verify-owner"]; 
 
-export function proxy(request) {
+export default function middleware(request) {
   const { pathname } = request.nextUrl;
   
   const token = request.cookies.get("accessToken")?.value;
   const userRole = request.cookies.get("userRole")?.value;
+  const approvalStatus = request.cookies.get("approvalStatus")?.value;
 
-  // 1. Check Public Paths
-  // We check if the path IS exactly "/" OR starts with one of the public paths
+  console.log(`[Middleware] Checking: ${pathname}`);
+  console.log(`[Middleware] Cookies - Token: ${token ? "YES" : "NO"} | Role: ${userRole || "NONE"} | Approval: ${approvalStatus || "NONE"}`);
   const isPublicPath = pathname === "/" || publicPaths.some((path) => 
       pathname.startsWith(path)
   );
@@ -29,22 +29,15 @@ export function proxy(request) {
       pathname.startsWith(path)
   );
 
-  console.log(`Checking: ${pathname} | Token: ${token ? "YES" : "NO"} | Public? ${isPublicPath} | Role: ${userRole || "NONE"}`);
-
-  // 2. PROTECT ROUTES
-  // If no token, and it's NOT a public path, Redirect to login
+  // 1. NO TOKEN REDIRECT
   if (!token && !isPublicPath) {
-    // If trying to access admin area, send to admin login
     if (isAdminPath) {
         return NextResponse.redirect(new URL("/admin/login", request.url));
     }
-    
-    const loginUrl = new URL("/login", request.url);
-    // loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 3. AUTH PAGE REDIRECT (If already logged in)
+  // 2. AUTH PAGE REDIRECT (If already logged in)
   if (token && (pathname === "/login" || pathname === "/register")) {
     if (userRole === "admin") {
         return NextResponse.redirect(new URL("/admin", request.url));
@@ -52,9 +45,45 @@ export function proxy(request) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // 4. ADMIN ROLE CHECK
+  // 3. ADMIN ROLE CHECK
   if (token && isAdminPath && userRole !== "admin") {
      return NextResponse.rewrite(new URL("/unauthorized", request.url));
+  }
+
+  // 4. SHOP OWNER APPROVAL CHECK
+  if (token && userRole === "shop_owner") {
+      const allowedUnapprovedPaths = ["/onboarding", "/status", "/login"];
+      const isRestrictedPath = !allowedUnapprovedPaths.some(p => pathname.startsWith(p));
+      
+      // If NOT approved and trying to access restricted areas (dashboard, products, etc.)
+      const isDashboardRelated = pathname.startsWith("/dashboard") || 
+                               pathname.startsWith("/products") || 
+                               pathname.startsWith("/orders") || 
+                               pathname.startsWith("/myshop");
+
+      if (approvalStatus !== "approved" && isDashboardRelated) {
+           if (approvalStatus === "pending") {
+              return NextResponse.redirect(new URL("/status", request.url));
+           } else {
+              // draft, rejected, or unknown -> onboarding
+              return NextResponse.redirect(new URL("/onboarding", request.url));
+           }
+      }
+      
+      // Prevent approved users from going back to onboarding/status
+      if (approvalStatus === "approved" && (pathname === "/onboarding" || pathname === "/status")) {
+           return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+      
+      // Prevent pending users from going to onboarding (force status page)
+      if (approvalStatus === "pending" && pathname === "/onboarding") {
+           return NextResponse.redirect(new URL("/status", request.url));
+      }
+
+      // Prevent draft users from going to status (force onboarding page)
+      if (approvalStatus === "draft" && pathname === "/status") {
+           return NextResponse.redirect(new URL("/onboarding", request.url));
+      }
   }
 
   return NextResponse.next();

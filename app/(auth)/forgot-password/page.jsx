@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -41,6 +41,9 @@ export default function ForgotPasswordPage() {
         }
     };
 
+    const searchParams = useSearchParams();
+    const role = searchParams.get("role");
+
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-slate-100 dark:bg-slate-900 p-4 relative overflow-hidden">
              {/* Ambient Background */}
@@ -49,7 +52,7 @@ export default function ForgotPasswordPage() {
                     src="/login-illustration.png" // Reusing the ambient blur from login if suitable, or just the bg logic
                     alt="Background blur" 
                     fill 
-                    className="object-cover blur-3xl opacity-10 scale-110" 
+                    className="object-cover blur-3xl opacity-10 dark:opacity-5 scale-110" 
                 />
             </div>
 
@@ -97,7 +100,7 @@ export default function ForgotPasswordPage() {
                     animate={{ opacity: 1 }} 
                     transition={{ delay: 0.4 }}
                 >
-                    <Link href="/login" className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                    <Link href={role === "admin" ? "/admin/login" : "/login"} className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
                         Back to Login
                     </Link>
                 </motion.div>

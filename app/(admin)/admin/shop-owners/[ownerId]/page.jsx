@@ -3,19 +3,41 @@
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useShopOwnerStore } from "@/store/adminShopownerStore";
+import { toast } from "sonner";
 import {
     ArrowLeft, Building2, MapPin, Landmark,
-    Receipt, Calendar, Check, X, hash
+    Receipt, Calendar, Check, X, FileText, Download
 } from "lucide-react";
 
 export default function ShopOwnerDetailPage() {
     const { ownerId } = useParams();
     const router = useRouter();
-    const { selectedOwner, fetchOwnerById, updateStatus, isLoading, error } = useShopOwnerStore();
+    const { selectedOwner, fetchOwnerById, approveOwner, rejectOwner, revokeOwner, isLoading, error } = useShopOwnerStore();
 
     useEffect(() => {
         if (ownerId) fetchOwnerById(ownerId);
     }, [ownerId, fetchOwnerById]);
+
+    const handleApprove = async () => {
+        const result = await approveOwner(ownerId);
+        if (result.success) {
+            toast.success("Shop Owner Approved Successfully");
+        }
+    };
+
+    const handleReject = async () => {
+        const result = await rejectOwner(ownerId);
+        if (result.success) {
+            toast.success("Application Rejected");
+        }
+    };
+
+    const handleRevoke = async () => {
+        const result = await revokeOwner(ownerId);
+        if (result.success) {
+            toast.success("Application Revoked");
+        }
+    };
 
     if (isLoading) return <div className="p-10 text-center animate-pulse text-gray-500">Loading business credentials...</div>;
     if (error) return <div className="p-10 text-center text-red-500 font-medium">{error}</div>;
@@ -43,11 +65,14 @@ export default function ShopOwnerDetailPage() {
                             REG_ID: {selectedOwner.owner_id}
                         </p>
                     </div>
-                    <div className={`px-5 py-2 rounded-full font-bold text-sm uppercase tracking-widest border-2 ${selectedOwner.is_approved
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                    <div className={`px-5 py-2 rounded-full font-bold text-sm uppercase tracking-widest border-2 ${
+                            selectedOwner.verification_status === "approved" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                            selectedOwner.verification_status === "rejected" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                            "bg-amber-500/10 text-amber-400 border-amber-500/20"
                         }`}>
-                        {selectedOwner.is_approved ? "● Fully Approved" : "○ Verification Pending"}
+                        {selectedOwner.verification_status === "approved" ? "● Fully Approved" : 
+                         selectedOwner.verification_status === "rejected" ? "⊗ Application Rejected" : 
+                         "○ Verification Pending"}
                     </div>
                 </div>
 
@@ -58,12 +83,60 @@ export default function ShopOwnerDetailPage() {
                         {/* Column 1: Business & Tax */}
                         <div className="space-y-8">
                             <SectionTitle title="Business Identity" />
+                            
+                            {/* Logo Preview */}
+                            {selectedOwner.business_logo && (
+                                <div className="mb-6">
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-2">Shop Logo</p>
+                                    <div className="relative h-32 w-32 rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-700">
+                                         {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img 
+                                            src={selectedOwner.business_logo} 
+                                            alt="Shop Logo" 
+                                            className="h-full w-full object-cover"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <InfoTile
                                 icon={<Receipt className="text-blue-600" />}
                                 label="GST Number"
                                 value={selectedOwner.gst_number || "Not Registered"}
                                 color="bg-blue-50 dark:bg-blue-500/10"
                             />
+                             
+                            {/* Uploaded Documents */}
+                            <div className="space-y-4 pt-2">
+                                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-2">Documents</p>
+                                {selectedOwner.documents && selectedOwner.documents.length > 0 ? (
+                                    selectedOwner.documents.map((doc, idx) => (
+                                        <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between group">
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <div className="p-2 bg-blue-100 dark:bg-blue-500/20 text-blue-600 rounded-lg shrink-0">
+                                                    <FileText size={18} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                     <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate" title={doc.name}>{doc.name}</p>
+                                                     <span className="text-[10px] text-gray-400 uppercase">{doc.mime_type?.split('/')[1] || 'FILE'}</span>
+                                                </div>
+                                            </div>
+                                            <a 
+                                                href={doc.url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="p-2 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                                title="Download/View"
+                                            >
+                                                <Download size={16} />
+                                            </a>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-slate-400 italic">No documents uploaded.</p>
+                                )}
+                            </div>
+
                             <InfoTile
                                 icon={<Calendar className="text-purple-600" />}
                                 label="In Business Since"
@@ -121,16 +194,45 @@ export default function ShopOwnerDetailPage() {
                             {/* Verification Actions */}
                             <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
                                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-4 tracking-tighter">Decision Panel</h4>
-                                <button
-                                    onClick={() => updateStatus(ownerId, !selectedOwner.is_approved)}
-                                    className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${selectedOwner.is_approved
-                                            ? "bg-white dark:bg-slate-900 border-2 border-red-100 dark:border-red-900/30 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10"
-                                            : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl shadow-emerald-200 dark:shadow-none"
-                                        }`}
-                                >
-                                    {selectedOwner.is_approved ? <X size={20} /> : <Check size={20} />}
-                                    {selectedOwner.is_approved ? "Revoke Approval" : "Approve Business"}
-                                </button>
+                                <div className="flex flex-col gap-3">
+                                    {/* Approved State: Show Revoke */}
+                                    {selectedOwner.verification_status === "approved" && (
+                                        <button
+                                            onClick={handleRevoke}
+                                            className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-white dark:bg-slate-900 border-2 border-amber-100 dark:border-amber-900/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10"
+                                        >
+                                            <X size={20} /> Revoke Approval
+                                        </button>
+                                    )}
+
+                                    {/* Pending or Revoked State: Show Approve & Reject */}
+                                    {(selectedOwner.verification_status === "pending" || selectedOwner.verification_status === "revoked" || selectedOwner.verification_status === "draft") && (
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={handleReject}
+                                                className="flex-1 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/10 text-red-600 border border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/20"
+                                            >
+                                                <X size={20} /> Reject
+                                            </button>
+                                            <button
+                                                onClick={handleApprove}
+                                                className="flex-1 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl shadow-emerald-200 dark:shadow-none"
+                                            >
+                                                <Check size={20} /> Approve
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* Rejected State: Show Approve (Reconsider) */}
+                                    {selectedOwner.verification_status === "rejected" && (
+                                        <button
+                                            onClick={handleApprove}
+                                            className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl shadow-emerald-200 dark:shadow-none"
+                                        >
+                                            <Check size={20} /> Reconsided & Approve
+                                        </button>
+                                    )}
+                                </div>
                                 <p className="text-[10px] text-center text-gray-400 mt-4 italic">
                                     Action will be logged and owner will be notified.
                                 </p>
@@ -144,7 +246,7 @@ export default function ShopOwnerDetailPage() {
     );
 }
 
-// --- Helper Components for Cleanliness ---
+// --- Helper Components ---
 
 function SectionTitle({ title }) {
     return <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4">{title}</h3>;

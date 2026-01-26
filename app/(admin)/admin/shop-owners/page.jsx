@@ -13,7 +13,7 @@ import {
     Users,
     Fingerprint,
     Search,
-    Filter
+    XCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export default function ShopOwnerListPage() {
-    const { shopOwners, isLoading, fetchAllOwners, updateStatus, verifyOwner } = useShopOwnerStore();
+    const { shopOwners, isLoading, fetchAllOwners, approveOwner, rejectOwner, verifyOwner } = useShopOwnerStore();
     const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
@@ -210,21 +210,39 @@ export default function ShopOwnerListPage() {
                                                     </TooltipProvider>
 
                                                     {!owner.is_approved && (
-                                                        <TooltipProvider delayDuration={0}>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button 
-                                                                        size="icon" 
-                                                                        variant="ghost" 
-                                                                        onClick={() => updateStatus(owner._id, true)}
-                                                                        className="h-9 w-9 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl"
-                                                                    >
-                                                                        <CheckCircle size={18} />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>Approve Owner</TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
+                                                        <>
+                                                            <TooltipProvider delayDuration={0}>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button 
+                                                                            size="icon" 
+                                                                            variant="ghost" 
+                                                                            onClick={() => approveOwner(owner._id)}
+                                                                            className="h-9 w-9 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl"
+                                                                        >
+                                                                            <CheckCircle size={18} />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>Approve Owner</TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+
+                                                            <TooltipProvider delayDuration={0}>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button 
+                                                                            size="icon" 
+                                                                            variant="ghost" 
+                                                                            onClick={() => rejectOwner(owner._id)}
+                                                                            className="h-9 w-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl"
+                                                                        >
+                                                                            <XCircle className="h-[18px] w-[18px]" />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>Reject Application</TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        </>
                                                     )}
 
                                                     <TooltipProvider delayDuration={0}>

@@ -34,7 +34,7 @@ export const useShopStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.post("/shopowneruser/create/shops", shopData);
-      const newShop = response.data.shop; // Assuming API returns { success: true, shop: { ... } }
+      const newShop = response.data.data.shop; 
 
       // Add the new shop to the state immutably
       set((state) => ({
@@ -61,7 +61,11 @@ export const useShopStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.put(`/shopowneruser/shops/${shopId}`, updateData);
-      const updatedShop = response.data.shop; // Assuming API returns { success: true, shop: { ... } }
+      const updatedShop = response.data?.data?.shop || response.data?.shop || response.data?.data; 
+
+      if (!updatedShop) {
+        throw new Error("Invalid response structure from server");
+      }
 
       // Update the shop in the state
       set((state) => ({
@@ -91,7 +95,7 @@ export const useShopStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.get(`/shopowneruser/shops/${shopId}/analytics`);
-      const analytics = response.data.analytics; // Assuming API returns { success: true, analytics: { ... } }
+      const analytics = response.data.data.analytics; 
 
       set({ isLoading: false });
       return analytics;

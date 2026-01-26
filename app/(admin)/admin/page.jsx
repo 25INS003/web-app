@@ -52,7 +52,7 @@ export default function AdminDashboardPage() {
                 // Fetch in parallel
                 const [shopsRes, pendingRes, salesRes, healthRes] = await Promise.all([
                     apiClient.get("/admin/shops"),
-                    apiClient.get("/admin/shops/pending-approval"),
+                    apiClient.get("/admin/shop-owners/pending-approval"),
                     apiClient.get("/reports/sales?groupBy=day&startDate=" + new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
                      apiClient.get("/admin/system/health").catch(() => ({ data: { data: null } }))
                 ]);

@@ -18,7 +18,8 @@ import {
     Phone,
     Mail,
     Building2,
-    Navigation
+    Navigation,
+    X
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,8 @@ const AddShopPage = () => {
     const router = useRouter();
     const { createNewShop, isLoading, error: storeError } = useShopStore();
     const [category, setCategory] = useState(null);
+    const [pincodes, setPincodes] = useState([]);
+    const [currentPincode, setCurrentPincode] = useState("");
 
     const {
         register,
@@ -66,7 +69,7 @@ const AddShopPage = () => {
             name: "",
             business_name: "",
             categories: [],
-            delivery_radius_km: 5,
+            // delivery_radius_km: 5, // Removed
             preparation_time: 30,
             delivery_fee: 0,
             min_order_amount: 0,
@@ -153,12 +156,26 @@ const AddShopPage = () => {
         }
     }, [category, setValue]);
 
+    const handleAddPincode = () => {
+        if (!currentPincode) return;
+        if (pincodes.includes(currentPincode)) {
+            toast.error("Pincode already added");
+            return;
+        }
+        setPincodes([...pincodes, currentPincode]);
+        setCurrentPincode("");
+    };
+
+    const handleRemovePincode = (code) => {
+        setPincodes(pincodes.filter(p => p !== code));
+    };
+
     const onSubmit = async (data) => {
         const formattedData = {
             ...data,
             shop_lat: Number(data.shop_lat),
             shop_lng: Number(data.shop_lng),
-            delivery_radius_km: Number(data.delivery_radius_km),
+            delivery_pincodes: pincodes,
             delivery_fee: Number(data.delivery_fee),
             free_delivery_threshold: Number(data.free_delivery_threshold),
             min_order_amount: Number(data.min_order_amount),
@@ -443,12 +460,49 @@ const AddShopPage = () => {
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Radius (KM) *</label>
-                                    <Input 
-                                        type="number" 
-                                        {...register("delivery_radius_km", { required: true })}
-                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
-                                    />
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Delivery Pincodes *</label>
+                                    <div className="space-y-3">
+                                        <div className="flex gap-2">
+                                            <Input 
+                                                value={currentPincode}
+                                                onChange={(e) => setCurrentPincode(e.target.value)}
+                                                placeholder="Enter pincode"
+                                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        handleAddPincode();
+                                                    }
+                                                }}
+                                            />
+                                            <Button 
+                                                type="button"
+                                                onClick={handleAddPincode}
+                                                className="rounded-xl bg-blue-500 hover:bg-blue-600 text-white"
+                                            >
+                                                Add
+                                            </Button>
+                                        </div>
+                                        
+                                        {pincodes.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {pincodes.map((pin, index) => (
+                                                    <div key={index} className="flex items-center gap-1 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm border border-blue-100 dark:border-blue-500/20">
+                                                        <span>{pin}</span>
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => handleRemovePincode(pin)}
+                                                            className="hover:text-red-500 ml-1"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-400 italic">Add at least one pincode</p>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Delivery Fee</label>

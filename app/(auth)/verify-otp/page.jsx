@@ -55,7 +55,7 @@ export default function VerifyOtp() {
                     src="/login-bg-new.png" 
                     alt="Background blur" 
                     fill 
-                    className="object-cover blur-3xl opacity-20 scale-110" 
+                    className="object-cover blur-3xl opacity-20 dark:opacity-10 scale-110" 
                 />
             </div>
 

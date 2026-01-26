@@ -21,7 +21,8 @@ import {
     AlertCircle,
     Globe,
     FileText,
-    ArrowLeft
+    ArrowLeft,
+    Truck
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,8 @@ const EditShopPage = ({ params }) => {
     const [errorMessage, setErrorMessage] = useState("");
     const [activeTab, setActiveTab] = useState("general");
     const [shopImage, setShopImage] = useState(null);
+    const [pincodes, setPincodes] = useState([]);
+    const [currentPincode, setCurrentPincode] = useState("");
     const [imagePreview, setImagePreview] = useState("");
 
     const { register, handleSubmit, reset, control, formState: { errors } } = useForm();
@@ -79,22 +82,43 @@ const EditShopPage = ({ params }) => {
                 description: shop.description || "",
                 email: shop.email || "",
                 phone: shop.phone || "",
-                address: shop.address || "",
+                address_line: shop.address_line || "",
                 city: shop.city || "",
                 state: shop.state || "",
                 pincode: shop.pincode || "",
-                gst_number: shop.gst_number || "",
+                business_name: shop.business_name || "",
                 opening_time: shop.opening_time || "09:00",
                 closing_time: shop.closing_time || "21:00",
                 website: shop.website || "",
+                shop_lat: shop.shop_lat || "",
+                shop_lng: shop.shop_lng || "",
                 category: shop.category || "",
+                preparation_time: shop.preparation_time || 30,
+                delivery_fee: shop.delivery_fee || 0,
+                min_order_amount: shop.min_order_amount || 0,
+                free_delivery_threshold: shop.free_delivery_threshold || 0,
             });
+            setPincodes(shop.delivery_pincodes || []); 
             setImagePreview(shop.image || "");
         } else if (!storeLoading && myShops.length > 0) {
             setErrorMessage("Shop not found.");
             setTimeout(() => router.push('/myshop'), 2000);
         }
     }, [shopId, myShops, reset, storeLoading, router]);
+
+    const handleAddPincode = () => {
+        if (!currentPincode) return;
+        if (pincodes.includes(currentPincode)) {
+             setErrorMessage("Pincode already added"); 
+             return;
+        }
+        setPincodes([...pincodes, currentPincode]);
+        setCurrentPincode("");
+    };
+
+    const handleRemovePincode = (code) => {
+        setPincodes(pincodes.filter(p => p !== code));
+    };
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -113,15 +137,21 @@ const EditShopPage = ({ params }) => {
 
         try {
             const formData = new FormData();
-            Object.keys(data).forEach(key => {
-                if (data[key] !== null && data[key] !== undefined) {
-                    formData.append(key, data[key]);
-                }
-            });
-
             if (shopImage) {
                 formData.append('image', shopImage);
             }
+            
+            // Explicitly cast numbers and append others
+            Object.keys(data).forEach(key => {
+                if (key === 'shop_lat' || key === 'shop_lng' || key === 'delivery_fee' || key === 'min_order_amount' || key === 'free_delivery_threshold' || key === 'preparation_time') {
+                    formData.set(key, Number(data[key]));
+                } else if (data[key] !== null && data[key] !== undefined) {
+                    formData.set(key, data[key]);
+                }
+            });
+
+            // Send pincodes as JSON string to ensure array structure is preserved
+            formData.set('delivery_pincodes', JSON.stringify(pincodes));
 
             const updated = await updateExistingShop(shopId, formData);
 
@@ -223,6 +253,7 @@ const EditShopPage = ({ params }) => {
                                 { id: "contact", label: "Contact", icon: Phone },
                                 { id: "business", label: "Business", icon: Building2 },
                                 { id: "hours", label: "Hours", icon: Clock },
+                                { id: "delivery", label: "Delivery", icon: Truck },
                             ].map((tab) => (
                                 <button
                                     key={tab.id}
@@ -375,7 +406,7 @@ const EditShopPage = ({ params }) => {
                                         <MapPin className="h-4 w-4 text-slate-400" /> Street Address
                                     </label>
                                     <Textarea 
-                                        {...register("address")} 
+                                        {...register("address_line")} 
                                         rows={2} 
                                         placeholder="Building, Street, Area"
                                         className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
@@ -426,11 +457,11 @@ const EditShopPage = ({ params }) => {
                             <div className="space-y-5">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                        <FileText className="h-4 w-4 text-slate-400" /> GST Number / Tax ID
+                                        <FileText className="h-4 w-4 text-slate-400" /> Official Business Name
                                     </label>
                                     <Input 
-                                        {...register("gst_number")} 
-                                        placeholder="22AAAAA0000A1Z5"
+                                        {...register("business_name")} 
+                                        placeholder="e.g. Fresh Mart Private Ltd"
                                         className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
                                     />
                                 </div>
@@ -484,6 +515,93 @@ const EditShopPage = ({ params }) => {
                             </div>
                             <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
                                 <p className="text-xs text-slate-500 dark:text-slate-400">Times are based on your local timezone.</p>
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="delivery" className="space-y-6 outline-none">
+                        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-500/10">
+                                    <Truck className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Delivery Settings</h2>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage delivery areas and fees</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Delivery Pincodes</label>
+                                    <div className="flex gap-2">
+                                        <Input 
+                                            value={currentPincode}
+                                            onChange={(e) => setCurrentPincode(e.target.value)}
+                                            placeholder="Enter pincode"
+                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleAddPincode();
+                                                }
+                                            }}
+                                        />
+                                        <Button 
+                                            type="button"
+                                            onClick={handleAddPincode}
+                                            className="rounded-xl bg-blue-500 hover:bg-blue-600 text-white"
+                                        >
+                                            Add
+                                        </Button>
+                                    </div>
+                                    
+                                    {pincodes.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {pincodes.map((pin, index) => (
+                                                <div key={index} className="flex items-center gap-1 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm border border-blue-100 dark:border-blue-500/20">
+                                                    <span>{pin}</span>
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => handleRemovePincode(pin)}
+                                                        className="hover:text-red-500 ml-1"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-slate-400 italic">No delivery pincodes added yet.</p>
+                                    )}
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Delivery Fee</label>
+                                        <Input 
+                                            type="number"
+                                            {...register("delivery_fee")} 
+                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Min Order Amount</label>
+                                        <Input 
+                                            type="number"
+                                            {...register("min_order_amount")} 
+                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                        />
+                                    </div>
+                                     <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Free Delivery Threshold</label>
+                                        <Input 
+                                            type="number"
+                                            {...register("free_delivery_threshold")} 
+                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </TabsContent>
