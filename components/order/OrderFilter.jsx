@@ -47,7 +47,7 @@ export default function OrderFilter({ filters = {}, onFilterChange }) {
         // Use local state values for the filter object
         const newFilters = {
             search: local.search || undefined,
-            order_status: local.status !== 'all' ? local.status : undefined,
+            status: local.status !== 'all' ? local.status : undefined,
             dateRange: local.dateRange !== 'all' ? local.dateRange : undefined,
             ...dateParams,
         };
@@ -99,6 +99,7 @@ export default function OrderFilter({ filters = {}, onFilterChange }) {
                                 <SelectItem value="shipped" className={selectItemClass}>Shipped</SelectItem>
                                 <SelectItem value="delivered" className={selectItemClass}>Delivered</SelectItem>
                                 <SelectItem value="cancelled" className={selectItemClass}>Cancelled</SelectItem>
+                                <SelectItem value="refunded" className={selectItemClass}>Refunded</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

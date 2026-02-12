@@ -21,13 +21,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Loader2, Store, MapPin, CreditCard, CheckCircle2, Building2, UploadCloud } from "lucide-react";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import { Loader2, Store, MapPin, CreditCard, CheckCircle2, Building2, UploadCloud, ChevronDown } from "lucide-react";
 
 // Schema Validation
 const onboardingSchema = z.object({
@@ -309,17 +316,60 @@ export default function OnboardingPage() {
                         <div className="space-y-1 relative">
                             {/* Native Select or Custom - keeping native for simplicity but styled */}
                             <Label className="text-xs font-semibold text-slate-500 ml-1 mb-1 block">State</Label>
-                            <Select onValueChange={(val) => setValue("business_address_state", val)}>
-                              <SelectTrigger className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
-                                <SelectValue placeholder="Select State" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Delhi">Delhi</SelectItem>
-                                <SelectItem value="Maharashtra">Maharashtra</SelectItem>
-                                <SelectItem value="Karnataka">Karnataka</SelectItem>
-                                <SelectItem value="Tamil Nadu">Tamil Nadu</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            
+                            {/* Combobox Implementation */}
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn(
+                                    "w-full h-14 justify-between rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 font-normal hover:bg-slate-100 dark:hover:bg-slate-800",
+                                    !watch("business_address_state") && "text-muted-foreground"
+                                  )}
+                                >
+                                  {watch("business_address_state")
+                                    ? watch("business_address_state")
+                                    : "Select State"}
+                                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                                <Command>
+                                  <CommandInput placeholder="Search state..." />
+                                  <CommandList>
+                                      <CommandEmpty>No state found.</CommandEmpty>
+                                      <CommandGroup>
+                                        {[
+                                          "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", 
+                                          "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", 
+                                          "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", 
+                                          "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", 
+                                          "Uttar Pradesh", "Uttarakhand", "West Bengal", "Delhi", "Jammu and Kashmir", 
+                                          "Ladakh", "Puducherry", "Chandigarh", "Andaman and Nicobar Islands", 
+                                          "Dadra and Nagar Haveli and Daman and Diu", "Lakshadweep"
+                                        ].map((state) => (
+                                          <CommandItem
+                                            key={state}
+                                            value={state}
+                                            onSelect={(currentValue) => {
+                                              setValue("business_address_state", currentValue === watch("business_address_state") ? "" : currentValue, { shouldValidate: true });
+                                            }}
+                                          >
+                                            <CheckCircle2
+                                              className={cn(
+                                                "mr-2 h-4 w-4",
+                                                watch("business_address_state") === state ? "opacity-100" : "opacity-0"
+                                              )}
+                                            />
+                                            {state}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
                             {errors.business_address_state && <p className="text-red-500 text-xs pl-1">{errors.business_address_state.message}</p>}
                         </div>
                         <div className="space-y-1">

@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { Badge } from '@/components/ui/badge';
 import {
     RefreshCw,
@@ -41,7 +41,6 @@ const OrdersDashboard = () => {
 
     // --- LOCAL STATE ---
     const [filters, setFilters] = useState({});
-    const [activeTab, setActiveTab] = useState("all");
 
     // --- FETCH ORDERS ---
     useEffect(() => {
@@ -53,26 +52,17 @@ const OrdersDashboard = () => {
             ...filters,
         };
 
-        if (activeTab !== "all") {
-            queryParams.order_status = activeTab;
-        }
-
         fetchOrders(shopId, queryParams);
-    }, [shopId, page, limit, filters, activeTab, fetchOrders]);
+    }, [shopId, page, limit, filters, fetchOrders]);
 
     // --- HANDLERS ---
     const handleRefresh = () => {
         if (!shopId) return;
-        fetchOrders(shopId, { page: 1, limit, ...filters, order_status: activeTab === "all" ? undefined : activeTab });
+        fetchOrders(shopId, { page: 1, limit, ...filters });
     };
 
     const handleFilterChange = (newFilters) => {
         setFilters(newFilters);
-        setPage(1); 
-    };
-
-    const handleTabChange = (val) => {
-        setActiveTab(val);
         setPage(1); 
     };
 
@@ -85,7 +75,7 @@ const OrdersDashboard = () => {
 
         if (pendingIds.length > 0) {
             await acceptOrders(shopId, pendingIds);
-            fetchOrders(shopId, { page, limit, ...filters, order_status: activeTab === "all" ? undefined : activeTab });
+            fetchOrders(shopId, { page, limit, ...filters });
         }
     };
 
@@ -204,40 +194,7 @@ const OrdersDashboard = () => {
                 />
             </div>
 
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-8">
-                {/* Floating Segmented Control */}
-                <div className="flex justify-center">
-                    <TabsList className="h-auto p-1.5 bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-md rounded-full border border-white/20 dark:border-slate-700/50 shadow-sm">
-                        {["all", "pending", "preparing", "ready", "delivered"].map((tab) => (
-                            <TabsTrigger 
-                                key={tab}
-                                value={tab}
-                                className="relative rounded-full px-6 py-2.5 bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-none font-medium z-10"
-                            >
-                                {activeTab === tab && (
-                                    <motion.div
-                                        layoutId="activeTabBackground"
-                                        className="absolute inset-0 bg-white dark:bg-slate-700 rounded-full shadow-md -z-10"
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                    />
-                                )}
-                                <span className={cn(
-                                    "capitalize transition-colors duration-200",
-                                    activeTab === tab ? "text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-                                )}>
-                                    {tab === "all" ? "All Orders" : tab}
-                                </span>
-                                {tab === "pending" && stats.pendingCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-in fade-in zoom-in duration-300 z-20">
-                                        {stats.pendingCount}
-                                    </span>
-                                )}
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
-                </div>
-
+            <div className="space-y-8">
                 <div className="space-y-6">
                     {/* Glassmorphic Filter Bar Container */}
                     <div className="p-1 rounded-2xl bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -250,7 +207,6 @@ const OrdersDashboard = () => {
                     </div>
 
                     <motion.div
-                        key={activeTab}
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, ease: "easeOut" }}
@@ -279,7 +235,7 @@ const OrdersDashboard = () => {
                          )}
                     </motion.div>
                 </div>
-            </Tabs>
+            </div>
         </motion.div>
     );
 };

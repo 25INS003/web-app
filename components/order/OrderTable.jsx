@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, AlertCircle, Eye } from 'lucide-react';
 import { useShopOrderStore } from '@/store/shopOrderStore';
+import OrderDetailsModal from './OrderDetailsModal';
 
 const getStatusBadge = (status) => {
     const styles = {
@@ -34,6 +35,20 @@ const OrderTable = ({
     const { acceptOrders, markOrdersReady, updateOrderStatus } = useShopOrderStore();
     const { page, limit } = pagination;
     const totalPages = Math.ceil(total / limit) || 1;
+
+    // Modal State
+    const [selectedOrderId, setSelectedOrderId] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleViewDetails = (orderId) => {
+        setSelectedOrderId(orderId);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedOrderId(null);
+    };
 
     const handleStatusChange = async (orderId, newStatus) => {
         if (!shopId) return;
@@ -86,6 +101,7 @@ const OrderTable = ({
     }
 
     return (
+        <>
         <div className="space-y-4">
             <Card className="border bg-white dark:bg-slate-800/60 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
@@ -127,17 +143,34 @@ const OrderTable = ({
                                     <TableCell>{getStatusBadge(order.order_status)}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center justify-center gap-2">
+                                            {/* View Details Button */}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 w-8 p-0 hover:bg-indigo-100 dark:hover:bg-indigo-900/50"
+                                                onClick={() => handleViewDetails(order.order_id)}
+                                                title="View Order Details"
+                                            >
+                                                <Eye className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                                            </Button>
+                                            
                                             {order.order_status === 'pending' ? (
-                                                <Button size="sm" className="h-8 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleStatusChange(order._id, 'confirmed')}>Accept</Button>
+                                                <Button size="sm" className="h-8 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleStatusChange(order.order_id, 'confirmed')}>Accept</Button>
+                                            ) : order.order_status === 'confirmed' ? (
+                                                <Button size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => handleStatusChange(order.order_id, 'preparing')}>Start Preparing</Button>
                                             ) : order.order_status === 'preparing' ? (
-                                                <Button size="sm" className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => handleStatusChange(order._id, 'ready')}>Ready</Button>
+                                                <Button size="sm" className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => handleStatusChange(order.order_id, 'ready')}>Ready</Button>
+                                            ) : order.order_status === 'ready' ? (
+                                                <Button size="sm" className="h-8 bg-purple-600 hover:bg-purple-700 text-white" onClick={() => handleStatusChange(order.order_id, 'picked_up')}>Picked Up</Button>
                                             ) : (
-                                                <Select value={order.order_status} onValueChange={(val) => handleStatusChange(order._id, val)} disabled={['delivered', 'cancelled', 'refunded'].includes(order.order_status)}>
+                                                <Select value={order.order_status} onValueChange={(val) => handleStatusChange(order.order_id, val)} disabled={['delivered', 'cancelled', 'refunded'].includes(order.order_status)}>
                                                     <SelectTrigger className="h-8 w-[110px] text-xs"><SelectValue /></SelectTrigger>
                                                     <SelectContent>
+                                                        <SelectItem value="picked_up">Picked Up</SelectItem>
                                                         <SelectItem value="in_transit">In Transit</SelectItem>
                                                         <SelectItem value="delivered">Delivered</SelectItem>
                                                         <SelectItem value="cancelled">Cancelled</SelectItem>
+                                                        <SelectItem value="refunded">Refunded</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             )}
@@ -162,6 +195,15 @@ const OrderTable = ({
                 </div>
             )}
         </div>
+
+            {/* Order Details Modal */}
+            <OrderDetailsModal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                orderId={selectedOrderId}
+                shopId={shopId}
+            />
+        </>
     );
 };
 
