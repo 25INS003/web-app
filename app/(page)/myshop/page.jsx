@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useShopStore } from "@/store/shopStore";
+import { toast } from "sonner";
 import {
     Store,
     Plus,
@@ -13,6 +14,7 @@ import {
     MapPin,
     Phone,
     CheckCircle,
+    XCircle,
     Search,
     Settings,
     Edit,
@@ -26,8 +28,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -51,7 +51,15 @@ const itemVariants = {
 // ==========================================
 const MyShopsPage = () => {
     const router = useRouter();
-    const { myShops, fetchMyShops, isLoading, error: storeError } = useShopStore();
+    const { 
+        myShops, 
+        fetchMyShops, 
+        isLoading, 
+        deactivateExistingShop,
+        activateExistingShop,
+        permanentlyDeleteShop,
+        error: storeError 
+    } = useShopStore();
     const [searchTerm, setSearchTerm] = useState("");
     const [searchFocused, setSearchFocused] = useState(false);
 
@@ -63,8 +71,37 @@ const MyShopsPage = () => {
         router.push(`/myshop/edit/${shopId}`);
     };
 
-    const handleDeleteShop = async (shopId) => {
-        if (!window.confirm("Are you sure you want to delete this shop?")) return;
+    const handleDeactivate = async (shopId) => {
+        if (!window.confirm("Are you sure you want to deactivate this shop? It will be marked as inactive.")) return;
+        
+        const result = await deactivateExistingShop(shopId);
+        if (result.success) {
+            toast.success(result.message);
+        } else {
+            toast.error(result.message);
+        }
+    };
+
+    const handleActivate = async (shopId) => {
+        if (!window.confirm("Are you sure you want to activate this shop?")) return;
+        
+        const result = await activateExistingShop(shopId);
+        if (result.success) {
+            toast.success(result.message);
+        } else {
+            toast.error(result.message);
+        }
+    };
+
+    const handleHardDelete = async (shopId) => {
+        if (!window.confirm("⚠️ WARNING: This will PERMANENTLY delete the shop and ALL its data (products, orders, etc). This cannot be undone. Are you sure?")) return;
+        
+        const result = await permanentlyDeleteShop(shopId);
+        if (result.success) {
+            toast.success(result.message);
+        } else {
+            toast.error(result.message);
+        }
     };
 
     const filteredShops = myShops?.filter(shop => {
@@ -77,7 +114,7 @@ const MyShopsPage = () => {
         );
     }) || [];
 
-    const activeShops = myShops?.filter(s => s.status === 'active' || !s.status).length || 0;
+    const activeShops = myShops?.filter(s => s.shop_status === 'active' || !s.shop_status).length || 0;
     const totalProducts = myShops?.reduce((sum, s) => sum + (s.total_products || 0), 0) || 0;
     const totalOrders = myShops?.reduce((sum, s) => sum + (s.total_orders || 0), 0) || 0;
 
@@ -196,7 +233,9 @@ const MyShopsPage = () => {
                             shop={shop}
                             index={index}
                             onEdit={handleEditShop}
-                            onDelete={handleDeleteShop}
+                            onDeactivate={handleDeactivate}
+                            onActivate={handleActivate}
+                            onHardDelete={handleHardDelete}
                         />
                     ))}
                 </div>
@@ -206,7 +245,7 @@ const MyShopsPage = () => {
 };
 
 // --- Shop Card Component ---
-const ShopCard = ({ shop, index, onEdit, onDelete }) => (
+const ShopCard = ({ shop, index, onEdit, onDeactivate, onActivate, onHardDelete }) => (
     <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -256,13 +295,40 @@ const ShopCard = ({ shop, index, onEdit, onDelete }) => (
                             <Settings className="mr-3 h-4 w-4 text-slate-400" />
                             Edit Shop
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
-                            onClick={() => onDelete(shop._id)}
-                            className="rounded-xl px-3 py-2.5 text-red-400 hover:text-red-300 hover:bg-slate-800 cursor-pointer focus:bg-slate-800 focus:text-red-300"
-                        >
-                            <Trash2 className="mr-3 h-4 w-4" />
-                            Delete Shop
-                        </DropdownMenuItem>
+                        
+                        {/* Active Shop Actions */}
+                        {(shop.shop_status === 'active' || !shop.shop_status) && (
+                            <DropdownMenuItem 
+                                onClick={() => onDeactivate(shop._id)}
+                                className="rounded-xl px-3 py-2.5 text-orange-400 hover:text-orange-300 hover:bg-slate-800 cursor-pointer focus:bg-slate-800 focus:text-orange-300"
+                            >
+                                <XCircle className="mr-3 h-4 w-4" />
+                                Deactivate Shop
+                            </DropdownMenuItem>
+                        )}
+
+                        {/* Inactive Shop Actions */}
+                        {shop.shop_status === 'inactive' && (
+                            <>
+                                <DropdownMenuItem 
+                                    onClick={() => onActivate(shop._id)}
+                                    className="rounded-xl px-3 py-2.5 text-green-400 hover:text-green-300 hover:bg-slate-800 cursor-pointer focus:bg-slate-800 focus:text-green-300"
+                                >
+                                    <CheckCircle className="mr-3 h-4 w-4" />
+                                    Activate Shop
+                                </DropdownMenuItem>
+                                
+                                <div className="h-px bg-slate-700 my-1" />
+                                
+                                <DropdownMenuItem 
+                                    onClick={() => onHardDelete(shop._id)}
+                                    className="rounded-xl px-3 py-2.5 text-red-500 hover:text-red-400 hover:bg-slate-800 cursor-pointer focus:bg-slate-800 focus:text-red-400"
+                                >
+                                    <Trash2 className="mr-3 h-4 w-4" />
+                                    Delete Permanently
+                                </DropdownMenuItem>
+                            </>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
@@ -283,13 +349,14 @@ const ShopCard = ({ shop, index, onEdit, onDelete }) => (
             <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
                 <span 
                     className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                        shop.status === 'active' || !shop.status
+                        shop.shop_status === 'active' || !shop.shop_status
                             ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400' 
+                            : shop.shop_status === 'inactive' ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                 >
-                    <span className={`w-1.5 h-1.5 rounded-full ${shop.status === 'active' || !shop.status ? 'bg-green-500' : 'bg-slate-400'}`} />
-                    {shop.status || 'active'}
+                    <span className={`w-1.5 h-1.5 rounded-full ${shop.shop_status === 'active' || !shop.shop_status ? 'bg-green-500' : shop.shop_status === 'inactive' ? 'bg-red-500' : 'bg-slate-400'}`} />
+                    {shop.shop_status || 'active'}
                 </span>
                 <Button 
                     size="sm" 

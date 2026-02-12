@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import apiClient from "@/api/apiClient";
+import { useProductStore } from "./productStore";
 
 export const useVariantStore = create((set, get) => ({
     // ================= STATE =================
@@ -45,10 +46,16 @@ export const useVariantStore = create((set, get) => ({
             );
 
             // Successfully created variant
-            const newVariant = response.data.data;
+            const { variant, product } = response.data.data;
 
-            set({ currentVariant: newVariant, isLoading: false });
-            return newVariant;
+            set({ currentVariant: variant, isLoading: false });
+            
+            // Sync parent product in ProductStore
+            if (product) {
+                useProductStore.getState().updateProductInList(product);
+            }
+
+            return variant;
         } catch (err) {
             set({
                 error: err.response?.data?.message || "Failed to create variant",
@@ -70,8 +77,14 @@ export const useVariantStore = create((set, get) => ({
                 variantData
             );
 
-            const updatedVariant = response.data.data;
-            set({ currentVariant: updatedVariant, isLoading: false });
+            const { variant, product } = response.data.data;
+            set({ currentVariant: variant, isLoading: false });
+
+            // Sync parent product in ProductStore
+            if (product) {
+                useProductStore.getState().updateProductInList(product);
+            }
+
             return true;
         } catch (err) {
             set({
@@ -94,11 +107,16 @@ export const useVariantStore = create((set, get) => ({
             );
 
             // Update local state if we are currently viewing this variant
-            const updatedVariant = response.data.data;
+            const { variant, product } = response.data.data;
             const current = get().currentVariant;
 
             if (current && current._id === variantId) {
-                set({ currentVariant: updatedVariant });
+                set({ currentVariant: variant });
+            }
+
+            // Sync parent product in ProductStore
+            if (product) {
+                useProductStore.getState().updateProductInList(product);
             }
 
             set({ isLoading: false });
@@ -159,8 +177,14 @@ export const useVariantStore = create((set, get) => ({
             );
 
             // Update state with new image data
-            const updatedVariant = response.data.data;
-            set({ currentVariant: updatedVariant, isLoading: false });
+            const { variant, product } = response.data.data;
+            set({ currentVariant: variant, isLoading: false });
+
+            // Sync parent product in ProductStore
+            if (product) {
+                useProductStore.getState().updateProductInList(product);
+            }
+
             return true;
         } catch (err) {
             set({
@@ -188,8 +212,14 @@ export const useVariantStore = create((set, get) => ({
                 formData
             );
 
-            const updatedVariant = response.data.data;
-            set({ currentVariant: updatedVariant, isLoading: false });
+            const { variant, product } = response.data.data;
+            set({ currentVariant: variant, isLoading: false });
+
+            // Sync parent product in ProductStore
+            if (product) {
+                useProductStore.getState().updateProductInList(product);
+            }
+
             return true;
         } catch (err) {
             set({
@@ -211,8 +241,14 @@ export const useVariantStore = create((set, get) => ({
                 `/variants/${variantId}/images/${imageIndex}`
             );
 
-            const updatedVariant = response.data.data;
-            set({ currentVariant: updatedVariant, isLoading: false });
+            const { variant, product } = response.data.data;
+            set({ currentVariant: variant, isLoading: false });
+
+            // Sync parent product in ProductStore
+            if (product) {
+                useProductStore.getState().updateProductInList(product);
+            }
+
             return true;
         } catch (err) {
             set({

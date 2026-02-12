@@ -332,7 +332,7 @@ const AddProductPage = () => {
       }
 
       toast.success("Product created successfully!");
-      router.push(`/products`);
+      router.push(`/products/${shopId}/view/${productId}`);
 
     } catch (error) {
       console.error("Submission Error:", error);

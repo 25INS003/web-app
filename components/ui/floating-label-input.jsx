@@ -25,7 +25,7 @@ const FloatingLabelInput = React.forwardRef(({ className, type, label, icon, val
       <input
         type={type}
         className={cn(
-          "flex w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-1 text-sm shadow-sm transition-all duration-300 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-transparent focus-visible:outline-none focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/10 focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50 font-medium group-hover:bg-slate-100 dark:group-hover:bg-slate-800",
+          "flex w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-1 text-sm shadow-sm transition-all duration-300 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-transparent focus-visible:outline-none focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/10 focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50 font-medium group-hover:bg-slate-100 dark:group-hover:bg-slate-800 text-slate-900 dark:text-white",
           icon ? "pl-12" : "pl-4",
           "h-14 pt-5 pb-2", // Adjusted padding for perfect cursor centering relative to label
           className

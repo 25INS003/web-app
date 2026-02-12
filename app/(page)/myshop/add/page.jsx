@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useShopStore } from "@/store/shopStore";
+import { toast } from "sonner";
 
 import {
     Store,
@@ -17,13 +18,20 @@ import {
     Phone,
     Mail,
     Building2,
-    Navigation
+    Navigation,
+    X
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import SelectCategory from "@/components/Dropdowns/selectCategory";
+import dynamic from "next/dynamic";
+
+const MapPicker = dynamic(() => import("@/components/Maps/MapPicker"), { 
+    ssr: false,
+    loading: () => <div className="h-[300px] w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl flex items-center justify-center text-slate-400">Loading Map...</div>
+});
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -46,26 +54,101 @@ const AddShopPage = () => {
     const router = useRouter();
     const { createNewShop, isLoading, error: storeError } = useShopStore();
     const [category, setCategory] = useState(null);
+    const [pincodes, setPincodes] = useState([]);
+    const [currentPincode, setCurrentPincode] = useState("");
 
     const {
         register,
         handleSubmit,
         reset,
         setValue,
+        watch,
         formState: { errors },
     } = useForm({
         defaultValues: {
             name: "",
             business_name: "",
             categories: [],
-            delivery_radius_km: 5,
+            // delivery_radius_km: 5, // Removed
             preparation_time: 30,
             delivery_fee: 0,
             min_order_amount: 0,
             free_delivery_threshold: 0,
             payment_methods: ["cod"],
+            shop_lat: "",
+            shop_lng: "",
         }
     });
+
+    const shopLat = watch("shop_lat");
+    const shopLng = watch("shop_lng");
+
+    const [isDetecting, setIsDetecting] = useState(false);
+
+    const reverseGeocode = async (lat, lng) => {
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+            );
+            const data = await response.json();
+            
+            if (data.address) {
+                const { 
+                    road, 
+                    suburb, 
+                    neighbourhood, 
+                    city, 
+                    town, 
+                    village, 
+                    state, 
+                    postcode 
+                } = data.address;
+
+                const addressLine = [road, neighbourhood, suburb].filter(Boolean).join(", ");
+                const detectedCity = city || town || village || "";
+                
+                setValue("address_line", addressLine, { shouldValidate: true });
+                setValue("city", detectedCity, { shouldValidate: true });
+                setValue("state", state || "", { shouldValidate: true });
+                setValue("pincode", postcode || "", { shouldValidate: true });
+            }
+        } catch (error) {
+            console.error("Reverse geocoding error:", error);
+        }
+    };
+
+    const handleDetectLocation = () => {
+        if (!navigator.geolocation) {
+            toast.error("Geolocation is not supported by your browser");
+            return;
+        }
+
+        setIsDetecting(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                setValue("shop_lat", latitude, { shouldValidate: true });
+                setValue("shop_lng", longitude, { shouldValidate: true });
+                
+                await reverseGeocode(latitude, longitude);
+                
+                setIsDetecting(false);
+                toast.success("Location and address detected!");
+            },
+            (error) => {
+                console.error("Geolocation error:", error);
+                setIsDetecting(false);
+                toast.error("Failed to detect location. Please enter manually.");
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+    };
+
+    const handleLocationChange = async (lat, lng) => {
+        setValue("shop_lat", lat, { shouldValidate: true });
+        setValue("shop_lng", lng, { shouldValidate: true });
+        await reverseGeocode(lat, lng);
+    };
 
     useEffect(() => {
         if (category) {
@@ -73,12 +156,26 @@ const AddShopPage = () => {
         }
     }, [category, setValue]);
 
+    const handleAddPincode = () => {
+        if (!currentPincode) return;
+        if (pincodes.includes(currentPincode)) {
+            toast.error("Pincode already added");
+            return;
+        }
+        setPincodes([...pincodes, currentPincode]);
+        setCurrentPincode("");
+    };
+
+    const handleRemovePincode = (code) => {
+        setPincodes(pincodes.filter(p => p !== code));
+    };
+
     const onSubmit = async (data) => {
         const formattedData = {
             ...data,
             shop_lat: Number(data.shop_lat),
             shop_lng: Number(data.shop_lng),
-            delivery_radius_km: Number(data.delivery_radius_km),
+            delivery_pincodes: pincodes,
             delivery_fee: Number(data.delivery_fee),
             free_delivery_threshold: Number(data.free_delivery_threshold),
             min_order_amount: Number(data.min_order_amount),
@@ -213,10 +310,25 @@ const AddShopPage = () => {
                         <div className="p-2 rounded-lg bg-green-50 dark:bg-green-500/10">
                             <MapPin className="h-5 w-5 text-green-600 dark:text-green-400" />
                         </div>
-                        <div>
+                        <div className="flex-1">
                             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Location Details</h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400">Where customers can find you</p>
                         </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleDetectLocation}
+                            disabled={isDetecting}
+                            className="gap-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20"
+                        >
+                            {isDetecting ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                                <Navigation size={14} />
+                            )}
+                            {isDetecting ? "Detecting..." : "Detect My Location"}
+                        </Button>
                     </div>
 
                     <div className="space-y-5">
@@ -245,31 +357,48 @@ const AddShopPage = () => {
                                 className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
                             />
                         </div>
+
+                        {/* Coordinates Field (Visible and Editable) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                     <Navigation size={14} /> Latitude *
                                 </label>
                                 <Input 
                                     step="any" 
                                     type="number" 
-                                    {...register("shop_lat", { required: "Required" })} 
+                                    {...register("shop_lat", { required: "Latitude is required" })} 
                                     placeholder="0.0000"
                                     className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
                                 />
+                                {errors.shop_lat && <p className="text-xs text-red-500">{errors.shop_lat.message}</p>}
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                     <Navigation size={14} /> Longitude *
                                 </label>
                                 <Input 
                                     step="any" 
                                     type="number" 
-                                    {...register("shop_lng", { required: "Required" })} 
+                                    {...register("shop_lng", { required: "Longitude is required" })} 
                                     placeholder="0.0000"
                                     className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
                                 />
+                                {errors.shop_lng && <p className="text-xs text-red-500">{errors.shop_lng.message}</p>}
                             </div>
+                        </div>
+
+                        {/* Interactive Map */}
+                        <div className="space-y-4">
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Pin your shop location on map
+                            </label>
+                            
+                            <MapPicker 
+                                lat={Number(shopLat) || null} 
+                                lng={Number(shopLng) || null} 
+                                onLocationChange={handleLocationChange} 
+                            />
                         </div>
                     </div>
                 </motion.div>
@@ -331,12 +460,49 @@ const AddShopPage = () => {
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Radius (KM) *</label>
-                                    <Input 
-                                        type="number" 
-                                        {...register("delivery_radius_km", { required: true })}
-                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
-                                    />
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Delivery Pincodes *</label>
+                                    <div className="space-y-3">
+                                        <div className="flex gap-2">
+                                            <Input 
+                                                value={currentPincode}
+                                                onChange={(e) => setCurrentPincode(e.target.value)}
+                                                placeholder="Enter pincode"
+                                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        handleAddPincode();
+                                                    }
+                                                }}
+                                            />
+                                            <Button 
+                                                type="button"
+                                                onClick={handleAddPincode}
+                                                className="rounded-xl bg-blue-500 hover:bg-blue-600 text-white"
+                                            >
+                                                Add
+                                            </Button>
+                                        </div>
+                                        
+                                        {pincodes.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {pincodes.map((pin, index) => (
+                                                    <div key={index} className="flex items-center gap-1 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm border border-blue-100 dark:border-blue-500/20">
+                                                        <span>{pin}</span>
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => handleRemovePincode(pin)}
+                                                            className="hover:text-red-500 ml-1"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-400 italic">Add at least one pincode</p>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Delivery Fee</label>

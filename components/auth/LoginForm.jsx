@@ -12,6 +12,8 @@ import { EyeIcon, EyeOffIcon, MailIcon, LockIcon } from "@/components/ui/animate
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import { motion } from "framer-motion";
+import apiClient from "@/api/apiClient";
+import Cookies from "js-cookie";
 
 export default function LoginForm({ switchToRegister }) {
     const router = useRouter();
@@ -41,7 +43,23 @@ export default function LoginForm({ switchToRegister }) {
         const result = await login(credentials);
         if (result.success) {
             toast.success("Welcome back!", { description: "Successfully logged in." });
-            router.push("/dashboard");
+            
+            // Redirection is now handled by middleware based on cookies set in authStore.login
+            // but we can still do a client-side push for smoother UX.
+            if (result.user.user_type === "shop_owner") {
+                const { shop_owner_status } = result;
+                if (shop_owner_status?.is_approved) {
+                    router.push("/dashboard");
+                } else if (shop_owner_status) {
+                    router.push("/status");
+                } else {
+                    router.push("/onboarding");
+                }
+            } else if (result.user.user_type === "admin") {
+                router.push("/admin");
+            } else {
+                router.push("/dashboard");
+            }
         } else {
             toast.error("Login Failed", { description: result.error || "Please check your credentials." });
         }

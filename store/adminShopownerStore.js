@@ -74,23 +74,64 @@ export const useShopOwnerStore = create((set, get) => ({
     },
 
     // 5. Update status (Approve/Disapprove)
-    updateStatus: async (ownerId, isApproved) => {
+    // 5. Approve Owner
+    approveOwner: async (ownerId) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await apiClient.put(`/admin/shop-owners/${ownerId}/status`, {
-                is_approved: isApproved,
-            });
-
+            const response = await apiClient.put(`/admin/shop-owners/${ownerId}/approve`);
             const updatedOwner = response.data.data || response.data;
+            
             set((state) => ({
                 shopOwners: state.shopOwners.map((o) => (o._id === ownerId ? updatedOwner : o)),
                 pendingOwners: state.pendingOwners.filter((o) => o._id !== ownerId),
+                selectedOwner: updatedOwner, // Update selected view
                 isLoading: false,
             }));
-
             return { success: true };
         } catch (err) {
-            set({ error: err.response?.data?.message || "Update failed", isLoading: false });
+            set({ error: err.response?.data?.message || "Approval failed", isLoading: false });
+            return { success: false };
+        }
+    },
+
+    // 6. Reject Owner
+    rejectOwner: async (ownerId) => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await apiClient.put(`/admin/shop-owners/${ownerId}/reject`);
+            const updatedOwner = response.data.data || response.data;
+            
+            set((state) => ({
+                shopOwners: state.shopOwners.map((o) => (o._id === ownerId ? updatedOwner : o)),
+                pendingOwners: state.pendingOwners.filter((o) => o._id !== ownerId),
+                selectedOwner: updatedOwner, // Update selected view
+                isLoading: false,
+            }));
+            return { success: true };
+        } catch (err) {
+            set({ error: err.response?.data?.message || "Rejection failed", isLoading: false });
+            return { success: false };
+        }
+    },
+
+    // 7. Revoke Owner (e.g., suspend or deactivate)
+    revokeOwner: async (ownerId) => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await apiClient.put(`/admin/shop-owners/${ownerId}/revoke`);
+            const updatedOwner = response.data.data || response.data;
+            
+            set((state) => ({
+                shopOwners: state.shopOwners.map((o) => (o._id === ownerId ? updatedOwner : o)),
+                // If revoking means they are no longer pending, filter them out.
+                // If they become pending again, they would be fetched by fetchPendingOwners.
+                pendingOwners: state.pendingOwners.filter((o) => o._id !== ownerId), 
+                selectedOwner: updatedOwner, // Update selected view
+                isLoading: false,
+            }));
+            return { success: true };
+        } catch (err) {
+            set({ error: err.response?.data?.message || "Revocation failed", isLoading: false });
             return { success: false };
         }
     },

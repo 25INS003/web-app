@@ -173,7 +173,7 @@ export const useProductStore = create((set, get) => ({
         `/shops/${shopId}/products/${productId}`,
         productData
       );
-      const updatedProduct = response.data.data || response.data;
+      const updatedProduct = response.data.data; // Consistently use .data.data
 
       set((state) => ({
         products: state.products.map((p) =>
@@ -190,6 +190,20 @@ export const useProductStore = create((set, get) => ({
       });
       return false;
     }
+  },
+
+  /**
+   * Externally update a product in the list (used by VariantStore)
+   */
+  updateProductInList: (updatedProduct) => {
+    if (!updatedProduct || !updatedProduct._id) return;
+    set((state) => ({
+      products: state.products.map((p) =>
+        p._id === updatedProduct._id ? updatedProduct : p
+      ),
+      // Also update currentProduct if it's the same one
+      currentProduct: state.currentProduct?._id === updatedProduct._id ? updatedProduct : state.currentProduct
+    }));
   },
 
   softDeleteProduct: async (shopId, productId, action = false) => {
@@ -265,16 +279,6 @@ export const useProductStore = create((set, get) => ({
 
   getProductDetails: async (shopId, productId) => {
     set({ isLoading: true, error: null });
-    const cachedProduct = get().products.find((p) => p._id === productId);
-
-    if (cachedProduct && cachedProduct.variants && cachedProduct.variants.length > 0) {
-      set({
-        currentProduct: cachedProduct,
-        currentVariants: cachedProduct.variants, 
-        isLoading: false
-      });
-      return;
-    }
 
     try {
       const response = await apiClient.get(
