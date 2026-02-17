@@ -24,11 +24,11 @@ export const useShopOrderStore = create()(
     /**
      * GET /shops/:shopId/orders
      */
-    fetchOrders: async (shopId, { page = 1, limit = 25 } = {}) => {
+    fetchOrders: async (shopId, { page = 1, limit = 25, ...filters } = {}) => {
       set({ isLoading: true, error: null });
       try {
         const response = await apiClient.get(`/shops/${shopId}/orders`, {
-          params: { page, limit },
+          params: { page, limit, ...filters },
         });
 
         const { orders, total } = response.data.data;

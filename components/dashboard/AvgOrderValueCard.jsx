@@ -29,12 +29,12 @@ function AnimatedCounter({ value, prefix = "", suffix = "", duration = 1500 }) {
   return `${prefix}${count.toFixed(2)}${suffix}`;
 }
 
-export default function AvgOrderValueCard() {
+export default function AvgOrderValueCard({ data, loading }) {
   const orderData = {
-    avgValue: 156.80,
-    percentage: 5.4,
-    thisMonth: 164.20,
-    lastMonth: 149.60
+    avgValue: data?.avgOrderValue || 0,
+    percentage: data?.avgOrderPercentChange || 0,
+    thisMonth: data?.revenueComparison?.thisMonth || 0,
+    lastMonth: data?.revenueComparison?.lastMonth || 0
   };
 
   const isUp = orderData.thisMonth > orderData.lastMonth;
@@ -61,7 +61,7 @@ export default function AvgOrderValueCard() {
           </motion.div>
           <motion.span 
             className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-full ${
-              isUp 
+              orderData.percentage >= 0 
                 ? 'text-green-600 bg-green-50 dark:bg-green-500/10' 
                 : 'text-red-600 bg-red-50 dark:bg-red-500/10'
             }`}
@@ -69,8 +69,8 @@ export default function AvgOrderValueCard() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-            {isUp ? '+' : ''}{orderData.percentage}%
+            {orderData.percentage >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            {orderData.percentage >= 0 ? '+' : ''}{orderData.percentage}%
           </motion.span>
         </div>
         

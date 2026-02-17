@@ -29,12 +29,12 @@ function AnimatedCounter({ value, duration = 1500 }) {
   return count.toLocaleString();
 }
 
-export default function TotalCustomersCard() {
+export default function TotalCustomersCard({ data, loading }) {
   const customerData = {
-    total: 8549,
-    percentage: 23,
-    newCustomers: 342,
-    returningCustomers: 8207
+    total: data?.totalCustomers || 0,
+    percentage: data?.customerPercentChange || 0,
+    newCustomers: data?.newCustomers || 0,
+    returningCustomers: data?.returningCustomers || 0
   };
   
   return (
@@ -58,12 +58,12 @@ export default function TotalCustomersCard() {
             <Users className="w-5 h-5 text-white" />
           </motion.div>
           <motion.span 
-            className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-full text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10"
+            className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-full ${customerData.percentage >= 0 ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10' : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10'}`}
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            +{customerData.percentage}%
+            {customerData.percentage >= 0 ? '+' : ''}{customerData.percentage}%
           </motion.span>
         </div>
         

@@ -7,6 +7,11 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v
 const apiClient = axios.create({
   baseURL: BASE_URL,
   timeout: 20000,
+  headers: {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+  },
   withCredentials: true,
 });
 

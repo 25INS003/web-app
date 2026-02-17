@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { io } from "socket.io-client";
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,10 @@ const OrdersDashboard = () => {
 
     // --- LOCAL STATE ---
     const [filters, setFilters] = useState({});
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    
+    // Use ref to store socket instance to prevent reconnection on every render
+    const socketRef = useRef(null);
 
     // --- FETCH ORDERS ---
     useEffect(() => {
@@ -53,12 +58,59 @@ const OrdersDashboard = () => {
         };
 
         fetchOrders(shopId, queryParams);
-    }, [shopId, page, limit, filters, fetchOrders]);
+    }, [shopId, page, limit, filters, fetchOrders, refreshTrigger]);
+    
+    // Listen for real-time order updates - stable socket connection
+    useEffect(() => {
+        if (!shopId) return;
+
+        const socketUrl = process.env.NEXT_PUBLIC_API_URL
+            ? process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '')
+            : "http://localhost:8000";
+
+        // Create socket connection only once per shopId
+        const socket = io(socketUrl, { withCredentials: true });
+        socketRef.current = socket;
+
+        socket.on("connect", () => {
+            console.log("Orders page connected to socket:", socket.id);
+            // Join shop room after connection
+            socket.emit("join-shop", shopId);
+            console.log("Joined shop room:", shopId);
+        });
+
+        socket.on("new-order", (payload) => {
+            console.log("Socket event 'new-order' received. payload:", payload);
+            console.log("Triggering orders refresh for shop:", shopId);
+            
+            // Trigger refresh by updating refreshTrigger state
+            setRefreshTrigger(prev => prev + 1);
+        });
+
+        socket.on("disconnect", () => {
+            console.log("Orders page disconnected from socket");
+        });
+
+        return () => {
+            socket.disconnect();
+            socketRef.current = null;
+        };
+    }, [shopId]); // Only re-run when shopId changes
+
+    // Polling fallback - reduced frequency since socket is working
+    useEffect(() => {
+        if (!shopId) return;
+        const interval = setInterval(() => {
+            setRefreshTrigger(prev => prev + 1);
+        }, 30000); // Poll every 30 seconds as fallback
+    
+        return () => clearInterval(interval);
+    }, [shopId]);
 
     // --- HANDLERS ---
     const handleRefresh = () => {
         if (!shopId) return;
-        fetchOrders(shopId, { page: 1, limit, ...filters });
+        setRefreshTrigger(prev => prev + 1);
     };
 
     const handleFilterChange = (newFilters) => {

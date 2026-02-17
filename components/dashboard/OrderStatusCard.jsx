@@ -1,18 +1,36 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { CheckCircle, Clock, XCircle } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { CheckCircle, Clock, XCircle, RotateCcw } from "lucide-react";
 
-export default function OrderStatusCard() {
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700 shadow-xl">
+        <p className="text-xs font-bold text-gray-900 dark:text-white mb-1">{data.name}</p>
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          {data.count} Order{data.count !== 1 ? 's' : ''} ({data.value}%)
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+export default function OrderStatusCard({ data, loading }) {
+  // data is stats.overview (contains ordersByStatus)
+  const stats = data?.ordersByStatus || { completed: 0, pending: 0, cancelled: 0, refunded: 0 };
+  const total = (stats.completed + stats.pending + stats.cancelled + stats.refunded) || 0;
+
   const orderStatusData = [
-    { name: "Completed", value: 65, color: "#10b981", icon: CheckCircle },
-    { name: "Pending", value: 25, color: "#f59e0b", icon: Clock },
-    { name: "Cancelled", value: 10, color: "#ef4444", icon: XCircle }
+    { name: "Completed", value: total > 0 ? Math.round((stats.completed / total) * 100) : 0, count: stats.completed, color: "#10b981", icon: CheckCircle },
+    { name: "Pending", value: total > 0 ? Math.round((stats.pending / total) * 100) : 0, count: stats.pending, color: "#f59e0b", icon: Clock },
+    { name: "Cancelled", value: total > 0 ? Math.round((stats.cancelled / total) * 100) : 0, count: stats.cancelled, color: "#ef4444", icon: XCircle },
+    { name: "Refunded", value: total > 0 ? Math.round((stats.refunded / total) * 100) : 0, count: stats.refunded, color: "#8b5cf6", icon: RotateCcw }
   ];
 
-  const total = orderStatusData.reduce((sum, item) => sum + item.value, 0);
-  
   return (
     <motion.div 
       className="relative overflow-hidden border rounded-2xl p-5 shadow-sm transition-all duration-300 
@@ -37,6 +55,7 @@ export default function OrderStatusCard() {
                 outerRadius={48}
                 paddingAngle={3}
                 dataKey="value"
+                nameKey="name"
                 animationBegin={0}
                 animationDuration={1000}
               >
@@ -48,10 +67,11 @@ export default function OrderStatusCard() {
                   />
                 ))}
               </Pie>
+              <Tooltip content={<CustomTooltip />} />
             </PieChart>
           </ResponsiveContainer>
           {/* Center text */}
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
               <p className="text-lg font-bold text-gray-900 dark:text-white">{total}</p>
               <p className="text-[10px] text-gray-500">Orders</p>
@@ -77,9 +97,14 @@ export default function OrderStatusCard() {
                       {item.name}
                     </span>
                   </div>
-                  <span className="text-xs font-bold text-gray-900 dark:text-white">
-                    {item.value}%
-                  </span>
+                  <div className="text-right">
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 mr-2">
+                      ({item.count})
+                    </span>
+                    <span className="text-xs font-bold text-gray-900 dark:text-white">
+                      {item.value}%
+                    </span>
+                  </div>
                 </div>
                 {/* Animated progress bar */}
                 <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">

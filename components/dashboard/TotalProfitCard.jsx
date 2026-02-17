@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BadgeIndianRupee, TrendingUp } from "lucide-react";
+import { BadgeIndianRupee, TrendingUp, TrendingDown } from "lucide-react";
 import { useEffect, useState } from "react";
 
 function AnimatedCounter({ value, duration = 1500 }) {
@@ -31,11 +31,11 @@ function AnimatedCounter({ value, duration = 1500 }) {
   return count.toLocaleString();
 }
 
-export default function TotalProfitCard() {
+export default function TotalProfitCard({ data, loading }) {
   const profitData = {
-    total: 12304,
-    percentage: 12.5,
-    returnAmount: 1230
+    total: data?.totalProfit || 0,
+    percentage: data?.revenuePercentChange || 0,
+    returnAmount: 0 // TODO: Calculate actual return amount from refunded orders
   };
   
   return (
@@ -65,8 +65,8 @@ export default function TotalProfitCard() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <TrendingUp className="w-3 h-3" />
-            +{profitData.percentage}%
+            {profitData.percentage >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            {profitData.percentage >= 0 ? '+' : ''}{profitData.percentage}%
           </motion.span>
         </div>
         

@@ -3,42 +3,15 @@
 import { motion, LayoutGroup } from "framer-motion";
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { TrendingUp, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar } from "lucide-react";
 
-export default function SalesPerformanceChart() {
-  const [activeTab, setActiveTab] = useState("month");
+export default function SalesPerformanceChart({ data, monthlyData, yearlyData, overview, loading }) {
+  const [activeTab, setActiveTab] = useState("week");
   
   const tabData = {
-    week: [
-      { name: "Mon", value: 1200 },
-      { name: "Tue", value: 1800 },
-      { name: "Wed", value: 1400 },
-      { name: "Thu", value: 2200 },
-      { name: "Fri", value: 1900 },
-      { name: "Sat", value: 2800 },
-      { name: "Sun", value: 2100 }
-    ],
-    month: [
-      { name: "Jan", value: 6200 },
-      { name: "Feb", value: 1800 },
-      { name: "Mar", value: 5100 },
-      { name: "Apr", value: 4600 },
-      { name: "May", value: 8800 },
-      { name: "Jun", value: 6200 },
-      { name: "Jul", value: 5900 },
-      { name: "Aug", value: 2800 },
-      { name: "Sep", value: 7200 },
-      { name: "Oct", value: 6900 },
-      { name: "Nov", value: 7800 },
-      { name: "Dec", value: 8400 }
-    ],
-    year: [
-      { name: "2020", value: 45000 },
-      { name: "2021", value: 52000 },
-      { name: "2022", value: 68000 },
-      { name: "2023", value: 71700 },
-      { name: "2024", value: 85000 }
-    ]
+    week: data ? data.map(d => ({ name: d.date, value: d.value })) : [],
+    month: monthlyData ? monthlyData.map(d => ({ name: d.date, value: d.value })) : [],
+    year: yearlyData ? yearlyData.map(d => ({ name: d.date, value: d.value })) : []
   };
 
   const tabs = [
@@ -49,6 +22,9 @@ export default function SalesPerformanceChart() {
   
   const salesData = tabData[activeTab];
   const totalRevenue = salesData.reduce((sum, item) => sum + item.value, 0);
+
+  const trendValue = overview?.salesPercentChange || 0;
+  const isPositive = trendValue >= 0;
   
   return (
     <motion.div 
@@ -68,9 +44,9 @@ export default function SalesPerformanceChart() {
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                 Sales Performance
               </h2>
-              <span className="flex items-center gap-1 text-xs text-green-500 font-medium">
-                <TrendingUp className="w-3 h-3" />
-                +12.5%
+              <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${isPositive ? 'text-green-500 bg-green-500/10' : 'text-red-500 bg-red-500/10'}`}>
+                {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                {isPositive ? '+' : ''}{trendValue}%
               </span>
             </div>
             <p className="text-gray-500 dark:text-gray-500 text-xs flex items-center gap-1.5">

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { io } from "socket.io-client";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { 
@@ -38,6 +40,7 @@ export default function AdminDashboardPage() {
         activeOwners: 0,
         totalRevenue: 0,
     });
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
      const [health, setHealth] = useState({
         database: { status: "Checking...", latency: "...", state: 0 },
         server: { uptime: 0, memoryUsage: "...", storageUsage: "...", cpuLoad: 0 },
@@ -98,6 +101,36 @@ export default function AdminDashboardPage() {
         };
 
         fetchDashboardData();
+
+    }, [refreshTrigger]);
+
+    useEffect(() => {
+        const socketUrl = process.env.NEXT_PUBLIC_API_URL 
+            ? process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '') 
+            : "http://localhost:8000";
+
+        const socket = io(socketUrl, {
+            withCredentials: true
+        });
+
+        socket.on("connect", () => {
+            console.log("Admin dashboard connected to socket:", socket.id);
+            // Join admin room to receive all new order notifications
+            socket.emit("join-room", "admin");
+            console.log("Joined admin room");
+        });
+
+        socket.on("new-order", (data) => {
+            console.log("New order received:", data);
+            toast.success(`New Order! ${data.orderId}`, {
+                description: `Amount: ₹${data.amount} | Shop: ${data.shopName || 'Unknown'}`
+            });
+            setRefreshTrigger(prev => prev + 1);
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const statCards = [

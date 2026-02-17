@@ -110,6 +110,7 @@ const OrderTable = ({
                             <TableRow className="bg-slate-50 dark:bg-slate-800/50">
                                 <TableHead>Order ID</TableHead>
                                 <TableHead>Customer</TableHead>
+                                <TableHead>Products</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead className="text-center">Items</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
@@ -129,6 +130,18 @@ const OrderTable = ({
                                             <span className="text-xs text-muted-foreground">
                                                 {order.delivery_address?.phone_number}
                                             </span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col max-w-[150px]">
+                                            <span className="text-sm font-medium truncate" title={order.items?.[0]?.product_name}>
+                                                {order.items?.[0]?.product_name || 'N/A'}
+                                            </span>
+                                            {order.items?.length > 1 && (
+                                                <span className="text-[10px] text-indigo-500 font-medium whitespace-nowrap">
+                                                    + {order.items.length - 1} more item{order.items.length > 2 ? 's' : ''}
+                                                </span>
+                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-xs">

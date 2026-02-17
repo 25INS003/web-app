@@ -81,19 +81,24 @@
   --foreground: oklch(0.141 0.005 285.823);
 }
 
-/* Fix: Prevent scrollbar from disappearing when dropdowns/modals open */
+/* Fix: Prevent scrollbar layout shift when dropdowns/modals open */
 html {
-  overflow-y: scroll;
+  overflow-y: scroll !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable !important;
 }
 
-body[data-scroll-locked] {
-  overflow: hidden !important;
-  padding-right: var(--scrollbar-width, 0px) !important;
-}
-
-/* Preserve scrollbar space to prevent layout shift */
 body {
-  scrollbar-gutter: stable;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable !important;
+  padding-right: 0 !important;
+}
+
+/* Force Radix and other libraries to not shift content */
+[data-scroll-locked] {
+  padding-right: 0px !important;
+  margin-right: 0px !important;
+  overflow: hidden !important;
 }
 
 .dark {
