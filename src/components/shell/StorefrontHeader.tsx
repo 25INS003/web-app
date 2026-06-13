@@ -1,0 +1,54 @@
+"use client";
+
+import { Leaf, Search, ShoppingBag, User } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+
+export function StorefrontHeader() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
+        {/* brand */}
+        <Link href="/" className="flex shrink-0 items-center gap-2">
+          <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-pop">
+            <Leaf className="size-5" />
+          </span>
+          <span className="font-display text-xl font-semibold tracking-tight">
+            Nedyway
+          </span>
+        </Link>
+
+        {/* search */}
+        <div className="relative ml-2 hidden flex-1 md:block">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="search"
+            placeholder="Search for groceries, shops, brands…"
+            aria-label="Search products"
+            className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-3 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/40"
+          />
+        </div>
+
+        {/* actions */}
+        <div className="ml-auto flex items-center gap-1">
+          <ThemeToggle />
+          <Button variant="ghost" size="icon" aria-label="Account" asChild>
+            <Link href="/account">
+              <User />
+            </Link>
+          </Button>
+          <Button className="relative gap-2" asChild>
+            <Link href="/cart">
+              <ShoppingBag />
+              <span className="hidden sm:inline">Cart</span>
+              <span className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-foreground text-[10px] font-bold text-background">
+                3
+              </span>
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </header>
+  );
+}

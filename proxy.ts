@@ -18,7 +18,9 @@ const PUBLIC_PATHS = [
 const ADMIN_PATHS = ["/admin", "/verify-owner"];
 const OWNER_GATED = ["/dashboard", "/products", "/orders", "/myshop"];
 
-export default function proxy(request: NextRequest) {
+// Next 16 resolves a proxy file via the NAMED `proxy` export (preferred) or a
+// default export; we provide the named export to match the convention exactly.
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("accessToken")?.value;
   const role = request.cookies.get("userRole")?.value;
