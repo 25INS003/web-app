@@ -1,15 +1,20 @@
 "use client";
 
+import Cookies from "js-cookie";
 import { Leaf, Search, ShoppingBag, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useCartCount } from "@/features/cart/useCart";
 
 export function StorefrontHeader() {
   const router = useRouter();
   const [q, setQ] = useState("");
+  const [authed, setAuthed] = useState(false);
+  useEffect(() => setAuthed(!!Cookies.get("userRole")), []);
+  const cartCount = useCartCount(authed);
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
@@ -54,9 +59,11 @@ export function StorefrontHeader() {
             <Link href="/cart">
               <ShoppingBag />
               <span className="hidden sm:inline">Cart</span>
-              <span className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-foreground text-[10px] font-bold text-background">
-                3
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-foreground text-[10px] font-bold text-background">
+                  {cartCount}
+                </span>
+              )}
             </Link>
           </Button>
         </div>
