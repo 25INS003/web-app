@@ -18,6 +18,7 @@ const PROTECTED = [
   "/account", // customer-gated storefront
   "/cart",
   "/checkout",
+  "/wishlist",
 ];
 const ADMIN_PATHS = ["/admin", "/verify-owner"];
 // /orders is the CUSTOMER order history (login-only); shop orders live under

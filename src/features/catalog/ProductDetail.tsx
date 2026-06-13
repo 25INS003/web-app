@@ -1,11 +1,20 @@
 "use client";
 
-import { ArrowLeft, Loader2, Minus, Plus, ShoppingBag, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  Heart,
+  Loader2,
+  Minus,
+  Plus,
+  ShoppingBag,
+  Star,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAddToCart } from "@/features/cart/useCart";
+import { useAddToWishlist } from "@/features/wishlist/useWishlist";
 import {
   productImage,
   reviewerName,
@@ -19,6 +28,7 @@ export function ProductDetail({ productId }: { productId: string }) {
   const q = useProduct(productId);
   const reviewsQ = useProductReviews(productId);
   const add = useAddToCart();
+  const wishlist = useAddToWishlist();
   const [variant, setVariant] = useState<ProductVariant | null>(null);
   const [qty, setQty] = useState(1);
 
@@ -167,6 +177,25 @@ export function ProductDetail({ productId }: { productId: string }) {
             >
               {add.isPending ? <Loader2 className="animate-spin" /> : <ShoppingBag />}
               {inStock ? "Add to cart" : "Out of stock"}
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              aria-label="Save to wishlist"
+              disabled={!selected || wishlist.isPending}
+              onClick={() =>
+                selected &&
+                wishlist.mutate({
+                  productId: product._id,
+                  variantId: selected._id,
+                })
+              }
+            >
+              {wishlist.isPending ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <Heart />
+              )}
             </Button>
           </div>
 
