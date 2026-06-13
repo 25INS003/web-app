@@ -1,0 +1,20 @@
+# syntax=docker/dockerfile:1.4
+# Development image: install deps and run `next dev` (Turbopack HMR).
+# No production `next build` happens here — source is bind-mounted by
+# docker-compose.dev.yml so edits hot-reload live inside the container.
+FROM node:20-slim
+
+WORKDIR /app
+
+# Install dependencies only. --legacy-peer-deps: react-svg-map declares a
+# React 16 peer dep while the app is on React 19.
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
+
+# Copy source as a fallback for runs without a bind mount (compose mounts over this).
+COPY . .
+
+ENV NODE_ENV=development
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]

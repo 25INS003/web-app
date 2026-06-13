@@ -8,7 +8,7 @@ WORKDIR /app
 # Copy necessary package files
 COPY package*.json ./
 
-RUN npm install --silent
+RUN npm install --silent --legacy-peer-deps
 
 COPY . .
 
