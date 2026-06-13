@@ -1,0 +1,68 @@
+import { z } from "zod";
+import { objectId } from "./common";
+
+export const userTypeSchema = z.enum([
+  "customer",
+  "shop_owner",
+  "admin",
+  "delivery_executive",
+]);
+export type UserType = z.infer<typeof userTypeSchema>;
+
+export const verificationStatusSchema = z.enum([
+  "draft",
+  "pending",
+  "approved",
+  "rejected",
+  "revoked",
+]);
+export type VerificationStatus = z.infer<typeof verificationStatusSchema>;
+
+export const userSchema = z.object({
+  _id: objectId,
+  user_id: z.string().optional(),
+  email: z.string(),
+  first_name: z.string(),
+  last_name: z.string(),
+  user_type: userTypeSchema,
+  phone: z.string().nullish(),
+  profile_image: z.string().nullish(),
+  is_active: z.boolean().optional(),
+  is_verified: z.boolean().optional(),
+});
+export type User = z.infer<typeof userSchema>;
+
+// Shop-owner approval state, attached to the session for shop_owner users.
+export const shopOwnerStatusSchema = z.object({
+  is_approved: z.boolean(),
+  verification_status: verificationStatusSchema,
+  owner_id: objectId,
+});
+export type ShopOwnerStatus = z.infer<typeof shopOwnerStatusSchema>;
+
+// GET /auth/me payload (the source of truth for server-side gating).
+export const sessionSchema = z.object({
+  user: userSchema,
+  customer_profile: z.unknown().nullish(),
+  shop_owner_status: shopOwnerStatusSchema.nullish(),
+});
+export type Session = z.infer<typeof sessionSchema>;
+
+// --- form inputs ---
+
+export const loginInputSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+});
+export type LoginInput = z.infer<typeof loginInputSchema>;
+
+export const registerInputSchema = z.object({
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(6, "At least 6 characters"),
+  // The dashboard only registers shop owners; admins are provisioned out-of-band.
+  user_type: z.literal("shop_owner").default("shop_owner"),
+  phone: z.string().optional(),
+});
+export type RegisterInput = z.infer<typeof registerInputSchema>;
