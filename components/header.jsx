@@ -8,11 +8,8 @@ export default function Header() {
     const { logout, loading } = useLogout();
 
     const handleLogout = async () => {
-        const result = await logout();
-        if (result.success) {
-            // Optional: Show success message
-            console.log("Logged out successfully");
-        }
+        await logout();
+        // TODO: optionally surface a success toast here
     };
 
     return (

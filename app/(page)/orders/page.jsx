@@ -73,22 +73,13 @@ const OrdersDashboard = () => {
         socketRef.current = socket;
 
         socket.on("connect", () => {
-            console.log("Orders page connected to socket:", socket.id);
             // Join shop room after connection
             socket.emit("join-shop", shopId);
-            console.log("Joined shop room:", shopId);
         });
 
-        socket.on("new-order", (payload) => {
-            console.log("Socket event 'new-order' received. payload:", payload);
-            console.log("Triggering orders refresh for shop:", shopId);
-            
+        socket.on("new-order", () => {
             // Trigger refresh by updating refreshTrigger state
             setRefreshTrigger(prev => prev + 1);
-        });
-
-        socket.on("disconnect", () => {
-            console.log("Orders page disconnected from socket");
         });
 
         return () => {

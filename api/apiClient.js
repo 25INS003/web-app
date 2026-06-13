@@ -47,7 +47,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       
       // 2. Prevent refresh loop on login/profile specific routes
-      const isProfileCheck = originalRequest.url.includes(Routes.AUTH.PROFILE);
+      const isProfileCheck = originalRequest.url.includes(Routes.AUTH.ME);
       if (isProfileCheck || window.location.pathname === '/login') {
         return Promise.reject(error);
       }

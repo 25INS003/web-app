@@ -86,9 +86,8 @@ export default function OnboardingPage() {
                 router.replace("/status");
             }
             // If verification_status is "draft" or "rejected", stay on onboarding
-        } catch (error) {
-            // 404 means no profile, so stay here.
-            console.log("No existing profile, stay on onboarding.");
+        } catch {
+            // 404 means no profile, so stay on onboarding.
         }
     };
     checkExistingStatus();

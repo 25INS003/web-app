@@ -114,14 +114,11 @@ export default function AdminDashboardPage() {
         });
 
         socket.on("connect", () => {
-            console.log("Admin dashboard connected to socket:", socket.id);
             // Join admin room to receive all new order notifications
             socket.emit("join-room", "admin");
-            console.log("Joined admin room");
         });
 
         socket.on("new-order", (data) => {
-            console.log("New order received:", data);
             toast.success(`New Order! ${data.orderId}`, {
                 description: `Amount: ₹${data.amount} | Shop: ${data.shopName || 'Unknown'}`
             });

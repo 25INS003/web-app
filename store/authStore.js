@@ -160,7 +160,7 @@ export const useAuthStore = create(
                 }
 
                 try {
-                    const res = await apiClient.get(Routes.AUTH.PROFILE, {
+                    const res = await apiClient.get(Routes.AUTH.ME, {
                         withCredentials: true,
                     });
 
@@ -204,7 +204,7 @@ export const useAuthStore = create(
             getProfile: async () => {
                 set({ loading: true, error: null });
                 try {
-                    const res = await apiClient.get(Routes.AUTH.PROFILE, {
+                    const res = await apiClient.get(Routes.AUTH.ME, {
                         withCredentials: true,
                     });
 
@@ -332,22 +332,20 @@ export const useAuthStore = create(
 
                 set({ loading: true, error: null });
                 try {
-                    await apiClient.post(Routes.AUTH.PASSWORD?.RESET || "/auth/password/reset", {
-                        resetToken,
-                        newPassword
-                    }).then(res => {
-                         // Capture user_type if returned
-                         const userType = res.data.data?.user_type;
-                         return userType;
-                    }).then(userType => {
-                         set({ loading: false, resetToken: null, email: "", message: "Password reset successfully" });
-                         return { success: true, userType };
+                    const res = await apiClient.post(
+                        Routes.AUTH.PASSWORD?.RESET || "/auth/password/reset",
+                        { resetToken, newPassword }
+                    );
+                    // user_type is optional in the response; used to route the
+                    // user after reset.
+                    const userType = res.data?.data?.user_type;
+                    set({
+                        loading: false,
+                        resetToken: null,
+                        email: "",
+                        message: "Password reset successfully",
                     });
-                    
-                    // Note: The previous logic was simpler but didn't return data. 
-                    // To handle the async properly with the variable scope:
-                    
-/* Re-writing the block correctly since I can't chain well inside try/catch without refactoring */
+                    return { success: true, userType };
                 } catch (err) {
                     set({ error: err.response?.data?.message || "Reset failed", loading: false });
                     return { success: false };

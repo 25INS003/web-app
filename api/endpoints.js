@@ -8,8 +8,7 @@ const Routes = {
     REGISTER: "/auth/register",
     LOGOUT: "/auth/logout",
     REFRESH: "/auth/refresh-token",
-    PROFILE: "/auth/profile",
-    ME: "/auth/me", // Matches router.get("/me")
+    ME: "/auth/me", // current user — backend exposes router.get("/me"), not /profile
 
     // OTP / Password Reset Flow
     PASSWORD: {

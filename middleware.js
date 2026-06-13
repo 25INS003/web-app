@@ -19,9 +19,7 @@ export default function middleware(request) {
   const userRole = request.cookies.get("userRole")?.value;
   const approvalStatus = request.cookies.get("approvalStatus")?.value;
 
-  console.log(`[Middleware] Checking: ${pathname}`);
-  console.log(`[Middleware] Cookies - Token: ${token ? "YES" : "NO"} | Role: ${userRole || "NONE"} | Approval: ${approvalStatus || "NONE"}`);
-  const isPublicPath = pathname === "/" || publicPaths.some((path) => 
+  const isPublicPath = pathname === "/" || publicPaths.some((path) =>
       pathname.startsWith(path)
   );
 

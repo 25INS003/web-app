@@ -74,18 +74,15 @@ export default function DashboardPage() {
     }
 
     socket.on("connect", () => {
-      console.log("Dashboard connected to socket:", socket.id);
       // If we already have stats with shopIds, join immediately
       if (stats?.overview?.shopIds && stats.overview.shopIds.length > 0) {
         stats.overview.shopIds.forEach(shopId => {
-           console.log("Joining shop room:", shopId);
            socket.emit("join-shop", shopId);
         });
       }
     });
 
     socket.on("new-order", (data) => {
-      console.log("New order event received:", data);
       toast.info("New Order Received!", {
         description: `Order #${data.orderId} - ₹${data.amount} (${data.shopName})`,
         duration: 5000,
@@ -108,7 +105,6 @@ export default function DashboardPage() {
       const socket = window.dashboardSocket;
       if (socket && socket.connected) {
         stats.overview.shopIds.forEach(shopId => {
-          console.log("Joining shop room (post-load):", shopId);
           socket.emit("join-shop", shopId);
         });
       }

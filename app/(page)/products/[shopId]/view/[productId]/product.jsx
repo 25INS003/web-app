@@ -210,9 +210,7 @@ const ViewProductPage = ({ shopId, productId }) => {
     
     // Only use validated images for rendering
     const validImages = uniqueImages.filter(isValidUrl);
-    
-    console.log("DEBUG: validImages =", validImages, "uniqueImages =", uniqueImages);
-    
+
     // Handler for thumbnail click - selects image and corresponding variant
     const handleImageClick = (src) => {
         setActiveImage(src);
@@ -542,7 +540,6 @@ const ViewProductPage = ({ shopId, productId }) => {
                         {(() => {
                             // Normalize tax data - handle both array and object formats
                             let taxArray = [];
-                            console.log("selectedVariant?.tax:", selectedVariant?.tax, "type:", typeof selectedVariant?.tax);
                             if (selectedVariant?.tax) {
                                 if (Array.isArray(selectedVariant.tax)) {
                                     taxArray = selectedVariant.tax.filter(t => t?.name && t?.rate !== undefined);
@@ -551,7 +548,6 @@ const ViewProductPage = ({ shopId, productId }) => {
                                     taxArray = Object.entries(selectedVariant.tax).map(([name, rate]) => ({ name, rate }));
                                 }
                             }
-                            console.log("taxArray:", taxArray);
                             return taxArray.length > 0 && (
                                 <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 dark:border dark:border-amber-800/30">
                                     <CardHeader className="pb-3">
