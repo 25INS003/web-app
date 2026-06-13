@@ -27,6 +27,19 @@ const nextConfig = {
                 port: '',
                 pathname: '/**',
             },
+            // dev seed product imagery
+            {
+                protocol: 'https',
+                hostname: 'www.themealdb.com',
+                port: '',
+                pathname: '/**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'picsum.photos',
+                port: '',
+                pathname: '/**',
+            },
         ],
     },
 };
