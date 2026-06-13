@@ -124,9 +124,12 @@ orders/dashboard queries).
   typed API client + zod schemas + envelope, auth/session layer (`getSession`, `proxy.ts`),
   TanStack Query provider + key factory + hydration, both app shells, providers/theme/toaster,
   error/loading boundaries, test scaffolding.
-- **Phase 1 — Auth (all roles) + role routing:** customer auth (email/password, **phone OTP**,
-  social) + shop-owner register/onboarding wizard + admin login; forgot/verify-otp/reset, logout;
-  role-based redirect + approval gating; the two shells wired up; tests.
+- **Phase 1 — Auth (all roles) + role routing — DONE (core):** email/password login,
+  register (+auto-login, customer/seller), password reset (email→OTP→new password),
+  logout; role-based redirect + approval gating; both shells; (auth) group fully on TS.
+  **Deferred (backend-blocked):** phone-OTP login and social login — the backend's
+  social routes are commented out and OTP exists only for password reset. Onboarding
+  *wizard* + tests roll into later phases.
 - **Phase 2 — Customer storefront (WC-1…WC-5):** home/landing, catalog browse, search +
   filter/sort, category pages, product detail + reviews, cart, **COD checkout** (address select/save,
   payment method), order placement, order tracking (realtime) + history + reorder, account/addresses,
