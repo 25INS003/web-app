@@ -25,3 +25,17 @@ export function useCategories() {
     staleTime: 5 * 60_000,
   });
 }
+
+export function useProduct(id: string) {
+  return useQuery({
+    queryKey: queryKeys.products.detail("catalog", id),
+    queryFn: () => catalogApi.getProduct(id),
+  });
+}
+
+export function useProductReviews(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.products.detail("catalog", id), "reviews"],
+    queryFn: () => catalogApi.getProductReviews(id),
+  });
+}

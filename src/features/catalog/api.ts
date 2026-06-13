@@ -2,11 +2,15 @@ import { z } from "zod";
 import { api } from "@/lib/api/client";
 import {
   catalogCategorySchema,
+  productDetailSchema,
   productListSchema,
+  reviewsResponseSchema,
 } from "@/lib/api/schemas/catalog";
 import type {
   CatalogCategory,
+  ProductDetail,
   ProductList,
+  ReviewsResponse,
 } from "@/lib/api/schemas/catalog";
 
 export type ProductQuery = {
@@ -27,5 +31,15 @@ export const catalogApi = {
   async getCategories(): Promise<CatalogCategory[]> {
     const data = await api.get<unknown>("/catalog/categories");
     return z.array(catalogCategorySchema).parse(data);
+  },
+
+  async getProduct(id: string): Promise<ProductDetail> {
+    const data = await api.get<unknown>(`/catalog/id/${id}`);
+    return productDetailSchema.parse(data);
+  },
+
+  async getProductReviews(id: string): Promise<ReviewsResponse> {
+    const data = await api.get<unknown>(`/catalog/reviews/products/${id}`);
+    return reviewsResponseSchema.parse(data);
   },
 };
