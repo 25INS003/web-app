@@ -56,13 +56,16 @@ export const loginInputSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginInputSchema>;
 
+// Web sign-up is for customers (default) or shop owners; admins are provisioned
+// out-of-band.
 export const registerInputSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
   email: z.string().email("Enter a valid email"),
   password: z.string().min(6, "At least 6 characters"),
-  // The dashboard only registers shop owners; admins are provisioned out-of-band.
-  user_type: z.literal("shop_owner").default("shop_owner"),
+  // No .default() here — the form supplies the default via defaultValues, which
+  // keeps the zod input/output types aligned for react-hook-form's resolver.
+  user_type: z.enum(["customer", "shop_owner"]),
   phone: z.string().optional(),
 });
 export type RegisterInput = z.infer<typeof registerInputSchema>;
