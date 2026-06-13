@@ -1,0 +1,169 @@
+"use client";
+
+import { Loader2, PackageOpen, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { ProductCard } from "./ProductCard";
+import { useCategories, useProducts } from "./hooks";
+
+export function CatalogBrowser({
+  initialSearch = "",
+  initialCategory,
+}: {
+  initialSearch?: string;
+  initialCategory?: string;
+}) {
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [search, setSearch] = useState(initialSearch);
+  const [category, setCategory] = useState<string | undefined>(initialCategory);
+
+  // debounce the search box
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const categories = useCategories();
+  const products = useProducts({
+    search: search || undefined,
+    category,
+  });
+
+  const items = products.data?.pages.flatMap((p) => p.data) ?? [];
+  const total = products.data?.pages[0]?.total ?? 0;
+
+  return (
+    <div>
+      {/* search */}
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="search"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search for products, brands…"
+          aria-label="Search products"
+          className="h-12 w-full rounded-2xl border border-border bg-card pl-11 pr-4 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
+        />
+      </div>
+
+      {/* category chips */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Chip active={!category} onClick={() => setCategory(undefined)}>
+          All
+        </Chip>
+        {categories.data?.map((c) => (
+          <Chip
+            key={c._id}
+            active={category === c._id}
+            onClick={() => setCategory(c._id)}
+          >
+            {c.name}
+          </Chip>
+        ))}
+      </div>
+
+      {/* result count */}
+      <p className="mt-5 text-sm text-muted-foreground">
+        {products.isPending
+          ? "Loading…"
+          : `${total} ${total === 1 ? "product" : "products"}`}
+      </p>
+
+      {/* grid */}
+      {products.isPending ? (
+        <SkeletonGrid />
+      ) : products.isError ? (
+        <EmptyState
+          title="Couldn't load products"
+          sub="Please try again in a moment."
+        />
+      ) : items.length === 0 ? (
+        <EmptyState
+          title="No products found"
+          sub="Try a different search or category."
+        />
+      ) : (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {items.map((p) => (
+              <ProductCard key={p._id} product={p} />
+            ))}
+          </div>
+          {products.hasNextPage && (
+            <div className="mt-8 flex justify-center">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => products.fetchNextPage()}
+                disabled={products.isFetchingNextPage}
+              >
+                {products.isFetchingNextPage && (
+                  <Loader2 className="animate-spin" />
+                )}
+                Load more
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "rounded-full border px-3.5 py-1.5 text-sm font-medium transition",
+        active
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border bg-card text-foreground hover:border-primary/40",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function SkeletonGrid() {
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          className="overflow-hidden rounded-2xl border border-border bg-card"
+        >
+          <div className="aspect-[4/3] animate-pulse bg-muted" />
+          <div className="space-y-2 p-3.5">
+            <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+            <div className="h-5 w-1/3 animate-pulse rounded bg-muted" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ title, sub }: { title: string; sub: string }) {
+  return (
+    <div className="mt-16 flex flex-col items-center text-center">
+      <span className="mb-3 grid size-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
+        <PackageOpen className="size-7" />
+      </span>
+      <p className="font-display text-lg font-semibold">{title}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{sub}</p>
+    </div>
+  );
+}

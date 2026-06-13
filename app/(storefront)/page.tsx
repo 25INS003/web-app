@@ -1,4 +1,5 @@
 import { Clock, Leaf, ShoppingBag, Truck, Wallet } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatPrice } from "@/lib/utils";
@@ -67,11 +68,13 @@ export default function StorefrontHome() {
             delivered to your door — pay on delivery, no app required.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" className="gap-2">
-              <ShoppingBag /> Start shopping
+            <Button size="lg" className="gap-2" asChild>
+              <Link href="/search">
+                <ShoppingBag /> Start shopping
+              </Link>
             </Button>
-            <Button size="lg" variant="outline">
-              Browse categories
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/search">Browse categories</Link>
             </Button>
           </div>
         </div>
