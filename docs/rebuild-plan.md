@@ -1,7 +1,18 @@
-# Web-app ground-up rebuild — Nedyway admin + shop-owner dashboard
+# Web-app ground-up rebuild — Nedyway commerce web app
 
 > Status: **active rebuild** on branch `rebuild/typescript-overhaul`.
 > This document is the source of truth for the overhaul. Phases are tracked below.
+
+> **Scope (per superproject `docs/SRS.md`, Addendum A.1):** this web app serves
+> **three audiences** behind one Next.js app, separated by role-based routing + RBAC:
+> 1. **Customer storefront** (the "front") — browse/search catalog, product + reviews,
+>    cart, checkout, order tracking/history, account. First-class alongside the mobile apps.
+> 2. **Shop-owner dashboard** — shops, products/variants/inventory, orders, analytics.
+> 3. **Admin** — shops, shop-owners, categories, promotions, system-wide orders, analytics, users.
+>
+> Login routes by `user_type`: customer → storefront/account, shop_owner → `/dashboard`,
+> admin → `/admin`. The same `/api/v1` backend serves web + mobile customers (no fork).
+> Checkout is **COD-first** — the payment gateway is a later enhancement (SRS §4.3).
 
 ## Context
 
@@ -48,7 +59,9 @@ and **Playwright** (critical e2e).
 ### Folder structure (`web-app/src/`)
 ```
 app/                      # thin route files that compose features
-  (auth)/ (admin)/ (shop)/   # (page) -> (shop) for clarity (route groups don't affect URLs)
+  (storefront)/            # customer-facing: /, /search, /c/[category], /p/[product], /cart,
+                           #   /checkout, /account, /orders, /track/[order] (mostly public; cart/checkout/account gated)
+  (auth)/ (shop)/ (admin)/ # auth flows · shop-owner panel (/dashboard...) · admin (/admin...)
   layout.tsx · providers.tsx     (proxy.ts lives at repo root)
 lib/
   api/ client.ts          # axios: withCredentials, envelope-unwrap, 401->refresh->retry queue
@@ -58,9 +71,14 @@ lib/
         guards.ts          # requireRole / requireApproval (server)
   query/ queryClient.ts · keys.ts   # query-key factory
   realtime/ socket.ts      # socket -> query invalidation
-features/<domain>/         # auth, onboarding, dashboard, shops, products, orders,
-                           # admin-shops, admin-owners, admin-categories, analytics, notifications, settings
-components/ ui/ (shadcn+custom) · shell/ (sidebar, header, app-shell) · common/ (data-table, empty-state, error-boundary, page-header, stat-card)
+features/<domain>/         # storefront: catalog, search, product, cart, checkout, account,
+                           #   customer-orders, reviews, addresses, wishlist
+                           # auth, onboarding · shop: dashboard, shops, products, orders
+                           # admin: admin-shops, admin-owners, admin-categories, analytics, promotions, users
+                           # cross-cutting: notifications, support, settings
+components/ ui/ (shadcn+custom) · shell/ (storefront-shell: header+search+cart+account;
+            dashboard-shell: sidebar+topbar for shop/admin) · common/ (data-table, product-card,
+            empty-state, error-boundary, page-header, stat-card)
 hooks/ · styles/globals.css
 ```
 
@@ -88,6 +106,9 @@ orders/dashboard queries).
   guards -> server gating + `proxy.ts`; JS -> TS.
 
 ## Rethought UX (highlights)
+- **Storefront:** fast, mobile-first commerce — instant search/filter, rich product pages with
+  variants + reviews, a frictionless cart and **single-page COD checkout** (address book + slots),
+  live order tracking. Browsing is public; only cart/checkout/account require login.
 - **Onboarding:** multi-step wizard (business -> address -> bank -> documents -> review)
   with progress + save-draft, replacing the single mega-form.
 - **Products:** unified product **+ variants** editor (variants first-class), inline
@@ -99,25 +120,36 @@ orders/dashboard queries).
 
 ## Phased delivery (each phase independently reviewable/shippable)
 
-- **Phase 0 — Foundation:** TS/tsconfig/lint, brand design system, typed API client +
-  zod schemas + envelope, auth/session layer (`getSession`, `proxy.ts`, login action),
-  TanStack Query provider + key factory + hydration, redesigned app shell (shop + admin),
-  providers/theme/toaster, error/loading boundaries, test scaffolding.
-- **Phase 1 — Auth + onboarding slice:** login, register, forgot/verify-otp/reset,
-  logout; onboarding wizard; approval status + gating; tests.
-- **Phase 2 — Shop-owner core:** dashboard, My Shops (CRUD + map), Products + Variants +
-  Inventory, Orders (realtime + detail + transitions + bulk).
-- **Phase 3 — Admin:** shops mgmt, shop-owners approval queue + doc review, categories
-  (nested), analytics/reports, system health.
-- **Phase 4 — Cross-cutting & polish:** notifications (realtime), settings + theme,
-  profile; a11y, empty/error/loading states, perf, e2e, remove old code.
+- **Phase 0 — Foundation:** TS/tsconfig/lint, brand design system (storefront + dashboard),
+  typed API client + zod schemas + envelope, auth/session layer (`getSession`, `proxy.ts`),
+  TanStack Query provider + key factory + hydration, both app shells, providers/theme/toaster,
+  error/loading boundaries, test scaffolding.
+- **Phase 1 — Auth (all roles) + role routing:** customer auth (email/password, **phone OTP**,
+  social) + shop-owner register/onboarding wizard + admin login; forgot/verify-otp/reset, logout;
+  role-based redirect + approval gating; the two shells wired up; tests.
+- **Phase 2 — Customer storefront (WC-1…WC-5):** home/landing, catalog browse, search +
+  filter/sort, category pages, product detail + reviews, cart, **COD checkout** (address select/save,
+  payment method), order placement, order tracking (realtime) + history + reorder, account/addresses,
+  wishlist, support entry. Mobile-first. *(This is the "front".)*
+- **Phase 3 — Shop-owner panel:** dashboard (stats/charts), My Shops (CRUD + map), Products +
+  Variants + Inventory, Orders (realtime board + detail + transitions + bulk).
+- **Phase 4 — Admin panel:** shops mgmt, shop-owners approval queue + doc review, categories
+  (nested), promotions/coupons, system-wide orders (cancel/refund), analytics/reports, users,
+  system health.
+- **Phase 5 — Cross-cutting & polish:** notifications (realtime), support/tickets, settings +
+  theme, profiles; a11y (WCAG), empty/error/loading states, perf (target: 95% < 500ms / 1000
+  concurrent per SRS §5), e2e for critical paths across all three audiences, remove old code.
+
+> Sequencing note: storefront (Phase 2) is prioritized as the primary public surface; it and
+> the panels share the Phase 0/1 foundation. Payment gateway is out of scope now (COD-first).
 
 ## Verification
 - **Per phase:** `tsc --noEmit`, ESLint/Prettier, `vitest run`.
 - **Live smoke test:** run the dev app against the running backend (Mongo+Redis, seed
   data present) via `docker compose -f docker-compose.dev.yml` or `next dev`.
-- **E2E (Playwright):** auth flow, shop-owner happy path (onboard -> add product+variant
-  -> realtime order -> advance status), admin approval.
+- **E2E (Playwright):** customer happy path (browse -> add to cart -> COD checkout -> track
+  order), auth flow, shop-owner happy path (onboard -> add product+variant -> realtime order ->
+  advance status), admin approval.
 
 ## Backend API contract (reference)
 
