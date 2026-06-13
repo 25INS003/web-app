@@ -29,7 +29,9 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/myshop", label: "My Shops", icon: Store },
     { href: "/products", label: "Products", icon: Package },
-    { href: "/orders", label: "Orders", icon: ShoppingCart },
+    // shop orders live under /dashboard to avoid colliding with the customer
+    // storefront's /orders (built in Phase 3)
+    { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
   ],
   admin: [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },

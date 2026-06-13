@@ -20,7 +20,9 @@ const PROTECTED = [
   "/checkout",
 ];
 const ADMIN_PATHS = ["/admin", "/verify-owner"];
-const OWNER_GATED = ["/dashboard", "/products", "/orders", "/myshop"];
+// /orders is the CUSTOMER order history (login-only); shop orders live under
+// /dashboard, so it's covered here without listing /orders.
+const OWNER_GATED = ["/dashboard", "/products", "/myshop"];
 
 // Next 16 resolves a proxy file via the NAMED `proxy` export (preferred) or a
 // default export; we provide the named export to match the convention exactly.
