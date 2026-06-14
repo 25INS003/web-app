@@ -124,6 +124,7 @@ function AddressCard({
   return (
     <button
       onClick={onSelect}
+      data-testid="checkout-address"
       className={cn(
         "flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition",
         selected

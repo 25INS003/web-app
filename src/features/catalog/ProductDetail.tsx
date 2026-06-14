@@ -112,6 +112,7 @@ export function ProductDetail({ productId }: { productId: string }) {
                   return (
                     <button
                       key={v._id}
+                      data-testid="variant-option"
                       disabled={oos}
                       onClick={() => {
                         setVariant(v);
