@@ -36,6 +36,11 @@ export const catalogApi = {
     return z.array(catalogCategorySchema).parse(data);
   },
 
+  async getTopCategories(): Promise<CatalogCategory[]> {
+    const data = await api.get<unknown>("/catalog/categories/top");
+    return z.array(catalogCategorySchema).parse(data);
+  },
+
   async getProduct(id: string): Promise<ProductDetail> {
     const data = await api.get<unknown>(`/catalog/id/${id}`);
     return productDetailSchema.parse(data);

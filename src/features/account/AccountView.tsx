@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  LifeBuoy,
   MapPin,
   Package,
   Plus,
@@ -64,6 +65,18 @@ export function AccountView({ user }: { user: User }) {
           <div>
             <p className="text-sm font-semibold">Wishlist</p>
             <p className="text-xs text-muted-foreground">Saved for later</p>
+          </div>
+        </Link>
+        <Link
+          href="/support"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition hover:border-primary/40"
+        >
+          <span className="grid size-10 place-items-center rounded-xl bg-muted text-muted-foreground">
+            <LifeBuoy className="size-5" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold">Support</p>
+            <p className="text-xs text-muted-foreground">Help & requests</p>
           </div>
         </Link>
       </div>

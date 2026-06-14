@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCategories } from "./hooks";
+import { useCategories, useTopCategories } from "./hooks";
 
 const EMOJI: Record<string, string> = {
   "Fruits & Vegetables": "🥦",
@@ -17,8 +17,14 @@ const EMOJI: Record<string, string> = {
 };
 
 export function CategoryRow() {
-  const q = useCategories();
-  const tops = (q.data ?? []).filter((c) => !c.parent_id).slice(0, 10);
+  const top = useTopCategories();
+  const all = useCategories();
+  // Prefer categories ranked by purchase amount; fall back to the first
+  // top-level categories until there's order data to rank by.
+  const tops =
+    top.data && top.data.length > 0
+      ? top.data.slice(0, 10)
+      : (all.data ?? []).filter((c) => !c.parent_id).slice(0, 10);
 
   return (
     <section className="mt-12">

@@ -26,6 +26,14 @@ export function useCategories() {
   });
 }
 
+export function useTopCategories() {
+  return useQuery({
+    queryKey: [...queryKeys.categories, "top"],
+    queryFn: catalogApi.getTopCategories,
+    staleTime: 5 * 60_000,
+  });
+}
+
 export function useProduct(id: string) {
   return useQuery({
     queryKey: queryKeys.products.detail("catalog", id),

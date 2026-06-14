@@ -34,6 +34,13 @@ export const queryKeys = {
       [...queryKeys.orders.all, shopId, "detail", orderId] as const,
   },
 
+  support: {
+    all: ["support"] as const,
+    tickets: () => [...queryKeys.support.all, "tickets"] as const,
+    ticket: (ticketId: string) =>
+      [...queryKeys.support.all, "ticket", ticketId] as const,
+  },
+
   dashboardStats: ["dashboard-stats"] as const,
   categories: ["categories"] as const,
   notifications: {

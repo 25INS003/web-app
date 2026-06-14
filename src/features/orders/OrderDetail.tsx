@@ -152,7 +152,16 @@ export function OrderDetail({ orderId }: { orderId: string }) {
             <div key={it._id ?? i} className="py-2.5 text-sm">
               <div className="flex items-center justify-between gap-3">
                 <span className="min-w-0">
-                  <span className="font-medium">{it.product_name}</span>{" "}
+                  {it.product_id ? (
+                    <Link
+                      href={`/p/${it.product_id}`}
+                      className="font-medium transition hover:text-primary hover:underline"
+                    >
+                      {it.product_name}
+                    </Link>
+                  ) : (
+                    <span className="font-medium">{it.product_name}</span>
+                  )}{" "}
                   <span className="text-muted-foreground">× {it.quantity}</span>
                 </span>
                 <span className="font-mono tabular-nums">
