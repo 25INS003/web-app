@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Check, MapPin, XCircle } from "lucide-react";
+import { ArrowLeft, Check, MapPin, RotateCcw, XCircle } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
 import { OrderItemReview } from "@/features/reviews/ReviewControls";
 import { useMyReviews } from "@/features/reviews/hooks";
 import { cn, formatPrice } from "@/lib/utils";
-import { useOrder } from "./hooks";
+import { useOrder, useReorder } from "./hooks";
 import {
   STATUS_LABEL,
   formatDate,
@@ -23,6 +23,7 @@ import {
 export function OrderDetail({ orderId }: { orderId: string }) {
   const q = useOrder(orderId);
   const reviewsQ = useMyReviews();
+  const reorder = useReorder();
 
   if (q.isPending) {
     return (
@@ -179,6 +180,15 @@ export function OrderDetail({ orderId }: { orderId: string }) {
             {order.payment_method ?? "cod"}
           </span>
         </p>
+        <Button
+          variant="outline"
+          className="mt-4 w-full"
+          disabled={reorder.isPending || order.items.length === 0}
+          onClick={() => reorder.mutate(order)}
+        >
+          <RotateCcw className="size-4" />
+          {reorder.isPending ? "Adding to cart…" : "Reorder these items"}
+        </Button>
       </section>
 
       {/* address */}
