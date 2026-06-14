@@ -2,7 +2,7 @@
 
 import { CheckCircle2, Loader2, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCartTotal } from "@/features/cart/useCart";
 import type { Address } from "@/lib/api/schemas/address";
@@ -14,21 +14,17 @@ export function CheckoutView() {
   const addresses = useAddresses();
   const total = useCartTotal();
   const place = usePlaceOrder();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // The user's explicit pick, if any; otherwise we fall back to the default/first
+  // address (derived below) — no effect needed to seed it.
+  const [pickedId, setPickedId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-
-  useEffect(() => {
-    if (!selectedId && addresses.data?.length) {
-      setSelectedId(
-        addresses.data.find((a) => a.is_default)?._id ?? addresses.data[0]._id,
-      );
-    }
-  }, [addresses.data, selectedId]);
 
   if (place.isSuccess) return <Confirmation orderId={place.data.orderId} />;
   if (total.data?.is_empty) return <EmptyCart />;
 
   const list = addresses.data ?? [];
+  const defaultId = list.find((a) => a.is_default)?._id ?? list[0]?._id ?? null;
+  const selectedId = pickedId ?? defaultId;
   const selectedAddr = list.find((a) => a._id === selectedId);
   // place-order matches the string `address_id` mirror, not _id
   const orderAddressId = selectedAddr?.address_id ?? selectedAddr?._id ?? null;
@@ -53,7 +49,7 @@ export function CheckoutView() {
                   key={a._id}
                   address={a}
                   selected={selectedId === a._id}
-                  onSelect={() => setSelectedId(a._id)}
+                  onSelect={() => setPickedId(a._id)}
                 />
               ))}
 
