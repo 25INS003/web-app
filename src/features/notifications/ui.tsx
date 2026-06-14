@@ -51,12 +51,12 @@ export function timeAgo(value?: string | null): string {
   const then = new Date(value).getTime();
   if (Number.isNaN(then)) return "";
   const diff = Date.now() - then;
-  const min = Math.round(diff / 60_000);
+  const min = Math.floor(diff / 60_000);
   if (min < 1) return "just now";
   if (min < 60) return `${min}m`;
-  const hr = Math.round(min / 60);
+  const hr = Math.floor(min / 60);
   if (hr < 24) return `${hr}h`;
-  const day = Math.round(hr / 24);
+  const day = Math.floor(hr / 24);
   if (day < 7) return `${day}d`;
   return new Date(value).toLocaleDateString();
 }
