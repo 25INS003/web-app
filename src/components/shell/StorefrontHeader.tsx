@@ -1,19 +1,19 @@
 "use client";
 
-import Cookies from "js-cookie";
-import { Leaf, Search, ShoppingBag, User } from "lucide-react";
+import { Heart, Leaf, Search, ShoppingBag, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useIsAuthed } from "@/features/auth/useAuth";
 import { useCartCount } from "@/features/cart/useCart";
+import { NotificationBell } from "@/features/notifications/NotificationBell";
 
 export function StorefrontHeader() {
   const router = useRouter();
   const [q, setQ] = useState("");
-  const [authed, setAuthed] = useState(false);
-  useEffect(() => setAuthed(!!Cookies.get("userRole")), []);
+  const authed = useIsAuthed();
   const cartCount = useCartCount(authed);
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
@@ -50,6 +50,18 @@ export function StorefrontHeader() {
         {/* actions */}
         <div className="ml-auto flex items-center gap-1">
           <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden sm:inline-flex"
+            aria-label="Wishlist"
+            asChild
+          >
+            <Link href="/wishlist">
+              <Heart />
+            </Link>
+          </Button>
+          <NotificationBell />
           <Button variant="ghost" size="icon" aria-label="Account" asChild>
             <Link href="/account">
               <User />

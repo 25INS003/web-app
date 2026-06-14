@@ -5,6 +5,12 @@ import type { LoginInput, RegisterInput, Session } from "@/lib/api/schemas/auth"
 // All auth calls go through the same-origin client; the backend sets/clears the
 // httpOnly cookies. We only read the user/role off the body to drive redirects.
 export const authApi = {
+  // The non-forgeable current session (backend reads the httpOnly cookies).
+  async me(): Promise<Session> {
+    const data = await api.get<unknown>("/auth/me");
+    return sessionSchema.parse(data);
+  },
+
   async login(input: LoginInput): Promise<Session> {
     const data = await api.post<unknown>("/auth/login", input);
     return sessionSchema.parse(data);
