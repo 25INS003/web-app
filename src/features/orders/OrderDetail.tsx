@@ -13,6 +13,7 @@ import { OrderItemReview } from "@/features/reviews/ReviewControls";
 import { useMyReviews } from "@/features/reviews/hooks";
 import { cn, formatPrice } from "@/lib/utils";
 import { useOrder, useReorder } from "./hooks";
+import { useOrderRealtime } from "./useOrderRealtime";
 import {
   STATUS_LABEL,
   formatDate,
@@ -24,6 +25,7 @@ export function OrderDetail({ orderId }: { orderId: string }) {
   const q = useOrder(orderId);
   const reviewsQ = useMyReviews();
   const reorder = useReorder();
+  useOrderRealtime(orderId);
 
   if (q.isPending) {
     return (
