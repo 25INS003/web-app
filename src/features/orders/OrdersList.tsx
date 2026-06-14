@@ -53,7 +53,7 @@ export function OrdersList() {
         {orders.map((o) => (
           <Link
             key={o._id}
-            href={`/orders/${o.order_id}`}
+            href={`/orders/${o._id}`}
             className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-xs transition hover:border-primary/40 hover:shadow-md"
           >
             <div className="min-w-0 flex-1">

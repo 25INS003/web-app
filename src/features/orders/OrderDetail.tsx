@@ -5,8 +5,14 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { orderShopName } from "@/lib/api/schemas/order";
+import {
+  reviewKey,
+  reviewProductId,
+} from "@/lib/api/schemas/review";
+import { OrderItemReview } from "@/features/reviews/ReviewControls";
+import { useMyReviews } from "@/features/reviews/hooks";
 import { cn, formatPrice } from "@/lib/utils";
-import { useOrders } from "./hooks";
+import { useOrder } from "./hooks";
 import {
   STATUS_LABEL,
   formatDate,
@@ -15,7 +21,8 @@ import {
 } from "./status";
 
 export function OrderDetail({ orderId }: { orderId: string }) {
-  const q = useOrders();
+  const q = useOrder(orderId);
+  const reviewsQ = useMyReviews();
 
   if (q.isPending) {
     return (
@@ -26,9 +33,7 @@ export function OrderDetail({ orderId }: { orderId: string }) {
     );
   }
 
-  const order = q.data?.find(
-    (o) => o.order_id === orderId || o._id === orderId,
-  );
+  const order = q.data;
 
   if (!order) {
     return (
@@ -43,8 +48,20 @@ export function OrderDetail({ orderId }: { orderId: string }) {
 
   const cancelled =
     order.order_status === "cancelled" || order.order_status === "refunded";
+  const delivered = order.order_status === "delivered";
   const steps = timelineSteps(order);
   const addr = order.delivery_address;
+
+  // Map "this product was reviewed in this order" -> the review, so each
+  // delivered line item can show its existing review (or a prompt to add one).
+  const reviewByKey = new Map(
+    (reviewsQ.data?.reviews ?? []).flatMap((r) => {
+      const pid = reviewProductId(r);
+      return r.order_id && pid
+        ? [[reviewKey(r.order_id, pid), r] as const]
+        : [];
+    }),
+  );
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
@@ -129,17 +146,25 @@ export function OrderDetail({ orderId }: { orderId: string }) {
         </h2>
         <div className="mt-3 divide-y divide-border">
           {order.items.map((it, i) => (
-            <div
-              key={it._id ?? i}
-              className="flex items-center justify-between gap-3 py-2.5 text-sm"
-            >
-              <span className="min-w-0">
-                <span className="font-medium">{it.product_name}</span>{" "}
-                <span className="text-muted-foreground">× {it.quantity}</span>
-              </span>
-              <span className="font-mono tabular-nums">
-                {formatPrice(it.total_price)}
-              </span>
+            <div key={it._id ?? i} className="py-2.5 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="font-medium">{it.product_name}</span>{" "}
+                  <span className="text-muted-foreground">× {it.quantity}</span>
+                </span>
+                <span className="font-mono tabular-nums">
+                  {formatPrice(it.total_price)}
+                </span>
+              </div>
+              {delivered && it.product_id && (
+                <OrderItemReview
+                  orderId={order._id}
+                  productId={it.product_id}
+                  existing={reviewByKey.get(
+                    reviewKey(order._id, it.product_id),
+                  )}
+                />
+              )}
             </div>
           ))}
         </div>

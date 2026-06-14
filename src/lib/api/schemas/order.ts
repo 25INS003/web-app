@@ -18,6 +18,10 @@ export type OrderStatus = z.infer<typeof orderStatusSchema>;
 
 export const orderItemSchema = z.object({
   _id: objectId.optional(),
+  // Parent product id — only present on the order *detail* response (the list
+  // embeds variant refs). Needed to submit a review for a delivered item.
+  product_id: objectId.nullish(),
+  product_var_id: objectId.nullish(),
   product_name: z.string(),
   quantity: z.number(),
   unit_price: z.number(),
@@ -60,6 +64,9 @@ export const orderSchema = z.object({
 export type Order = z.infer<typeof orderSchema>;
 
 export const orderListSchema = z.object({ orders: z.array(orderSchema) });
+
+// GET /customer/orders/:orderId -> { order }
+export const orderDetailResponseSchema = z.object({ order: orderSchema });
 
 export function orderShopName(o: Order): string | undefined {
   return o.shop_id && typeof o.shop_id === "object" ? o.shop_id.name : undefined;
