@@ -20,6 +20,9 @@ export type ProductQuery = {
   search?: string;
   sort?: string;
   order?: "asc" | "desc";
+  min_price?: number;
+  max_price?: number;
+  in_stock?: boolean;
 };
 
 export const catalogApi = {

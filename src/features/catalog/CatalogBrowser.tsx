@@ -7,6 +7,15 @@ import { cn } from "@/lib/utils";
 import { ProductCard } from "./ProductCard";
 import { useCategories, useProducts } from "./hooks";
 
+const SORTS = [
+  { key: "newest", label: "Newest", sort: "created_at", order: "desc" },
+  { key: "price_asc", label: "Price: Low to High", sort: "price", order: "asc" },
+  { key: "price_desc", label: "Price: High to Low", sort: "price", order: "desc" },
+  { key: "rating", label: "Top rated", sort: "rating", order: "desc" },
+] as const;
+
+type SortKey = (typeof SORTS)[number]["key"];
+
 export function CatalogBrowser({
   initialSearch = "",
   initialCategory,
@@ -17,6 +26,10 @@ export function CatalogBrowser({
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState<string | undefined>(initialCategory);
+  const [sortKey, setSortKey] = useState<SortKey>("newest");
+  const [inStock, setInStock] = useState(false);
+  const [priceInput, setPriceInput] = useState({ min: "", max: "" });
+  const [price, setPrice] = useState({ min: "", max: "" });
 
   // debounce the search box
   useEffect(() => {
@@ -24,10 +37,25 @@ export function CatalogBrowser({
     return () => clearTimeout(t);
   }, [searchInput]);
 
+  // debounce the price range inputs
+  useEffect(() => {
+    const t = setTimeout(() => setPrice(priceInput), 400);
+    return () => clearTimeout(t);
+  }, [priceInput]);
+
+  const sort = SORTS.find((s) => s.key === sortKey) ?? SORTS[0];
+  const minPrice = price.min === "" ? undefined : Number(price.min);
+  const maxPrice = price.max === "" ? undefined : Number(price.max);
+
   const categories = useCategories();
   const products = useProducts({
     search: search || undefined,
     category,
+    sort: sort.sort,
+    order: sort.order,
+    in_stock: inStock || undefined,
+    min_price: Number.isFinite(minPrice) ? minPrice : undefined,
+    max_price: Number.isFinite(maxPrice) ? maxPrice : undefined,
   });
 
   const items = products.data?.pages.flatMap((p) => p.data) ?? [];
@@ -62,6 +90,55 @@ export function CatalogBrowser({
             {c.name}
           </Chip>
         ))}
+      </div>
+
+      {/* filters + sort */}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Chip active={inStock} onClick={() => setInStock((v) => !v)}>
+          In stock
+        </Chip>
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            value={priceInput.min}
+            onChange={(e) =>
+              setPriceInput((p) => ({ ...p, min: e.target.value }))
+            }
+            placeholder="Min ₹"
+            aria-label="Minimum price"
+            className="h-9 w-24 rounded-full border border-border bg-card px-3 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
+          />
+          <span className="text-muted-foreground">–</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            value={priceInput.max}
+            onChange={(e) =>
+              setPriceInput((p) => ({ ...p, max: e.target.value }))
+            }
+            placeholder="Max ₹"
+            aria-label="Maximum price"
+            className="h-9 w-24 rounded-full border border-border bg-card px-3 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
+          />
+        </div>
+        <label className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+          Sort
+          <select
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value as SortKey)}
+            aria-label="Sort products"
+            className="h-9 rounded-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
+          >
+            {SORTS.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {/* result count */}
