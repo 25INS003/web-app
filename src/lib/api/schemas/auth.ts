@@ -48,6 +48,18 @@ export const sessionSchema = z.object({
 });
 export type Session = z.infer<typeof sessionSchema>;
 
+// POST /auth/register. Deliberately NOT a Session: registration issues no
+// tokens, so the account is not usable until the emailed code is confirmed via
+// POST /auth/verify-email — which is what returns a real session.
+export const registerResultSchema = z.object({
+  user: userSchema,
+  verification_required: z.boolean().optional(),
+  // False when the account was created but the mail could not be sent, so the
+  // UI can lead with "resend" instead of "check your inbox".
+  verification_email_sent: z.boolean().optional(),
+});
+export type RegisterResult = z.infer<typeof registerResultSchema>;
+
 // --- form inputs ---
 
 export const loginInputSchema = z.object({
@@ -69,3 +81,12 @@ export const registerInputSchema = z.object({
   phone: z.string().optional(),
 });
 export type RegisterInput = z.infer<typeof registerInputSchema>;
+
+export const verifyEmailInputSchema = z.object({
+  email: z.string().email(),
+  otp: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Enter the 6-digit code"),
+});
+export type VerifyEmailInput = z.infer<typeof verifyEmailInputSchema>;

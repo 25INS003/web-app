@@ -1,6 +1,12 @@
 import { api } from "@/lib/api/client";
-import { sessionSchema } from "@/lib/api/schemas/auth";
-import type { LoginInput, RegisterInput, Session } from "@/lib/api/schemas/auth";
+import { registerResultSchema, sessionSchema } from "@/lib/api/schemas/auth";
+import type {
+  LoginInput,
+  RegisterInput,
+  RegisterResult,
+  Session,
+  VerifyEmailInput,
+} from "@/lib/api/schemas/auth";
 
 // All auth calls go through the same-origin client; the backend sets/clears the
 // httpOnly cookies. We only read the user/role off the body to drive redirects.
@@ -20,9 +26,21 @@ export const authApi = {
     await api.post("/auth/logout");
   },
 
-  async register(input: RegisterInput): Promise<Session> {
+  // Returns no session — the account cannot be used until the emailed code is
+  // confirmed. See registerResultSchema.
+  async register(input: RegisterInput): Promise<RegisterResult> {
     const data = await api.post<unknown>("/auth/register", input);
+    return registerResultSchema.parse(data);
+  },
+
+  // This is the first real sign-in: the backend sets the auth cookies here.
+  async verifyEmail(input: VerifyEmailInput): Promise<Session> {
+    const data = await api.post<unknown>("/auth/verify-email", input);
     return sessionSchema.parse(data);
+  },
+
+  async resendVerification(email: string): Promise<void> {
+    await api.post("/auth/resend-verification", { email });
   },
 
   async forgotPassword(email: string): Promise<void> {
