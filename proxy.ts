@@ -48,8 +48,34 @@ export function proxy(request: NextRequest) {
   }
 
   // 2) Authenticated user on an auth entry page -> their home.
+  //
+  // Skipped when a server guard has marked the session stale. This layer can
+  // only see that an accessToken cookie EXISTS; the guards actually verify it
+  // against /auth/me. When a cookie outlives its session — the user was deleted
+  // or deactivated, the token expired, the backend was unreachable — the two
+  // disagree and bounce the request between them forever:
+  //
+  //   /account -> guard: no session -> /login -> here: cookie! -> /dashboard
+  //            -> guard: no session -> /login -> ...
+  //
+  // The guard streams its redirect in the RSC payload rather than sending a
+  // 3xx, so each hop renders first: it looks like a flickering page, not a
+  // redirect-loop error. Clearing the cookies here is what actually breaks the
+  // cycle — a Server Component cannot delete a cookie, middleware can.
+  if (token && request.nextUrl.searchParams.has("stale")) {
+    const res = NextResponse.next();
+    for (const name of ["accessToken", "refreshToken", "sessionId", "userRole", "approvalStatus"]) {
+      res.cookies.delete(name);
+    }
+    return res;
+  }
+
   if (token && (pathname === "/login" || pathname === "/register")) {
-    return redirect(role === "admin" ? "/admin" : "/dashboard");
+    // Customers have no /dashboard — that is the shop-owner area, and sending
+    // them there produced a second bounce off the owner guard.
+    const home =
+      role === "admin" ? "/admin" : role === "shop_owner" ? "/dashboard" : "/";
+    return redirect(home);
   }
 
   // 3) Non-admin trying to reach the admin area.

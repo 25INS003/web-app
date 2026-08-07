@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
 import { SupportDetail } from "@/features/support/SupportDetail";
-import { getSession } from "@/lib/auth/session.server";
+import { requireSession } from "@/lib/auth/guards";
 
 export default async function SupportTicketPage({
   params,
@@ -8,7 +7,9 @@ export default async function SupportTicketPage({
   params: Promise<{ ticketId: string }>;
 }) {
   const { ticketId } = await params;
-  const session = await getSession();
-  if (!session) redirect("/login");
+  // requireSession, not a bare getSession + redirect: it sends an invalid
+  // session to /login?stale=1, which the proxy uses to clear the dead cookies
+  // instead of bouncing the request back here forever. See lib/auth/guards.ts.
+  const session = await requireSession();
   return <SupportDetail ticketId={ticketId} currentUserId={session.user._id} />;
 }
