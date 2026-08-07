@@ -1,0 +1,60 @@
+name: CI
+
+# This repository had no CI at all while `publish.yml` shipped an image to GHCR
+# on every push to main — so 36 tests never ran before a release, and a broken
+# build reached the registry unchallenged. See
+# docs/plan/07-phantom-implementations.md P5 in the parent repo.
+#
+# Scoped to pull requests: `publish.yml` runs the same checks as a `verify` job
+# that its build depends on, so a push to main is gated without both workflows
+# racing to do identical work.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Matches the production image. node 20 is end-of-life and its bundled
+          # npm 10.9 rejects this repo's npm 11 lockfile outright.
+          node-version: "24"
+          cache: "npm"
+
+      # `ci`, not `install`: the lockfile is the point of running this at all.
+      # --legacy-peer-deps matches how this tree resolves, and matches the
+      # Dockerfile, so CI and the image install the same graph.
+      - name: Install
+        run: npm ci --legacy-peer-deps
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Not `--max-warnings 0`: this tree carries pre-existing warnings in the
+      # legacy .jsx panels that workstreams 01/02 replace wholesale. Failing on
+      # them would make CI red from day one and train everyone to ignore it.
+      # Errors still fail the run.
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      # Catches the class of breakage typecheck cannot: a bad next.config, a
+      # server component importing something client-only, a failed static build.
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
