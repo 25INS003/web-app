@@ -15,6 +15,15 @@ type Step = "email" | "otp" | "reset" | "done";
 const msg = (err: unknown, fallback: string) =>
   err instanceof ApiError ? err.message : fallback;
 
+// Hoisted out of the component body. Declared inside, this was a NEW component
+// type on every render, so React unmounted and remounted it each time rather
+// than updating it — harmless for a <p>, but it resets state, and the rule
+// exists because the next person to add state here would not see it coming.
+function FieldError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return <p className="text-sm text-destructive">{message}</p>;
+}
+
 export function PasswordResetFlow() {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -51,9 +60,6 @@ export function PasswordResetFlow() {
     },
     onError: (e) => setError(msg(e, "Could not reset your password")),
   });
-
-  const Err = () =>
-    error ? <p className="text-sm text-destructive">{error}</p> : null;
 
   if (step === "done") {
     return (
@@ -106,7 +112,7 @@ export function PasswordResetFlow() {
               required
             />
           </div>
-          <Err />
+          <FieldError message={error} />
           <Button type="submit" size="lg" className="w-full" disabled={send.isPending}>
             {send.isPending && <Loader2 className="animate-spin" />}
             Send code
@@ -137,7 +143,7 @@ export function PasswordResetFlow() {
               required
             />
           </div>
-          <Err />
+          <FieldError message={error} />
           <Button type="submit" size="lg" className="w-full" disabled={verify.isPending}>
             {verify.isPending && <Loader2 className="animate-spin" />}
             Verify code
@@ -186,7 +192,7 @@ export function PasswordResetFlow() {
               required
             />
           </div>
-          <Err />
+          <FieldError message={error} />
           <Button type="submit" size="lg" className="w-full" disabled={reset.isPending}>
             {reset.isPending && <Loader2 className="animate-spin" />}
             Update password
