@@ -2,10 +2,14 @@
 
 import {
   LifeBuoy,
+  Loader2,
   MapPin,
   Package,
+  Pencil,
   Plus,
   Sparkles,
+  Star,
+  Trash2,
   Trophy,
 } from "lucide-react";
 import Link from "next/link";
@@ -13,7 +17,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@/features/auth/SignOutButton";
 import { AddressForm } from "@/features/checkout/AddressForm";
-import { useAddresses } from "@/features/checkout/hooks";
+import {
+  useAddresses,
+  useDeleteAddress,
+  useSetDefaultAddress,
+} from "@/features/checkout/hooks";
 import type { User } from "@/lib/api/schemas/auth";
 import type { Address } from "@/lib/api/schemas/address";
 import { useLoyalty } from "./useLoyalty";
@@ -119,6 +127,9 @@ function LoyaltyCard() {
 function AddressBook() {
   const q = useAddresses();
   const [showForm, setShowForm] = useState(false);
+  // Only one row is ever open for editing, and opening one closes the add form
+  // — two forms on screen at once made it ambiguous which "Save" applied.
+  const [editingId, setEditingId] = useState<string | null>(null);
   const list = q.data ?? [];
 
   return (
@@ -137,7 +148,16 @@ function AddressBook() {
             </p>
           )}
           {list.map((a) => (
-            <AddressRow key={a._id} address={a} />
+            <AddressRow
+              key={a._id}
+              address={a}
+              editing={editingId === a._id}
+              onEdit={() => {
+                setShowForm(false);
+                setEditingId(a._id);
+              }}
+              onDone={() => setEditingId(null)}
+            />
           ))}
 
           {showForm ? (
@@ -146,11 +166,23 @@ function AddressBook() {
             </div>
           ) : (
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => {
+                setEditingId(null);
+                setShowForm(true);
+              }}
               className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
             >
               <Plus className="size-4" /> Add a new address
             </button>
+          )}
+          {list.length === 1 && list[0]?.is_default && (
+            // The API refuses to delete the default address, so a lone address
+            // cannot be removed at all. Saying so beats a Delete button that
+            // only ever errors.
+            <p className="text-xs text-muted-foreground">
+              Add a second address to be able to remove this one — your default
+              address can&apos;t be deleted.
+            </p>
           )}
         </div>
       )}
@@ -158,31 +190,112 @@ function AddressBook() {
   );
 }
 
-function AddressRow({ address }: { address: Address }) {
+function AddressRow({
+  address,
+  editing,
+  onEdit,
+  onDone,
+}: {
+  address: Address;
+  editing: boolean;
+  onEdit: () => void;
+  onDone: () => void;
+}) {
+  const remove = useDeleteAddress();
+  const setDefault = useSetDefaultAddress();
+  const [confirming, setConfirming] = useState(false);
+  const busy = remove.isPending || setDefault.isPending;
+
+  if (editing) {
+    return (
+      <div className="rounded-2xl border border-primary/40 bg-card p-4">
+        <AddressForm address={address} onDone={onDone} />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
-      <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
-        <MapPin className="size-4" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-sm font-semibold capitalize">
-          {address.tag ?? address.label ?? "Address"}
-          {address.contact_name ? ` · ${address.contact_name}` : ""}
-          {address.is_default && (
-            <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
-              Default
-            </span>
-          )}
-        </p>
-        <p className="truncate text-sm text-muted-foreground">
-          {address.address_line}, {address.city}, {address.state}{" "}
-          {address.pincode}
-        </p>
-        {address.contact_phone && (
-          <p className="text-xs text-muted-foreground">
-            {address.contact_phone}
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
+          <MapPin className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold capitalize">
+            {address.tag ?? address.label ?? "Address"}
+            {address.contact_name ? ` · ${address.contact_name}` : ""}
+            {address.is_default && (
+              <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
+                Default
+              </span>
+            )}
           </p>
+          <p className="truncate text-sm text-muted-foreground">
+            {address.address_line}, {address.city}, {address.state}{" "}
+            {address.pincode}
+          </p>
+          {address.contact_phone && (
+            <p className="text-xs text-muted-foreground">
+              {address.contact_phone}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+        <Button size="sm" variant="ghost" onClick={onEdit} disabled={busy}>
+          <Pencil className="size-3.5" /> Edit
+        </Button>
+
+        {!address.is_default && (
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={busy}
+            onClick={() => setDefault.mutate(address._id)}
+          >
+            <Star className="size-3.5" /> Set as default
+          </Button>
         )}
+
+        {/* Hidden on the default address: the API rejects that delete outright,
+            so offering it would only ever produce an error toast. */}
+        {!address.is_default &&
+          (confirming ? (
+            <span className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Remove?</span>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={busy}
+                onClick={() =>
+                  remove.mutate(address._id, {
+                    onSettled: () => setConfirming(false),
+                  })
+                }
+              >
+                {remove.isPending && <Loader2 className="animate-spin" />}
+                Yes, remove
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setConfirming(false)}
+              >
+                Cancel
+              </Button>
+            </span>
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="ml-auto text-destructive hover:text-destructive"
+              disabled={busy}
+              onClick={() => setConfirming(true)}
+            >
+              <Trash2 className="size-3.5" /> Remove
+            </Button>
+          ))}
       </div>
     </div>
   );

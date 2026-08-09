@@ -27,6 +27,55 @@ export function useAddAddress() {
   });
 }
 
+export function useUpdateAddress() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: AddressInput }) =>
+      checkoutApi.updateAddress(id, input),
+    onSuccess: () => {
+      toast.success("Address updated");
+      qc.invalidateQueries({ queryKey: ADDR_KEY });
+    },
+    onError: (err) =>
+      toast.error(
+        err instanceof ApiError ? err.message : "Could not update address",
+      ),
+  });
+}
+
+export function useDeleteAddress() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => checkoutApi.deleteAddress(id),
+    onSuccess: () => {
+      toast.success("Address removed");
+      qc.invalidateQueries({ queryKey: ADDR_KEY });
+    },
+    // The backend refuses to delete the default address and says why. Surfacing
+    // its message rather than a generic one is what tells the user to make
+    // another address default first.
+    onError: (err) =>
+      toast.error(
+        err instanceof ApiError ? err.message : "Could not remove address",
+      ),
+  });
+}
+
+export function useSetDefaultAddress() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => checkoutApi.setDefaultAddress(id),
+    onSuccess: () => {
+      toast.success("Default address updated");
+      qc.invalidateQueries({ queryKey: ADDR_KEY });
+    },
+    onError: (err) =>
+      toast.error(
+        err instanceof ApiError ? err.message : "Could not set default address",
+      ),
+  });
+}
+
 export function usePlaceOrder() {
   const qc = useQueryClient();
   return useMutation({

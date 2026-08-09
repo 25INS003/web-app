@@ -6,13 +6,40 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { addressInputSchema } from "@/lib/api/schemas/address";
-import type { AddressInput } from "@/lib/api/schemas/address";
+import { addressInputSchema, addressTagSchema } from "@/lib/api/schemas/address";
+import type { Address, AddressInput } from "@/lib/api/schemas/address";
 import { cn } from "@/lib/utils";
-import { useAddAddress } from "./hooks";
+import { useAddAddress, useUpdateAddress } from "./hooks";
 
-export function AddressForm({ onDone }: { onDone: () => void }) {
+// Address (what the API returns) -> AddressInput (what the form edits). The
+// read shape allows nulls on fields the form requires, so each one falls back
+// to "" and lets the resolver ask for it rather than submitting a null. `tag`
+// is parsed rather than cast: an out-of-enum value would otherwise leave no
+// pill selected and silently submit something the backend rejects.
+function toInput(a: Address): AddressInput {
+  return {
+    contact_name: a.contact_name ?? "",
+    contact_phone: a.contact_phone ?? "",
+    address_line: a.address_line,
+    city: a.city,
+    state: a.state,
+    pincode: a.pincode,
+    country: a.country ?? "India",
+    tag: addressTagSchema.safeParse(a.tag).data ?? "home",
+  };
+}
+
+export function AddressForm({
+  address,
+  onDone,
+}: {
+  address?: Address;
+  onDone: () => void;
+}) {
   const add = useAddAddress();
+  const update = useUpdateAddress();
+  const editing = Boolean(address);
+  const pending = add.isPending || update.isPending;
   const {
     register,
     handleSubmit,
@@ -21,16 +48,18 @@ export function AddressForm({ onDone }: { onDone: () => void }) {
     formState: { errors },
   } = useForm<AddressInput>({
     resolver: zodResolver(addressInputSchema),
-    defaultValues: {
-      contact_name: "",
-      contact_phone: "",
-      address_line: "",
-      city: "",
-      state: "",
-      pincode: "",
-      country: "India",
-      tag: "home",
-    },
+    defaultValues: address
+      ? toInput(address)
+      : {
+          contact_name: "",
+          contact_phone: "",
+          address_line: "",
+          city: "",
+          state: "",
+          pincode: "",
+          country: "India",
+          tag: "home",
+        },
   });
   const tag = watch("tag");
 
@@ -46,7 +75,14 @@ export function AddressForm({ onDone }: { onDone: () => void }) {
 
   return (
     <form
-      onSubmit={handleSubmit((v) => add.mutate(v, { onSuccess: onDone }))}
+      onSubmit={handleSubmit((v) =>
+        editing
+          ? update.mutate(
+              { id: address!._id, input: v },
+              { onSuccess: onDone },
+            )
+          : add.mutate(v, { onSuccess: onDone }),
+      )}
       className="space-y-3"
       noValidate
     >
@@ -78,9 +114,9 @@ export function AddressForm({ onDone }: { onDone: () => void }) {
         ))}
       </div>
       <div className="flex gap-2 pt-1">
-        <Button type="submit" disabled={add.isPending}>
-          {add.isPending && <Loader2 className="animate-spin" />}
-          Save address
+        <Button type="submit" disabled={pending}>
+          {pending && <Loader2 className="animate-spin" />}
+          {editing ? "Save changes" : "Save address"}
         </Button>
         <Button type="button" variant="ghost" onClick={onDone}>
           Cancel
