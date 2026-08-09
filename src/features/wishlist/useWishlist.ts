@@ -47,8 +47,15 @@ export function useMoveToCart() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (itemId: string) => wishlistApi.moveToCart(itemId),
-    onSuccess: () => {
-      toast.success("Moved to cart");
+    onSuccess: (result) => {
+      // A move can be rejected per-item and still return 200, so report what
+      // actually happened — "Moved to cart" on an out-of-stock item sends the
+      // user to a cart that does not contain it.
+      if (result.added > 0) {
+        toast.success("Moved to cart");
+      } else {
+        toast.error(result.reason ?? "Could not move to cart");
+      }
       qc.invalidateQueries({ queryKey: KEY });
       qc.invalidateQueries({ queryKey: ["cart"] });
     },

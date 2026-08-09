@@ -15,7 +15,19 @@ export const wishlistApi = {
     await api.delete(`/wishlist/${itemId}`);
   },
 
-  async moveToCart(itemId: string): Promise<void> {
-    await api.post("/wishlist/move-to-cart", { item_ids: [itemId] });
+  // Returns 200 even when the item could not be moved (out of stock, product
+  // deactivated) — the outcome is in the body, not the status. Surfacing it lets
+  // the caller avoid reporting success for a move that did not happen.
+  async moveToCart(
+    itemId: string,
+  ): Promise<{ added: number; reason?: string }> {
+    const data = await api.post<{
+      added_count?: number;
+      failed_to_add?: { reason?: string }[];
+    }>("/wishlist/move-to-cart", { item_ids: [itemId] });
+    return {
+      added: data?.added_count ?? 0,
+      reason: data?.failed_to_add?.[0]?.reason,
+    };
   },
 };
