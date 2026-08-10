@@ -13,9 +13,11 @@ name: publish
 # job, then a second job stitches the digests into one manifest list. That is
 # the standard docker/build-push-action multi-platform pattern.
 
+# main and production both build. What differs is the tag they publish, so the
+# image a cluster pulls only moves when a release is promoted.
 on:
   push:
-    branches: [main]
+    branches: [main, production]
     tags: ["v*"]
   workflow_dispatch:
 
@@ -125,8 +127,18 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE }}
+          # main -> :dev, production -> :prod. `latest` follows production, not
+          # main: it is the tag people reach for by reflex and the one a stray
+          # `docker pull` gets, so it must mean "what is deployed". Pointing it
+          # at main is how :latest moved on every merge and production drifted
+          # for six months without anyone noticing.
+          #
+          # Every build also gets an immutable :sha-<commit>. Deployments should
+          # pin that or a digest — :dev and :prod are moving pointers.
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=prod,enable=${{ github.ref == 'refs/heads/production' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/production' }}
             type=sha,format=long
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
