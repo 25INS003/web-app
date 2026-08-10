@@ -20,6 +20,7 @@ import {
   reviewerName,
   shopName,
 } from "@/lib/api/schemas/catalog";
+import { ComplementRow } from "@/features/suggestions/ComplementRow";
 import type { ProductVariant } from "@/lib/api/schemas/catalog";
 import { cn, formatPrice } from "@/lib/utils";
 import { useProduct, useProductReviews } from "./hooks";
@@ -212,6 +213,11 @@ export function ProductDetail({ productId }: { productId: string }) {
           )}
         </div>
       </div>
+
+      {/* Complements for THIS product specifically — bread here means butter
+          and jam, not more bread. Above the reviews because it is a shopping
+          action, not reference material. */}
+      <ComplementRow productIds={[productId]} limit={4} />
 
       <ReviewsSection q={reviewsQ} />
     </div>

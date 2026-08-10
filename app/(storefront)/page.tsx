@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CategoryRow } from "@/features/catalog/CategoryRow";
 import { FreshPicks } from "@/features/catalog/FreshPicks";
+import { SuggestionRow } from "@/features/suggestions/SuggestionRow";
 
 const TRUST = [
   { icon: Truck, label: "Free delivery", sub: "on orders over ₹199" },
@@ -70,6 +71,8 @@ export default function StorefrontHome() {
 
       {/* Real data */}
       <CategoryRow />
+      {/* Renders nothing for signed-out visitors. */}
+      <SuggestionRow />
       <FreshPicks />
     </div>
   );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cartItemShop } from "@/lib/api/schemas/cart";
 import type { CartItem } from "@/lib/api/schemas/cart";
+import { ComplementRow } from "@/features/suggestions/ComplementRow";
 import { formatPrice } from "@/lib/utils";
 import {
   useCart,
@@ -85,6 +86,14 @@ export function CartView() {
           </div>
         </aside>
       </div>
+
+      {/* Complements, not lookalikes: what completes this basket. Seeded from
+          the cart server-side, and the cart is excluded from the results, so it
+          never suggests something already listed above. Preferred over the
+          affinity row here — two near-identical carousels on one page is noise,
+          and "goes with what you're buying" beats "similar to what you like"
+          at the point of checkout. */}
+      <ComplementRow limit={4} title="Goes well with your cart" />
     </div>
   );
 }

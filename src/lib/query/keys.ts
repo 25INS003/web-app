@@ -41,6 +41,14 @@ export const queryKeys = {
       [...queryKeys.support.all, "ticket", ticketId] as const,
   },
 
+  // Recommendations are derived from the cart, wishlist, searches and orders,
+  // so anything that changes those has to invalidate these or the row keeps
+  // showing what it computed before — visibly disagreeing with the cart it is
+  // sitting under. Listed here rather than inline so cart and wishlist hooks
+  // invalidate the same keys the queries actually use.
+  suggestions: ["suggestions"] as const,
+  complements: ["complements"] as const,
+
   dashboardStats: ["dashboard-stats"] as const,
   categories: ["categories"] as const,
   notifications: {
