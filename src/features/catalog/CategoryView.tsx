@@ -18,7 +18,15 @@ export function CategoryView({ categoryId }: { categoryId: string }) {
       </p>
       {/* key by category so the browser's internal filter state resets when
           navigating between category pages. */}
-      <CatalogBrowser key={categoryId} initialCategory={categoryId} />
+      {/* The header's search is on screen too and looks much the same, so this
+          one names its scope: it narrows the category rather than leaving it. */}
+      <CatalogBrowser
+        key={categoryId}
+        initialCategory={categoryId}
+        searchPlaceholder={
+          name ? `Search in ${name}…` : "Search for products, brands…"
+        }
+      />
     </div>
   );
 }

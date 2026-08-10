@@ -9,8 +9,18 @@ import { useCategories, useProducts } from "./hooks";
 
 const SORTS = [
   { key: "newest", label: "Newest", sort: "created_at", order: "desc" },
-  { key: "price_asc", label: "Price: Low to High", sort: "price", order: "asc" },
-  { key: "price_desc", label: "Price: High to Low", sort: "price", order: "desc" },
+  {
+    key: "price_asc",
+    label: "Price: Low to High",
+    sort: "price",
+    order: "asc",
+  },
+  {
+    key: "price_desc",
+    label: "Price: High to Low",
+    sort: "price",
+    order: "desc",
+  },
   { key: "rating", label: "Top rated", sort: "rating", order: "desc" },
 ] as const;
 
@@ -19,9 +29,28 @@ type SortKey = (typeof SORTS)[number]["key"];
 export function CatalogBrowser({
   initialSearch = "",
   initialCategory,
+  showSearch = true,
+  searchPlaceholder = "Search for products, brands…",
 }: {
   initialSearch?: string;
   initialCategory?: string;
+  /**
+   * Whether to render this component's own search box.
+   *
+   * Off on /search, where StorefrontHeader already puts a search field on the
+   * page and two identical boxes stacked above each other is just a question
+   * about which one is authoritative. On a category page it stays on: it
+   * filters WITHIN that category, whereas the header navigates away to a
+   * global search, so they are not the same control.
+   */
+  showSearch?: boolean;
+  /**
+   * Placeholder for this component's own search box. Worth setting wherever the
+   * header's search is also on screen: the two look alike but do different
+   * things — the header leaves for a global search, this one narrows what is
+   * already listed — and the placeholder is the only thing telling them apart.
+   */
+  searchPlaceholder?: string;
 }) {
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [search, setSearch] = useState(initialSearch);
@@ -64,20 +93,23 @@ export function CatalogBrowser({
   return (
     <div>
       {/* search */}
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="search"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search for products, brands…"
-          aria-label="Search products"
-          className="h-12 w-full rounded-2xl border border-border bg-card pl-11 pr-4 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
-        />
-      </div>
+      {showSearch && (
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="search"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder={searchPlaceholder}
+            aria-label="Search products"
+            className="h-12 w-full rounded-2xl border border-border bg-card pl-11 pr-4 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
+          />
+        </div>
+      )}
 
-      {/* category chips */}
-      <div className="mt-4 flex flex-wrap gap-2">
+      {/* category chips — the top margin separates them from the search box, so
+          it goes away with it rather than leaving a gap above the first row. */}
+      <div className={cn("flex flex-wrap gap-2", showSearch && "mt-4")}>
         <Chip active={!category} onClick={() => setCategory(undefined)}>
           All
         </Chip>
