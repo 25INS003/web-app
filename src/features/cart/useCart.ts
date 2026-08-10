@@ -4,10 +4,26 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api/types";
+import { queryKeys } from "@/lib/query/keys";
 import { cartApi } from "./api";
 
 const CART_KEY = ["cart"] as const;
 const CART_TOTAL_KEY = ["cart", "total"] as const;
+
+/**
+ * Invalidate the cart AND anything derived from it.
+ *
+ * Recommendations are computed from cart contents server-side, so without this
+ * the "Goes well with your cart" row keeps showing what it computed before the
+ * change — sitting directly under a cart it no longer matches. The row is on
+ * the cart page, where items are added and removed without navigating, so
+ * nothing would otherwise remount it until the stale window lapsed.
+ */
+const invalidateCartAndDerived = (qc: ReturnType<typeof useQueryClient>) => {
+  qc.invalidateQueries({ queryKey: CART_KEY });
+  qc.invalidateQueries({ queryKey: queryKeys.complements });
+  qc.invalidateQueries({ queryKey: queryKeys.suggestions });
+};
 
 export function useCart() {
   return useQuery({ queryKey: CART_KEY, queryFn: cartApi.getCart });
@@ -41,7 +57,7 @@ export function useAddToCart() {
     }) => cartApi.addItem(productVarId, quantity),
     onSuccess: () => {
       toast.success("Added to cart");
-      qc.invalidateQueries({ queryKey: CART_KEY });
+      invalidateCartAndDerived(qc);
     },
     onError: (err) => {
       if (err instanceof ApiError && err.status === 401) {
@@ -61,7 +77,7 @@ export function useUpdateCartItem() {
   return useMutation({
     mutationFn: ({ id, quantity }: { id: string; quantity: number }) =>
       cartApi.updateItem(id, quantity),
-    onSuccess: () => qc.invalidateQueries({ queryKey: CART_KEY }),
+    onSuccess: () => invalidateCartAndDerived(qc),
     onError: (err) =>
       toast.error(
         err instanceof ApiError ? err.message : "Could not update item",
@@ -75,7 +91,7 @@ export function useRemoveCartItem() {
     mutationFn: (id: string) => cartApi.removeItem(id),
     onSuccess: () => {
       toast.success("Removed from cart");
-      qc.invalidateQueries({ queryKey: CART_KEY });
+      invalidateCartAndDerived(qc);
     },
     onError: (err) =>
       toast.error(

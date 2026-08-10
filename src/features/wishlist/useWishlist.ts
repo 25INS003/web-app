@@ -4,9 +4,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api/types";
+import { queryKeys } from "@/lib/query/keys";
 import { wishlistApi } from "./api";
 
 const KEY = ["wishlist"] as const;
+
+/**
+ * The wishlist feeds the affinity profile, and adding or removing an item is
+ * also recorded as a suggestion signal server-side — so recommendations are
+ * stale the moment the wishlist changes.
+ */
+const invalidateWishlistAndDerived = (
+  qc: ReturnType<typeof useQueryClient>,
+) => {
+  qc.invalidateQueries({ queryKey: KEY });
+  qc.invalidateQueries({ queryKey: queryKeys.suggestions });
+  qc.invalidateQueries({ queryKey: queryKeys.complements });
+};
 
 export function useWishlist() {
   return useQuery({ queryKey: KEY, queryFn: wishlistApi.getWishlist });
@@ -20,7 +34,7 @@ export function useAddToWishlist() {
       wishlistApi.add(productId, variantId),
     onSuccess: () => {
       toast.success("Saved to wishlist");
-      qc.invalidateQueries({ queryKey: KEY });
+      invalidateWishlistAndDerived(qc);
     },
     onError: (err) => {
       if (err instanceof ApiError && err.status === 401) {
@@ -37,7 +51,7 @@ export function useRemoveFromWishlist() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (itemId: string) => wishlistApi.remove(itemId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => invalidateWishlistAndDerived(qc),
     onError: (err) =>
       toast.error(err instanceof ApiError ? err.message : "Could not remove"),
   });
@@ -56,7 +70,7 @@ export function useMoveToCart() {
       } else {
         toast.error(result.reason ?? "Could not move to cart");
       }
-      qc.invalidateQueries({ queryKey: KEY });
+      invalidateWishlistAndDerived(qc);
       qc.invalidateQueries({ queryKey: ["cart"] });
     },
     onError: (err) =>
