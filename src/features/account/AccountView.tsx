@@ -22,6 +22,7 @@ import {
   useDeleteAddress,
   useSetDefaultAddress,
 } from "@/features/checkout/hooks";
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
 import type { User } from "@/lib/api/schemas/auth";
 import type { Address } from "@/lib/api/schemas/address";
 import { useLoyalty } from "./useLoyalty";
@@ -32,9 +33,7 @@ export function AccountView({ user }: { user: User }) {
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-primary text-xl font-bold text-primary-foreground shadow-pop">
-            {initials(fullName) || "👤"}
-          </span>
+          <InitialsAvatar name={fullName} className="size-14 text-xl" />
           <div>
             <h1 className="font-display text-2xl font-bold tracking-tight">
               {fullName || "Your account"}
@@ -299,13 +298,4 @@ function AddressRow({
       </div>
     </div>
   );
-}
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join("");
 }

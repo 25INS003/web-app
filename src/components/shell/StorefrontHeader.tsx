@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { useIsAuthed } from "@/features/auth/useAuth";
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
+import { useIsAuthed, useSession } from "@/features/auth/useAuth";
 import { useCartCount } from "@/features/cart/useCart";
 import { NotificationBell } from "@/features/notifications/NotificationBell";
 
@@ -14,6 +15,8 @@ export function StorefrontHeader() {
   const router = useRouter();
   const [q, setQ] = useState("");
   const authed = useIsAuthed();
+  // Skipped for signed-out visitors — /auth/me is a guaranteed 401 there.
+  const session = useSession(authed);
   const cartCount = useCartCount(authed);
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
@@ -32,7 +35,11 @@ export function StorefrontHeader() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            router.push(q.trim() ? `/search?q=${encodeURIComponent(q.trim())}` : "/search");
+            router.push(
+              q.trim()
+                ? `/search?q=${encodeURIComponent(q.trim())}`
+                : "/search",
+            );
           }}
           className="relative ml-2 hidden flex-1 md:block"
         >
@@ -64,7 +71,23 @@ export function StorefrontHeader() {
           <NotificationBell />
           <Button variant="ghost" size="icon" aria-label="Account" asChild>
             <Link href="/account">
-              <User />
+              {/* Signed in, the generic person icon becomes the same initials
+                  tile the account page shows, so the header says WHO is signed in
+                  rather than merely that someone is. Signed out it stays the
+                  outline icon — there are no initials to draw, and a filled tile
+                  would read as a session that does not exist.
+
+                  Gated on session.data, not on isAuthed: the cookie says a
+                  session exists but carries no name, so rendering on the cookie
+                  alone would flash an empty tile until /auth/me resolves. */}
+              {session.data?.user ? (
+                <InitialsAvatar
+                  name={`${session.data.user.first_name} ${session.data.user.last_name}`.trim()}
+                  className="size-7 rounded-xl text-[11px]"
+                />
+              ) : (
+                <User />
+              )}
             </Link>
           </Button>
           <Button className="relative gap-2" asChild>
