@@ -43,3 +43,6 @@ next-env.d.ts
 # next.config.mjs if you would rather they were never written at all.
 AGENTS.md
 CLAUDE.md
+
+# Playwright's saved auth state — real session cookies, regenerated per run.
+e2e/.auth/

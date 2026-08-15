@@ -1,27 +1,23 @@
 import { expect, test } from "@playwright/test";
+import { STATE } from "./paths";
+import { findInStockProduct } from "./fixtures";
 
-// Critical customer journey against the running dev stack:
-// login → browse/search → add to cart → COD checkout → order tracking.
-// Uses the seeded bench customer (override via E2E_EMAIL / E2E_PASSWORD).
-const EMAIL = process.env.E2E_EMAIL ?? "bench-customer@example.com";
-const PASSWORD = process.env.E2E_PASSWORD ?? "BenchPass123!";
+// The critical customer journey against the running dev stack:
+// browse/search → add to cart → COD checkout → order tracking.
+// The session comes from auth.setup.ts, which signs in once per run.
 
-test("customer can sign in, add to cart and place a COD order", async ({
-  page,
-}) => {
-  // --- sign in ---
-  await page.goto("/login");
-  await page.getByLabel("Email").fill(EMAIL);
-  await page.getByLabel("Password").fill(PASSWORD);
-  await page.getByRole("button", { name: "Sign in" }).click();
-  // Lands authenticated off the /login route.
-  await expect(page).not.toHaveURL(/\/login/);
+test.use({ storageState: STATE.customer });
 
-  // --- browse / search → open a product ---
-  await page.goto("/search?q=avocado");
-  const firstProduct = page.locator('a[href^="/p/"]').first();
-  await expect(firstProduct).toBeVisible();
-  await firstProduct.click();
+test("customer can add to cart and place a COD order", async ({ page, request }) => {
+  // Start from an empty cart. Runs accumulate lines otherwise, and a line that
+  // has since gone out of stock makes placement refuse the whole order — the
+  // API is right to (it names the items), but the test would be reporting a
+  // stale fixture as a checkout bug.
+  await request.delete("/api/v1/cart/clear");
+
+  // --- open a product we know is purchasable ---
+  const product = await findInStockProduct(request);
+  await page.goto(`/p/${product.id}`);
   await expect(page).toHaveURL(/\/p\//);
 
   // --- pick an in-stock variant if the product has a size selector, then add ---
