@@ -52,14 +52,14 @@ export function OrdersList() {
       <div className="mt-6 space-y-3">
         {orders.map((o) => (
           <Link
-            key={o._id}
-            href={`/orders/${o._id}`}
+            key={o.id}
+            href={`/orders/${o.id}`}
             className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-xs transition hover:border-primary/40 hover:shadow-md"
           >
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm font-semibold">
-                  #{o.order_id}
+                  #{o.order_number}
                 </span>
                 <Badge variant={statusBadgeVariant(o.order_status)}>
                   {STATUS_LABEL[o.order_status]}

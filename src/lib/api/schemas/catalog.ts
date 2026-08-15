@@ -9,17 +9,17 @@ const productImageSchema = z.object({
 // shop_id / category_id come back populated (objects) on catalog reads, or as
 // bare ids elsewhere — accept either.
 const shopRefSchema = z.object({
-  _id: objectId.optional(),
+  id: objectId.optional(),
   name: z.string().optional(),
   rating: z.number().optional(),
 });
 const categoryRefSchema = z.object({
-  _id: objectId.optional(),
+  id: objectId.optional(),
   name: z.string().optional(),
 });
 
 export const catalogProductSchema = z.object({
-  _id: objectId,
+  id: objectId,
   product_id: z.string().optional(),
   name: z.string(),
   slug: z.string().optional(),
@@ -51,7 +51,7 @@ export const productListSchema = z.object({
 export type ProductList = z.infer<typeof productListSchema>;
 
 export const catalogCategorySchema = z.object({
-  _id: objectId,
+  id: objectId,
   name: z.string(),
   slug: z.string().optional(),
   image_url: z.string().nullish(),
@@ -62,7 +62,7 @@ export type CatalogCategory = z.infer<typeof catalogCategorySchema>;
 
 // --- product detail (GET /catalog/id/:id -> { product, variants }) ---
 export const productVariantSchema = z.object({
-  _id: objectId,
+  id: objectId,
   sku: z.string().nullish(),
   name: z.string(),
   attributes: z
@@ -85,7 +85,7 @@ export const productDetailSchema = z.object({
 export type ProductDetail = z.infer<typeof productDetailSchema>;
 
 export const reviewSchema = z.object({
-  _id: objectId,
+  id: objectId,
   rating: z.number(),
   comment: z.string().nullish(),
   customer_id: z

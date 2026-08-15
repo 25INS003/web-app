@@ -23,7 +23,7 @@ export function NotificationBell() {
   const ref = useRef<HTMLDivElement>(null);
 
   const { data: session } = useSession(authed);
-  const userId = session?.user._id;
+  const userId = session?.user.id;
   useNotificationsRealtime(userId);
 
   const { data: unread = 0 } = useUnreadCount(authed);
@@ -109,7 +109,7 @@ export function NotificationBell() {
             ) : (
               items.map((n) => (
                 <button
-                  key={n._id}
+                  key={n.id}
                   type="button"
                   role="menuitem"
                   onClick={() => onItem(n)}

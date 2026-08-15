@@ -59,7 +59,7 @@ export function CartView() {
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_22rem]">
         <div className="space-y-3">
           {items.map((item) => (
-            <CartRow key={item._id} item={item} />
+            <CartRow key={item.id} item={item} />
           ))}
         </div>
 
@@ -155,7 +155,7 @@ function CartRow({ item }: { item: CartItem }) {
           <div className="flex items-center rounded-lg border border-border">
             <button
               onClick={() =>
-                update.mutate({ id: item._id, quantity: Math.max(1, item.quantity - 1) })
+                update.mutate({ id: item.id, quantity: Math.max(1, item.quantity - 1) })
               }
               disabled={busy || item.quantity <= 1}
               className="grid size-8 place-items-center text-muted-foreground transition hover:text-foreground disabled:opacity-40"
@@ -172,7 +172,7 @@ function CartRow({ item }: { item: CartItem }) {
             </span>
             <button
               onClick={() =>
-                update.mutate({ id: item._id, quantity: item.quantity + 1 })
+                update.mutate({ id: item.id, quantity: item.quantity + 1 })
               }
               disabled={busy}
               className="grid size-8 place-items-center text-muted-foreground transition hover:text-foreground disabled:opacity-40"
@@ -188,7 +188,7 @@ function CartRow({ item }: { item: CartItem }) {
       </div>
 
       <button
-        onClick={() => remove.mutate(item._id)}
+        onClick={() => remove.mutate(item.id)}
         disabled={busy}
         className="self-start text-muted-foreground transition hover:text-destructive disabled:opacity-40"
         aria-label="Remove item"

@@ -7,7 +7,7 @@ import {
 describe("notificationSchema", () => {
   it("parses a well-formed notification", () => {
     const n = notificationSchema.parse({
-      _id: "6a2e5493f7bc866c400eba32",
+      id: "6a2e5493f7bc866c400eba32",
       notification_id: "6a2e5493f7bc866c400eba33",
       title: "Order Ready! 📦",
       message: "Your order is ready.",
@@ -22,7 +22,7 @@ describe("notificationSchema", () => {
 
   it("falls back to system_alert for an unknown type (.catch)", () => {
     const n = notificationSchema.parse({
-      _id: "x",
+      id: "x",
       title: "t",
       message: "m",
       type: "totally_new_backend_type",
@@ -32,7 +32,7 @@ describe("notificationSchema", () => {
 
   it("defaults is_read and data when omitted", () => {
     const n = notificationSchema.parse({
-      _id: "x",
+      id: "x",
       title: "t",
       message: "m",
       type: "order_placed",
@@ -46,7 +46,7 @@ describe("notificationListResponseSchema", () => {
   it("parses the feed envelope payload", () => {
     const parsed = notificationListResponseSchema.parse({
       notifications: [
-        { _id: "a", title: "t", message: "m", type: "order_delivered" },
+        { id: "a", title: "t", message: "m", type: "order_delivered" },
       ],
       pagination: { totalNotifications: 1, unreadCount: 1 },
     });

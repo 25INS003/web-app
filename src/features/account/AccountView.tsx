@@ -148,12 +148,12 @@ function AddressBook() {
           )}
           {list.map((a) => (
             <AddressRow
-              key={a._id}
+              key={a.id}
               address={a}
-              editing={editingId === a._id}
+              editing={editingId === a.id}
               onEdit={() => {
                 setShowForm(false);
-                setEditingId(a._id);
+                setEditingId(a.id);
               }}
               onDone={() => setEditingId(null)}
             />
@@ -251,7 +251,7 @@ function AddressRow({
             size="sm"
             variant="ghost"
             disabled={busy}
-            onClick={() => setDefault.mutate(address._id)}
+            onClick={() => setDefault.mutate(address.id)}
           >
             <Star className="size-3.5" /> Set as default
           </Button>
@@ -268,7 +268,7 @@ function AddressRow({
                 variant="destructive"
                 disabled={busy}
                 onClick={() =>
-                  remove.mutate(address._id, {
+                  remove.mutate(address.id, {
                     onSettled: () => setConfirming(false),
                   })
                 }

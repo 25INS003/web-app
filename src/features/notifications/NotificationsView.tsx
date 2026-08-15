@@ -58,7 +58,7 @@ export function NotificationsView() {
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
           {items.map((n) => (
-            <li key={n._id}>
+            <li key={n.id}>
               <button
                 type="button"
                 onClick={() => onItem(n)}

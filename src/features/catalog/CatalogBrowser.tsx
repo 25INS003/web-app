@@ -115,9 +115,9 @@ export function CatalogBrowser({
         </Chip>
         {categories.data?.map((c) => (
           <Chip
-            key={c._id}
-            active={category === c._id}
-            onClick={() => setCategory(c._id)}
+            key={c.id}
+            active={category === c.id}
+            onClick={() => setCategory(c.id)}
           >
             {c.name}
           </Chip>
@@ -197,7 +197,7 @@ export function CatalogBrowser({
         <>
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {items.map((p) => (
-              <ProductCard key={p._id} product={p} />
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
           {products.hasNextPage && (

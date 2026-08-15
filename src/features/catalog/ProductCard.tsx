@@ -16,7 +16,7 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
 
   return (
     <Link
-      href={`/p/${product.product_id ?? product._id}`}
+      href={`/p/${product.product_id ?? product.id}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xs transition-all hover:-translate-y-1 hover:shadow-lg"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">

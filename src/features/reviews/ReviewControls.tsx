@@ -93,7 +93,7 @@ function ReviewForm({
     const opts = { onSuccess: onDone };
     if (existing) {
       update.mutate(
-        { reviewId: existing._id, productId, rating, comment, images },
+        { reviewId: existing.id, productId, rating, comment, images },
         opts,
       );
     } else {
@@ -239,7 +239,7 @@ export function OrderItemReview({
             variant="ghost"
             size="sm"
             disabled={del.isPending}
-            onClick={() => del.mutate({ reviewId: existing._id, productId })}
+            onClick={() => del.mutate({ reviewId: existing.id, productId })}
             aria-label="Delete review"
           >
             <Trash2 className="size-3.5 text-destructive" />

@@ -17,7 +17,7 @@ export const orderStatusSchema = z
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
 
 export const orderItemSchema = z.object({
-  _id: objectId.optional(),
+  id: objectId.optional(),
   // Parent product id — only present on the order *detail* response (the list
   // embeds variant refs). Needed to submit a review for a delivered item.
   product_id: objectId.nullish(),
@@ -39,8 +39,10 @@ export const orderAddressSchema = z.object({
 });
 
 export const orderSchema = z.object({
-  _id: objectId,
-  order_id: z.string(),
+  id: objectId,
+  // The human-readable reference. DEBT-4a renamed it: `order_id` used to be
+  // the String mirror of the row id, and the display code is `order_number`.
+  order_number: z.string(),
   order_status: orderStatusSchema,
   items: z.array(orderItemSchema).optional().default([]),
   order_amount: z.number().optional(),

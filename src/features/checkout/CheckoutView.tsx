@@ -23,11 +23,11 @@ export function CheckoutView() {
   if (total.data?.is_empty) return <EmptyCart />;
 
   const list = addresses.data ?? [];
-  const defaultId = list.find((a) => a.is_default)?._id ?? list[0]?._id ?? null;
+  const defaultId = list.find((a) => a.is_default)?.id ?? list[0]?.id ?? null;
   const selectedId = pickedId ?? defaultId;
-  const selectedAddr = list.find((a) => a._id === selectedId);
-  // place-order matches the string `address_id` mirror, not _id
-  const orderAddressId = selectedAddr?.address_id ?? selectedAddr?._id ?? null;
+  const selectedAddr = list.find((a) => a.id === selectedId);
+  // place-order matches the string `address_id` mirror, not id
+  const orderAddressId = selectedAddr?.address_id ?? selectedAddr?.id ?? null;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -46,10 +46,10 @@ export function CheckoutView() {
             <div className="mt-3 space-y-3">
               {list.map((a) => (
                 <AddressCard
-                  key={a._id}
+                  key={a.id}
                   address={a}
-                  selected={selectedId === a._id}
-                  onSelect={() => setPickedId(a._id)}
+                  selected={selectedId === a.id}
+                  onSelect={() => setPickedId(a.id)}
                 />
               ))}
 

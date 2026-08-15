@@ -78,7 +78,7 @@ export function OrderDetail({ orderId }: { orderId: string }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight">
-            #{order.order_id}
+            #{order.order_number}
           </h1>
           <p className="text-sm text-muted-foreground">
             {formatDate(order.order_time ?? order.created_at)}
@@ -149,7 +149,7 @@ export function OrderDetail({ orderId }: { orderId: string }) {
         </h2>
         <div className="mt-3 divide-y divide-border">
           {order.items.map((it, i) => (
-            <div key={it._id ?? i} className="py-2.5 text-sm">
+            <div key={it.id ?? i} className="py-2.5 text-sm">
               <div className="flex items-center justify-between gap-3">
                 <span className="min-w-0">
                   {it.product_id ? (
@@ -170,10 +170,10 @@ export function OrderDetail({ orderId }: { orderId: string }) {
               </div>
               {delivered && it.product_id && (
                 <OrderItemReview
-                  orderId={order._id}
+                  orderId={order.id}
                   productId={it.product_id}
                   existing={reviewByKey.get(
-                    reviewKey(order._id, it.product_id),
+                    reviewKey(order.id, it.product_id),
                   )}
                 />
               )}

@@ -78,7 +78,7 @@ export function AddressForm({
       onSubmit={handleSubmit((v) =>
         editing
           ? update.mutate(
-              { id: address!._id, input: v },
+              { id: address!.id, input: v },
               { onSuccess: onDone },
             )
           : add.mutate(v, { onSuccess: onDone }),

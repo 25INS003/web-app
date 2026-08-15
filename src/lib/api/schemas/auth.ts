@@ -19,7 +19,7 @@ export const verificationStatusSchema = z.enum([
 export type VerificationStatus = z.infer<typeof verificationStatusSchema>;
 
 export const userSchema = z.object({
-  _id: objectId,
+  id: objectId,
   user_id: z.string().optional(),
   email: z.string(),
   first_name: z.string(),

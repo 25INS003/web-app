@@ -7,12 +7,11 @@ const wishlistImageSchema = z.object({
 });
 
 // GET /wishlist/ item shape. The product/variant ids come back as `id` (the
-// mongo _id) and the price is an OBJECT, not a scalar.
+// mongo id) and the price is an OBJECT, not a scalar.
 export const wishlistItemSchema = z.object({
   id: objectId, // wishlist-item id (for remove / move-to-cart)
   product: z.object({
     id: objectId.optional(),
-    _id: objectId.optional(),
     product_id: z.string().optional(),
     name: z.string(),
     main_image: z.string().nullish(),
@@ -23,7 +22,6 @@ export const wishlistItemSchema = z.object({
   variant: z
     .object({
       id: objectId.optional(),
-      _id: objectId.optional(),
       name: z.string().optional(),
     })
     .nullish(),
@@ -50,7 +48,7 @@ export function wishlistItemImage(it: WishlistItem): string | undefined {
 
 // Route id for the product detail page (/catalog/id/:id accepts the mongo id).
 export function wishlistProductId(it: WishlistItem): string {
-  return it.product.id ?? it.product._id ?? it.product.product_id ?? "";
+  return it.product.id ?? it.product.id ?? it.product.product_id ?? "";
 }
 
 export function wishlistItemPrice(it: WishlistItem): number | undefined {

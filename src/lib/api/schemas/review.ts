@@ -5,12 +5,12 @@ import { objectId } from "./common";
 // populated (object) there; `order_id` stays a bare id. We mainly need the
 // (order_id, product_id) pair to detect which delivered items are reviewed.
 export const myReviewSchema = z.object({
-  _id: objectId,
+  id: objectId,
   order_id: objectId.nullish(),
   product_id: z
     .union([
       objectId,
-      z.object({ _id: objectId, name: z.string().optional() }),
+      z.object({ id: objectId, name: z.string().optional() }),
     ])
     .nullish(),
   rating: z.number(),
@@ -36,7 +36,7 @@ export type MyReviewsResponse = z.infer<typeof myReviewsResponseSchema>;
 /** Resolve a (possibly populated) product_id ref to its bare id string. */
 export function reviewProductId(r: MyReview): string | undefined {
   if (!r.product_id) return undefined;
-  return typeof r.product_id === "object" ? r.product_id._id : r.product_id;
+  return typeof r.product_id === "object" ? r.product_id.id : r.product_id;
 }
 
 /** Stable key for "this product was reviewed within this order". */

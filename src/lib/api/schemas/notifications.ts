@@ -25,7 +25,7 @@ export const notificationTypeSchema = z
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
 
 export const notificationSchema = z.object({
-  _id: objectId,
+  id: objectId,
   notification_id: z.string().optional(),
   title: z.string(),
   message: z.string(),

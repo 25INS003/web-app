@@ -82,7 +82,7 @@ export function SupportDetail({
       <div className="mt-6 space-y-3">
         {ticket.messages.map((m) => (
           <MessageBubble
-            key={m._id}
+            key={m.id}
             message={m}
             mine={userRefId(m.sender_id) === currentUserId}
           />

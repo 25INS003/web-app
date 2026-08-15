@@ -58,7 +58,7 @@ export function ComplementRow({
 
       <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {items.map((p) => (
-          <ProductCard key={p._id} product={p} />
+          <ProductCard key={p.id} product={p} />
         ))}
       </div>
     </section>

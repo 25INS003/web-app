@@ -5,7 +5,7 @@ import { useCategories } from "./hooks";
 
 export function CategoryView({ categoryId }: { categoryId: string }) {
   const categories = useCategories();
-  const category = categories.data?.find((c) => c._id === categoryId);
+  const category = categories.data?.find((c) => c.id === categoryId);
   const name = category?.name;
 
   return (

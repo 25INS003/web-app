@@ -7,7 +7,7 @@ const userRefSchema = z
   .union([
     objectId,
     z.object({
-      _id: objectId,
+      id: objectId,
       first_name: z.string().nullish(),
       last_name: z.string().nullish(),
       email: z.string().nullish(),
@@ -43,7 +43,7 @@ export const ticketStatusSchema = z.enum(ticketStatusValues).catch("open");
 export type TicketStatus = z.infer<typeof ticketStatusSchema>;
 
 export const ticketSchema = z.object({
-  _id: objectId,
+  id: objectId,
   ticket_id: z.string(),
   subject: z.string(),
   description: z.string(),
@@ -58,7 +58,7 @@ export const ticketSchema = z.object({
 export type Ticket = z.infer<typeof ticketSchema>;
 
 export const ticketMessageSchema = z.object({
-  _id: objectId,
+  id: objectId,
   message_id: z.string().optional(),
   ticket_id: objectId,
   sender_id: userRefSchema,
@@ -134,7 +134,7 @@ export const TICKET_PRIORITY_LABELS: Record<TicketPriority, string> = {
 
 export function userRefId(ref: UserRef): string | undefined {
   if (!ref) return undefined;
-  return typeof ref === "object" ? ref._id : ref;
+  return typeof ref === "object" ? ref.id : ref;
 }
 
 export function userRefName(ref: UserRef): string {

@@ -108,11 +108,11 @@ export function ProductDetail({ productId }: { productId: string }) {
                 {variants.map((v) => {
                   const label =
                     v.attributes?.find((a) => a.name === "Size")?.value ?? v.name;
-                  const sel = selected?._id === v._id;
+                  const sel = selected?.id === v.id;
                   const oos = (v.stock_quantity ?? 0) <= 0;
                   return (
                     <button
-                      key={v._id}
+                      key={v.id}
                       data-testid="variant-option"
                       disabled={oos}
                       onClick={() => {
@@ -174,7 +174,7 @@ export function ProductDetail({ productId }: { productId: string }) {
               className="flex-1 gap-2"
               disabled={!inStock || !selected || add.isPending}
               onClick={() =>
-                selected && add.mutate({ productVarId: selected._id, quantity: qty })
+                selected && add.mutate({ productVarId: selected.id, quantity: qty })
               }
             >
               {add.isPending ? <Loader2 className="animate-spin" /> : <ShoppingBag />}
@@ -188,8 +188,8 @@ export function ProductDetail({ productId }: { productId: string }) {
               onClick={() =>
                 selected &&
                 wishlist.mutate({
-                  productId: product._id,
-                  variantId: selected._id,
+                  productId: product.id,
+                  variantId: selected.id,
                 })
               }
             >
@@ -255,7 +255,7 @@ function ReviewsSection({
           ) : null}
           {reviews.map((r) => (
             <div
-              key={r._id}
+              key={r.id}
               className="rounded-2xl border border-border bg-card p-4"
             >
               <div className="flex items-center justify-between">

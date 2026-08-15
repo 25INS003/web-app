@@ -12,7 +12,7 @@ vi.mock("next/link", () => ({
 }));
 vi.mock("@/features/auth/useAuth", () => ({
   useIsAuthed: () => true,
-  useSession: () => ({ data: { user: { _id: "u1" } } }),
+  useSession: () => ({ data: { user: { id: "u1" } } }),
 }));
 vi.mock("./useNotificationsRealtime", () => ({
   useNotificationsRealtime: () => {},
@@ -20,7 +20,7 @@ vi.mock("./useNotificationsRealtime", () => ({
 
 const items = [
   {
-    _id: "n1",
+    id: "n1",
     notification_id: "nid1",
     title: "Order Ready! 📦",
     message: "Your order is ready.",

@@ -2,12 +2,12 @@ import { z } from "zod";
 import { objectId } from "./common";
 
 export const cartItemSchema = z.object({
-  _id: objectId, // cart-item id (for update/remove)
+  id: objectId, // cart-item id (for update/remove)
   quantity: z.number(),
   item_total: z.number().nullish(),
   is_available: z.boolean().optional(),
   product_var_id: z.object({
-    _id: objectId,
+    id: objectId,
     name: z.string(),
     price: z.number(),
     compare_at_price: z.number().nullish(),

@@ -32,7 +32,7 @@ export function useCreateTicket() {
     onSuccess: (ticket) => {
       toast.success("Support request submitted");
       qc.invalidateQueries({ queryKey: queryKeys.support.tickets() });
-      router.push(`/support/${ticket._id}`);
+      router.push(`/support/${ticket.id}`);
     },
     onError: (err) =>
       toast.error(

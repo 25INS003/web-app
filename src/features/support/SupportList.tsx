@@ -60,8 +60,8 @@ export function SupportList() {
       <div className="mt-6 space-y-3">
         {tickets.map((t) => (
           <Link
-            key={t._id}
-            href={`/support/${t._id}`}
+            key={t.id}
+            href={`/support/${t.id}`}
             className="block rounded-2xl border border-border bg-card p-4 shadow-xs transition hover:border-primary/40 hover:shadow-md"
           >
             <div className="flex items-start justify-between gap-3">

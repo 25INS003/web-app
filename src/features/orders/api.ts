@@ -13,7 +13,7 @@ export const ordersApi = {
     return orderListSchema.parse(data).orders;
   },
 
-  // Detail endpoint takes the Mongo _id and enriches each item with its parent
+  // Detail endpoint takes the Mongo id and enriches each item with its parent
   // product_id (the list only carries variant refs).
   async getOrder(orderId: string): Promise<Order> {
     const data = await api.get<unknown>(`/customer/orders/${orderId}`);

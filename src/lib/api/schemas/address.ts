@@ -2,7 +2,7 @@ import { z } from "zod";
 import { objectId } from "./common";
 
 export const addressSchema = z.object({
-  _id: objectId,
+  id: objectId,
   address_id: z.string().optional(), // string mirror — what place-order matches on
   address_line: z.string(),
   city: z.string(),

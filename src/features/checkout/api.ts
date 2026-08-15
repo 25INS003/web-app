@@ -12,7 +12,7 @@ export const checkoutApi = {
     await api.post("/address/add", input);
   },
 
-  // These three are keyed on `_id`, not the `address_id` mirror: the routes are
+  // These three are keyed on `id`, not the `address_id` mirror: the routes are
   // guarded by protectCustomerAccess("address"), which resolves the param with
   // findById. Sending address_id gets a 403 from the guard.
   async updateAddress(id: string, input: AddressInput): Promise<void> {
@@ -28,10 +28,10 @@ export const checkoutApi = {
   },
 
   async placeOrder(addressId: string): Promise<{ orderId: string }> {
-    const data = await api.post<{ main_order?: { order_id?: string } }>(
+    const data = await api.post<{ main_order?: { order_number?: string } }>(
       "/customer/orders",
       { address_id: addressId, payment_method: "cod" },
     );
-    return { orderId: String(data?.main_order?.order_id ?? "") };
+    return { orderId: String(data?.main_order?.order_number ?? "") };
   },
 };

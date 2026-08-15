@@ -34,8 +34,8 @@ export function CategoryRow() {
       <div className="mt-5 flex flex-wrap gap-2.5">
         {tops.map((c) => (
           <Link
-            key={c._id}
-            href={`/c/${c._id}`}
+            key={c.id}
+            href={`/c/${c.id}`}
             className="group inline-flex items-center gap-2 rounded-full border border-border bg-card py-2 pl-2 pr-4 text-sm font-medium shadow-xs transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
           >
             <span className="grid size-8 place-items-center rounded-full bg-muted text-base transition group-hover:bg-primary/10">
