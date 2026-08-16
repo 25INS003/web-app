@@ -99,27 +99,55 @@ function LoyaltyCard() {
     return <div className="mt-6 h-28 animate-pulse rounded-2xl bg-muted" />;
   }
   if (q.isError || !q.data) return null;
-  const { available_points, tier } = q.data;
+  const {
+    available_points,
+    tier_label,
+    points_to_next_tier,
+    next_tier_label,
+    tier_progress,
+  } = q.data;
   return (
-    <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 to-success/10 p-5">
+    <Link
+      href="/account/rewards"
+      className="mt-6 block overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 to-success/10 p-5 transition hover:border-primary/40"
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Trophy className="size-4 text-warning" /> Loyalty
         </div>
-        <span className="rounded-full bg-card px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary capitalize">
-          {tier}
+        <span className="rounded-full bg-card px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">
+          {tier_label}
         </span>
       </div>
       <p className="mt-2 font-mono text-3xl font-bold tabular-nums">
-        {available_points.toLocaleString()}
+        {available_points.toLocaleString("en-IN")}
         <span className="ml-1.5 text-base font-medium text-muted-foreground">
           points
         </span>
       </p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Earn points on every order — redeem them at checkout.
-      </p>
-    </div>
+
+      {/* The card used to promise redemption "at checkout", which nothing
+          implemented. Rewards are redeemed on the rewards page, so it now says
+          so and links there. */}
+      {next_tier_label ? (
+        <>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-card">
+            <div
+              className="h-full rounded-full bg-primary"
+              style={{ width: `${Math.round(tier_progress)}%` }}
+            />
+          </div>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            {points_to_next_tier.toLocaleString("en-IN")} points to{" "}
+            {next_tier_label} · view rewards
+          </p>
+        </>
+      ) : (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Top tier reached · view rewards
+        </p>
+      )}
+    </Link>
   );
 }
 
