@@ -12,23 +12,37 @@ import type { APIRequestContext } from "@playwright/test";
 export async function findInStockProduct(request: APIRequestContext) {
   const res = await request.get("/api/v1/catalog/get?limit=60");
   if (!res.ok()) throw new Error(`catalog read failed: ${res.status()}`);
-  const body = await res.json();
-  const items: Array<Record<string, unknown>> = body?.data?.data ?? [];
+  const items: Array<Record<string, unknown>> = (await res.json())?.data?.data ?? [];
 
-  const product = items.find(
-    (p) => p.is_in_stock === true && typeof p.default_variant_id === "string",
-  );
-  if (!product) {
-    throw new Error(
-      `no in-stock product with a default variant in ${items.length} listings — reseed: npm run db:seed`,
-    );
+  // `is_in_stock` on a product is a ROLLUP across its variants, so a product
+  // can be "in stock" while the DEFAULT variant — the one the product page
+  // preselects and the cart adds — has none. Butter is exactly that: Small at
+  // 0, Regular at 99. The page then correctly shows Out of stock and offers no
+  // Add-to-cart button, and a test that trusted the rollup reported a broken
+  // button. Check the variant the page will actually use.
+  for (const p of items) {
+    if (!p.is_in_stock || typeof p.default_variant_id !== "string") continue;
+
+    const detail = await request.get(`/api/v1/catalog/id/${p.id}`);
+    if (!detail.ok()) continue;
+    const body = await detail.json();
+    const variants: Array<Record<string, unknown>> = body?.data?.variants ?? [];
+    const preselected =
+      variants.find((v) => v.id === p.default_variant_id) ?? variants[0];
+    if (!preselected || Number(preselected.stock_quantity ?? 0) <= 0) continue;
+
+    return {
+      id: String(p.id),
+      name: String(p.name),
+      shopId: String(p.shop_id ?? ""),
+      variantId: String(preselected.id),
+      categoryId: categoryIdOf(p),
+    };
   }
-  return {
-    id: String(product.id),
-    name: String(product.name),
-    shopId: String(product.shop_id ?? ""),
-    categoryId: categoryIdOf(product),
-  };
+
+  throw new Error(
+    `no product in ${items.length} listings had a purchasable default variant — reseed: npm run db:seed`,
+  );
 }
 
 /** `category_id` is either a bare id or a populated `{ id, name }`. */
