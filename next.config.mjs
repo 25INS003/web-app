@@ -6,6 +6,34 @@ const nextConfig = {
     // the difference between a fast and a painful pull on a Raspberry Pi.
     output: 'standalone',
 
+    // Who may load the dev server's own assets.
+    //
+    // `next dev` blocks cross-origin requests to dev-only endpoints (`/_next/hmr`
+    // and the dev runtime) from any host other than the one it was started on.
+    // The failure is quiet and easy to misread: the page still server-renders,
+    // so it LOOKS fine — hero, headings, and skeleton placeholders all present —
+    // but React never hydrates, so no client query ever runs, no request is made
+    // to /api, and the product sections stay as skeletons forever. There is no
+    // console error; the only evidence is a warning in the dev server's own log.
+    //
+    // This matters here because the stack is reached from another machine: nginx
+    // publishes :80 on the host, and the browser is usually not on that host.
+    // Anything not in this list gets the empty-looking homepage above.
+    //
+    // DEVELOPMENT ONLY — the option has no effect on a production build, so it
+    // widens nothing in the deployed image.
+    allowedDevOrigins: [
+        // The Tailscale address of the dev box; the tailnet is how the cluster
+        // and the team already reach it.
+        '100.110.41.59',
+        // LAN.
+        '10.11.43.225',
+        // Hostname-based access, e.g. http://navrobotec/ on the local network.
+        'navrobotec',
+        '*.local',
+        '*.ts.net',
+    ],
+
     // Same-origin proxy for running `next dev` on :3000 outside the Docker stack.
     //
     // NEXT_PUBLIC_API_URL is the relative "/api/v1", which only resolves when
