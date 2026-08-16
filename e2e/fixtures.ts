@@ -27,5 +27,33 @@ export async function findInStockProduct(request: APIRequestContext) {
     id: String(product.id),
     name: String(product.name),
     shopId: String(product.shop_id ?? ""),
+    categoryId: categoryIdOf(product),
   };
+}
+
+/** `category_id` is either a bare id or a populated `{ id, name }`. */
+function categoryIdOf(product: Record<string, unknown>): string {
+  const c = product.category_id;
+  if (typeof c === "string") return c;
+  if (c && typeof c === "object" && "id" in c) return String((c as { id: unknown }).id);
+  return "";
+}
+
+/**
+ * A category that definitely has something in it — taken from a real product
+ * rather than picked off the top of the list.
+ *
+ * The seeded taxonomy is two levels and products hang off the LEAVES, so the
+ * parents ("Fruits & Vegetables", "Dairy & Eggs") are legitimately empty. A
+ * test that walks the first few categories and expects products is asserting
+ * on the shape of the seed, not on the category page working.
+ */
+export async function findCategoryWithProducts(request: APIRequestContext) {
+  const res = await request.get("/api/v1/catalog/get?limit=60");
+  const items: Array<Record<string, unknown>> = (await res.json())?.data?.data ?? [];
+  for (const p of items) {
+    const id = categoryIdOf(p);
+    if (id) return { id, productId: String(p.id) };
+  }
+  throw new Error("no catalog product carried a category — reseed: npm run db:seed");
 }

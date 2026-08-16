@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { findInStockProduct } from "./fixtures";
+import { findCategoryWithProducts, findInStockProduct } from "./fixtures";
 
 // Storefront pages a signed-out visitor sees. These are deliberately data-level
 // assertions, not "the page loaded": the whole class of bug this suite exists
@@ -42,25 +42,14 @@ test.describe("storefront (signed out)", () => {
   });
 
   test("category browse lists that category's products", async ({ page, request }) => {
-    // Navigated by id rather than by clicking a link on the home page: the
-    // category row is client-rendered, so a link-based test would be asserting
-    // on render timing rather than on the category page working. A skipped
-    // test is worth nothing, and this one has a real precondition available.
-    const res = await request.get("/api/v1/catalog/categories");
-    const categories: Array<{ id: string; name: string }> = (await res.json()).data ?? [];
-    expect(categories.length, "seeded categories").toBeGreaterThan(0);
-
-    // Walk a few: not every category necessarily has stock in the random seed.
-    let landed = false;
-    for (const c of categories.slice(0, 6)) {
-      await page.goto(`/c/${c.id}`);
-      await expect(page).toHaveURL(/\/c\//);
-      if (await page.locator('a[href^="/p/"]').count()) {
-        landed = true;
-        break;
-      }
-    }
-    expect(landed, "no category in the first six listed any product").toBe(true);
+    // The category comes from a product that is actually in it. Navigated by id
+    // rather than by clicking the home page's category row, which is
+    // client-rendered — a link-based test would be asserting on render timing
+    // rather than on the category page working.
+    const { id, productId } = await findCategoryWithProducts(request);
+    await page.goto(`/c/${id}`);
+    await expect(page).toHaveURL(/\/c\//);
+    await expect(page.locator(`a[href="/p/${productId}"]`)).toBeVisible();
   });
 
   test("protected pages send a visitor to sign in", async ({ page }) => {
