@@ -33,7 +33,14 @@ export const catalogProductSchema = z.object({
   is_in_stock: z.boolean().optional(),
   rating: z.number().optional(),
   total_ratings: z.number().optional(),
-  main_image: z.string().nullish(),
+  // The API field is `main_image_url`. It was declared here as `main_image`,
+  // and z.object strips keys it does not declare — so the image was discarded
+  // on every parse and productImage() below always returned undefined. No
+  // product image has ever rendered on the storefront; the cards fall back to
+  // a cart glyph, which reads as "this product has no photo" rather than as a
+  // bug. Found after rehosting the catalogue imagery into our own bucket, when
+  // the pictures still did not appear.
+  main_image_url: z.string().nullish(),
   images: z.array(productImageSchema).optional(),
   shop_id: z.union([objectId, shopRefSchema]).nullish(),
   category_id: z.union([objectId, categoryRefSchema]).nullish(),
@@ -119,5 +126,5 @@ export function shopName(p: CatalogProduct): string | undefined {
   return p.shop_id && typeof p.shop_id === "object" ? p.shop_id.name : undefined;
 }
 export function productImage(p: CatalogProduct): string | undefined {
-  return p.main_image || p.images?.[0]?.url || undefined;
+  return p.main_image_url || p.images?.[0]?.url || undefined;
 }

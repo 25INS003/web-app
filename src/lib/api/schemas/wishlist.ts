@@ -14,7 +14,7 @@ export const wishlistItemSchema = z.object({
     id: objectId.optional(),
     product_id: z.string().optional(),
     name: z.string(),
-    main_image: z.string().nullish(),
+    main_image_url: z.string().nullish(),  // API field name; see catalog.ts
     images: z.array(wishlistImageSchema).optional(),
     is_available: z.boolean().optional(),
     stock_status: z.string().optional(),
@@ -43,7 +43,7 @@ export const wishlistSchema = z.object({
 });
 
 export function wishlistItemImage(it: WishlistItem): string | undefined {
-  return it.product.main_image || it.product.images?.[0]?.url || undefined;
+  return it.product.main_image_url || it.product.images?.[0]?.url || undefined;
 }
 
 // Route id for the product detail page (/catalog/id/:id accepts the mongo id).
