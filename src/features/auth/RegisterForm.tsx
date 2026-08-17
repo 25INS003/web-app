@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { registerInputSchema } from "@/lib/api/schemas/auth";
 import type { RegisterInput } from "@/lib/api/schemas/auth";
 import { cn } from "@/lib/utils";
@@ -95,9 +96,8 @@ export function RegisterForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="password">Password</Label>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           placeholder="At least 6 characters"
           {...register("password")}

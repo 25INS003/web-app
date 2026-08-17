@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { ApiError } from "@/lib/api/types";
 import { authApi } from "./api";
 
@@ -172,9 +173,8 @@ export function PasswordResetFlow() {
         >
           <div className="space-y-1.5">
             <Label htmlFor="newpw">New password</Label>
-            <Input
+            <PasswordInput
               id="newpw"
-              type="password"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -183,9 +183,8 @@ export function PasswordResetFlow() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="confirm">Confirm password</Label>
-            <Input
+            <PasswordInput
               id="confirm"
-              type="password"
               autoComplete="new-password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}

@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { loginInputSchema } from "@/lib/api/schemas/auth";
 import type { LoginInput } from "@/lib/api/schemas/auth";
 import { useLogin } from "./useAuth";
@@ -44,9 +45,8 @@ export function LoginForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="password">Password</Label>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="current-password"
           placeholder="••••••••"
           aria-invalid={!!errors.password}
