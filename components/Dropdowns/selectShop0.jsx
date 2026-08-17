@@ -36,9 +36,9 @@ export default function GlobalSelectShop({ onShopSelect, ShowLabel = true }) {
      * ✅ Selected shop derived safely
      */
     const selectedShop = useMemo(() => {
-        if (!currentShop?._id) return null;
-        return myShops.find((s) => s?._id === currentShop._id) ?? null;
-    }, [myShops, currentShop?._id]);
+        if (!currentShop?.id) return null;
+        return myShops.find((s) => s?.id === currentShop.id) ?? null;
+    }, [myShops, currentShop?.id]);
 
     const handleSelect = (shop) => {
         if (!shop) return;
@@ -115,12 +115,12 @@ export default function GlobalSelectShop({ onShopSelect, ShowLabel = true }) {
                     ) : (
                         myShops.map((shop) => (
                             <DropdownMenuItem
-                                key={shop?._id}
+                                key={shop?.id}
                                 onClick={() => handleSelect(shop)}
                                 className={cn(
                                     "cursor-pointer",
                                     "dark:hover:bg-slate-700 dark:focus:bg-slate-700",
-                                    shop?._id === currentShop?._id &&
+                                    shop?.id === currentShop?.id &&
                                     "bg-accent dark:bg-slate-700"
                                 )}
                             >

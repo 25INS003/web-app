@@ -54,7 +54,7 @@ export const useShopStore = create((set, get) => ({
   /**
    * Updates an existing shop.
    * Route: PUT /shops/:shopId
-   * @param {string} shopId - The ID of the shop to update (e.g., the Mongoose _id)
+   * @param {string} shopId - The shop's `id` (a uuid; the Mongo `_id` is gone)
    * @param {Partial<Shop>} updateData - The fields to update
    */
   updateExistingShop: async (shopId, updateData) => {
@@ -70,7 +70,7 @@ export const useShopStore = create((set, get) => ({
       // Update the shop in the state
       set((state) => ({
         myShops: state.myShops.map((shop) =>
-          shop._id === shopId ? { ...shop, ...updatedShop } : shop
+          shop.id === shopId ? { ...shop, ...updatedShop } : shop
         ),
         isLoading: false,
       }));
@@ -118,7 +118,7 @@ export const useShopStore = create((set, get) => ({
       
       set((state) => ({
         myShops: state.myShops.map((shop) => 
-          shop._id === shopId ? { ...shop, shop_status: 'inactive' } : shop
+          shop.id === shopId ? { ...shop, shop_status: 'inactive' } : shop
         ),
         isLoading: false,
       }));
@@ -143,7 +143,7 @@ export const useShopStore = create((set, get) => ({
       
       set((state) => ({
         myShops: state.myShops.map((shop) => 
-          shop._id === shopId ? { ...shop, shop_status: 'active' } : shop
+          shop.id === shopId ? { ...shop, shop_status: 'active' } : shop
         ),
         isLoading: false,
       }));
@@ -167,7 +167,7 @@ export const useShopStore = create((set, get) => ({
       await apiClient.delete(`/shopowneruser/shops/${shopId}/permanent`);
       
       set((state) => ({
-        myShops: state.myShops.filter((shop) => shop._id !== shopId),
+        myShops: state.myShops.filter((shop) => shop.id !== shopId),
         isLoading: false,
       }));
       

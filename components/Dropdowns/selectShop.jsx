@@ -112,12 +112,12 @@ export default function SelectShop({ selectedShop, onShopSelect, ShowLabel=true 
           ) : (
             shops.map((shop) => (
               <DropdownMenuItem
-                key={shop?._id}
+                key={shop?.id}
                 onClick={() => shop && handleSelect(shop)}
                 className={cn(
                   "cursor-pointer",
                   "dark:focus:bg-slate-700 dark:hover:bg-slate-700",
-                  displayShop?._id === shop?._id && "bg-accent dark:bg-slate-700"
+                  displayShop?.id === shop?.id && "bg-accent dark:bg-slate-700"
                 )}
               >
                 <div className="flex items-center gap-2">
