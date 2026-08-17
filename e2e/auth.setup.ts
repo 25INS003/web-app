@@ -23,7 +23,10 @@ for (const role of ["customer", "owner", "admin"] as const) {
     const { email, password } = USERS[role];
     await page.goto("/login");
     await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill(password);
+    // `exact`, because getByLabel matches on substring and the field now ships
+    // with a show/hide toggle whose aria-label is "Show password" — without it
+    // the locator resolves to two elements and fails in strict mode.
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(
