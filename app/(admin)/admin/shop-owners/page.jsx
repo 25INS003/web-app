@@ -141,7 +141,7 @@ export default function ShopOwnerListPage() {
                                 <AnimatePresence>
                                     {filteredOwners.map((owner, index) => (
                                         <motion.tr 
-                                            key={owner._id} 
+                                            key={owner.id} 
                                             variants={rowVariants}
                                             initial="hidden"
                                             animate="visible"
@@ -199,7 +199,7 @@ export default function ShopOwnerListPage() {
                                                     <TooltipProvider delayDuration={0}>
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
-                                                                <Link href={`/admin/shop-owners/${owner._id}`}>
+                                                                <Link href={`/admin/shop-owners/${owner.id}`}>
                                                                     <Button size="icon" variant="ghost" className="h-9 w-9 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl">
                                                                         <Eye size={18} />
                                                                     </Button>
@@ -217,7 +217,7 @@ export default function ShopOwnerListPage() {
                                                                         <Button 
                                                                             size="icon" 
                                                                             variant="ghost" 
-                                                                            onClick={() => approveOwner(owner._id)}
+                                                                            onClick={() => approveOwner(owner.id)}
                                                                             className="h-9 w-9 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl"
                                                                         >
                                                                             <CheckCircle size={18} />
@@ -233,7 +233,7 @@ export default function ShopOwnerListPage() {
                                                                         <Button 
                                                                             size="icon" 
                                                                             variant="ghost" 
-                                                                            onClick={() => rejectOwner(owner._id)}
+                                                                            onClick={() => rejectOwner(owner.id)}
                                                                             className="h-9 w-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl"
                                                                         >
                                                                             <XCircle className="h-[18px] w-[18px]" />
@@ -251,7 +251,7 @@ export default function ShopOwnerListPage() {
                                                                 <Button 
                                                                     size="icon" 
                                                                     variant="ghost" 
-                                                                    onClick={() => verifyOwner(owner._id)}
+                                                                    onClick={() => verifyOwner(owner.id)}
                                                                     className="h-9 w-9 text-purple-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl"
                                                                 >
                                                                     <ShieldCheck size={18} />

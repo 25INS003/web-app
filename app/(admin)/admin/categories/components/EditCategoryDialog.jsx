@@ -71,7 +71,7 @@ export function EditCategoryDialog({ open, onOpenChange, category, onSuccess }) 
     };
 
     const onSubmit = async (data) => {
-        if (!category?._id) return;
+        if (!category?.id) return;
         
         setIsSubmitting(true);
         try {
@@ -86,7 +86,7 @@ export function EditCategoryDialog({ open, onOpenChange, category, onSuccess }) 
                 formData.append("remove_image", "true");
             }
 
-            await updateCategory(category._id, formData);
+            await updateCategory(category.id, formData);
             toast.success("Category updated successfully!");
             onOpenChange(false);
             onSuccess?.();

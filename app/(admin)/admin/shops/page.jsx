@@ -85,7 +85,7 @@ export default function AdminShopsPage() {
     const confirmAction = async () => {
         if (!selectedActionShop || !actionType) return;
 
-        const success = await updateShopStatus(selectedActionShop._id, actionType, rejectionReason);
+        const success = await updateShopStatus(selectedActionShop.id, actionType, rejectionReason);
         
         if (success) {
             toast.success(`Shop ${actionType === 'active' ? 'approved' : 'rejected'} successfully`);
@@ -190,7 +190,7 @@ export default function AdminShopsPage() {
                                 <tr><td colSpan="5" className="p-12 text-center text-slate-500">No shops found matching your filters.</td></tr>
                             ) : (
                                 filteredShops.map((shop) => (
-                                    <tr key={shop._id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200">
+                                    <tr key={shop.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200">
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700 group-hover:border-purple-500/30 transition-colors">

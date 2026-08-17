@@ -436,7 +436,7 @@ export default function CategoriesManager() {
               return null;
             }
 
-            const categoryId = cat?.id || cat?.id;
+            const categoryId = cat?.id;
             const categoryName = cat?.name || "Unnamed Category";
             const depth = cat?.depth || 0;
             const childCount = getChildCount(categoryId);

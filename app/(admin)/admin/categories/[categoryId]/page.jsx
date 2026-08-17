@@ -35,7 +35,7 @@ export default function CategoryDetailPage() {
     const [isAddSubOpen, setIsAddSubOpen] = useState(false);
 
     // We try to find the category from the store first
-    const category = categories.find(c => c._id === categoryId);
+    const category = categories.find(c => c.id === categoryId);
     
     // Subcategories
     const subcategories = categories.filter(c => c.parent_category_id === categoryId);
@@ -164,9 +164,9 @@ export default function CategoryDetailPage() {
                                     <div className="grid gap-3">
                                         {subcategories.map(sub => (
                                             <motion.div 
-                                                key={sub._id}
+                                                key={sub.id}
                                                 whileHover={{ scale: 1.01, x: 4 }}
-                                                onClick={() => router.push(`/admin/categories/${sub._id}`)}
+                                                onClick={() => router.push(`/admin/categories/${sub.id}`)}
                                                 className="group flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-500/30 hover:shadow-md cursor-pointer transition-all"
                                             >
                                                 <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0">

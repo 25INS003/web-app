@@ -64,7 +64,7 @@ export function CategoryDialog({ open, onOpenChange, parentId = null }) {
 
     useEffect(() => {
         if (selectedParentId) {
-            const parent = flatCategories.find(c => c._id === selectedParentId || c.category_id === selectedParentId);
+            const parent = flatCategories.find(c => c.id === selectedParentId || c.category_id === selectedParentId);
             if (parent) {
                 const parentOrder = parent.display_order || 0;
                 setValue("display_order", parentOrder + 1);
@@ -135,7 +135,7 @@ export function CategoryDialog({ open, onOpenChange, parentId = null }) {
                         >
                             <option value="">None (Root Category)</option>
                             {flatCategories.map((cat) => (
-                                <option key={cat._id} value={cat._id}>
+                                <option key={cat.id} value={cat.id}>
                                     {'\u00A0\u00A0'.repeat(cat.level)} {cat.name} (Order: {cat.display_order || 0})
                                 </option>
                             ))}

@@ -53,7 +53,7 @@ const CategoryCard = ({ category, onEdit, index }) => {
     const { categories } = useCategoryStore();
     
     const subcategoryCount = categories.filter(
-        (cat) => cat.parent_category_id === category._id
+        (cat) => cat.parent_category_id === category.id
     ).length;
 
     const imageUrl = category.image_url || category.image;
@@ -69,7 +69,7 @@ const CategoryCard = ({ category, onEdit, index }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.03, duration: 0.2 }}
             whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            onClick={() => router.push(`/admin/categories/${category._id}`)}
+            onClick={() => router.push(`/admin/categories/${category.id}`)}
             className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm cursor-pointer group"
         >
             {/* Hover gradient */}
@@ -302,7 +302,7 @@ const CategoriesPage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     {filteredCategories.map((category, index) => (
                         <CategoryCard 
-                            key={category._id} 
+                            key={category.id} 
                             category={category} 
                             index={index}
                             onEdit={handleEditCategory}
