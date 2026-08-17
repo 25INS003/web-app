@@ -179,7 +179,7 @@ export default function AddVariantPage() {
                 attributes: validDefAttrs
             };
 
-            const success = await updateVariant(defaultVariantToRename._id, updatePayload);
+            const success = await updateVariant(defaultVariantToRename.id, updatePayload);
             if (!success) {
                 toast.error("Failed to update the default variant. Please try again.");
                 return;
@@ -194,9 +194,9 @@ export default function AddVariantPage() {
 
         const newVariant = await addVariant(productId, cleanedData);
 
-        if (newVariant && newVariant._id) {
+        if (newVariant && newVariant.id) {
             if (files.length > 0) {
-                await uploadVariantImages(newVariant._id, files);
+                await uploadVariantImages(newVariant.id, files);
             }
             toast.success("Variant created successfully!");
             router.back(); 

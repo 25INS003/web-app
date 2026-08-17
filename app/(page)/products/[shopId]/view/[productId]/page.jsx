@@ -129,7 +129,7 @@ const ViewProductPage = () => {
 
     useEffect(() => {
         if (currentProduct && currentVariants?.length > 0 && !selectedVariant) {
-            const defaultVar = currentVariants.find(v => v._id === currentProduct.default_variant_id) || currentVariants[0];
+            const defaultVar = currentVariants.find(v => v.id === currentProduct.default_variant_id) || currentVariants[0];
             setSelectedVariant(defaultVar);
         }
     }, [currentProduct, currentVariants, selectedVariant]);
@@ -138,10 +138,10 @@ const ViewProductPage = () => {
         if (selectedVariant) {
             const variantImg = selectedVariant.images?.[0];
             const imgUrl = typeof variantImg === 'string' ? variantImg : variantImg?.url;
-            const finalImg = imgUrl || currentProduct?.main_image?.url || null;
+            const finalImg = imgUrl || currentProduct?.main_image_url || null;
             setActiveImage(finalImg && finalImg.trim() !== '' ? finalImg : null);
         } else if (currentProduct) {
-            const mainImg = currentProduct.main_image?.url;
+            const mainImg = currentProduct.main_image_url;
             setActiveImage(mainImg && mainImg.trim() !== '' ? mainImg : null);
         }
     }, [selectedVariant, currentProduct]);
@@ -193,7 +193,7 @@ const ViewProductPage = () => {
     const isOutOfStock = stockQty <= 0;
 
     const galleryImages = [
-        currentProduct.main_image?.url,
+        currentProduct.main_image_url,
         ...(currentProduct.images || []).map((img) => img?.url),
         ...(selectedVariant?.images || []).map((img) => typeof img === 'string' ? img : img?.url)
     ].filter((url) => url && url.trim() !== '');
@@ -225,7 +225,7 @@ const ViewProductPage = () => {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => router.push(`/products/${shopId}/edit/${currentProduct._id}`)}
+                                onClick={() => router.push(`/products/${shopId}/edit/${currentProduct.id}`)}
                                 className="rounded-xl"
                             >
                                 <Settings className="w-4 h-4 mr-2" />
@@ -246,7 +246,7 @@ const ViewProductPage = () => {
                                 <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-slate-500">
                                     <span className="font-medium text-indigo-600 dark:text-indigo-400">{currentProduct.brand}</span>
                                     <span className="text-slate-300 dark:text-slate-600">•</span>
-                                    <span className="text-blue-600 dark:text-blue-400">{currentProduct.category_id?.name || 'Uncategorized'}</span>
+                                    <span className="text-blue-600 dark:text-blue-400">{currentProduct.category?.name || 'Uncategorized'}</span>
                                     {currentProduct.unit && (
                                         <>
                                             <span className="text-slate-300 dark:text-slate-600">•</span>
@@ -455,10 +455,10 @@ const ViewProductPage = () => {
                                         </label>
                                         <div className="grid grid-cols-2 gap-2">
                                             {currentVariants.map((variant) => {
-                                                const isSelected = selectedVariant?._id === variant._id;
+                                                const isSelected = selectedVariant?.id === variant.id;
                                                 return (
                                                     <button
-                                                        key={variant._id}
+                                                        key={variant.id}
                                                         onClick={() => setSelectedVariant(variant)}
                                                         className={cn(
                                                             "relative flex flex-col items-start p-3 rounded-xl border-2 text-left transition-all hover:bg-slate-50 dark:hover:bg-slate-800",
@@ -497,8 +497,8 @@ const ViewProductPage = () => {
                                     </div>
                                     <div className="flex justify-between items-center text-sm p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                                         <span className="text-slate-500 flex items-center gap-2"><Box className="w-4 h-4" /> Variant ID</span>
-                                        <span className="font-mono text-xs text-slate-400" title={selectedVariant?._id}>
-                                            ...{selectedVariant?._id?.slice(-8)}
+                                        <span className="font-mono text-xs text-slate-400" title={selectedVariant?.id}>
+                                            ...{selectedVariant?.id?.slice(-8)}
                                         </span>
                                     </div>
                                 </div>

@@ -308,12 +308,12 @@ const AddProductPage = () => {
       const response = await createProduct(shopId, productPayload);
       const createdProduct = response?.product;
 
-      if (!createdProduct || !createdProduct._id) {
+      if (!createdProduct || !createdProduct.id) {
         toast.error("Product created but ID missing. Check console.");
         return;
       }
 
-      const productId = createdProduct._id;
+      const productId = createdProduct.id;
 
       if (mainImageFile) {
         const formData = new FormData();
@@ -323,7 +323,7 @@ const AddProductPage = () => {
 
       if (createdProduct.variants && Object.keys(variantImages).length > 0) {
         const uploadPromises = Object.entries(variantImages).map(async ([vIndex, files]) => {
-          const variantId = createdProduct.variants[vIndex]?._id;
+          const variantId = createdProduct.variants[vIndex]?.id;
           if (variantId && files && files.length > 0) {
             await uploadVariantImages(variantId, files);
           }

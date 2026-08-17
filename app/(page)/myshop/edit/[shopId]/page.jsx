@@ -74,7 +74,7 @@ const EditShopPage = ({ params }) => {
     }, [fetchMyShops, myShops.length]);
 
     useEffect(() => {
-        const shop = myShops.find(s => s._id === shopId);
+        const shop = myShops.find(s => s.id === shopId);
         if (shop) {
             setSelectedShop(shop);
             reset({

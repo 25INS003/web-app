@@ -113,7 +113,7 @@ const ViewProductPage = ({ shopId, productId }) => {
     useEffect(() => {
         // Only set default if we have products and no variant is currently selected
         if (currentProduct && currentVariants?.length > 0 && !selectedVariant) {
-            const defaultVar = currentVariants.find(v => v._id === currentProduct.default_variant_id) || currentVariants[0];
+            const defaultVar = currentVariants.find(v => v.id === currentProduct.default_variant_id) || currentVariants[0];
             setSelectedVariant(defaultVar);
         }
     }, [currentProduct, currentVariants, selectedVariant]);
@@ -124,7 +124,7 @@ const ViewProductPage = ({ shopId, productId }) => {
             // Priority: Variant Image -> Product Main Image
             // Treat empty strings as falsy
             const variantImg = selectedVariant.images?.[0]?.url;
-            const productImg = currentProduct?.main_image?.url;
+            const productImg = currentProduct?.main_image_url;
             const img = (variantImg && variantImg.trim() !== '') 
                 ? variantImg 
                 : (productImg && productImg.trim() !== '') 
@@ -132,7 +132,7 @@ const ViewProductPage = ({ shopId, productId }) => {
                     : null;
             setActiveImage(img);
         } else if (currentProduct) {
-            const productImg = currentProduct.main_image?.url;
+            const productImg = currentProduct.main_image_url;
             setActiveImage((productImg && productImg.trim() !== '') ? productImg : null);
         }
     }, [selectedVariant, currentProduct]);
@@ -188,7 +188,7 @@ const ViewProductPage = ({ shopId, productId }) => {
     const imageToVariantMap = {};
     
     // Add product main image (no variant association)
-    const productMainImage = currentProduct.main_image?.url;
+    const productMainImage = currentProduct.main_image_url;
     
     // Add variant images with their variant association
     currentVariants?.forEach(variant => {
@@ -241,7 +241,7 @@ const ViewProductPage = ({ shopId, productId }) => {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => router.push(`/products/${shopId}/edit/${currentProduct._id}`)}
+                                onClick={() => router.push(`/products/${shopId}/edit/${currentProduct.id}`)}
                                 className="text-slate-600 dark:text-slate-300"
                             >
                                 <Settings className="w-4 h-4 mr-2" />
@@ -260,7 +260,7 @@ const ViewProductPage = ({ shopId, productId }) => {
                                     {currentProduct.brand}
                                 </span>
                                 <span>•</span>
-                                <span>{currentProduct.category_id?.name || 'Uncategorized'}</span>
+                                <span>{currentProduct.category?.name || 'Uncategorized'}</span>
                                 <span>•</span>
                                 <span>{currentProduct.unit}</span>
                             </div>
@@ -368,7 +368,7 @@ const ViewProductPage = ({ shopId, productId }) => {
                                         <div className="flex items-center justify-between">
                                             <h3 className="text-lg font-medium">Manage Variants</h3>
                                             <Button 
-                                                onClick={() => router.push(`/variants/${currentProduct._id}/add`)}
+                                                onClick={() => router.push(`/variants/${currentProduct.id}/add`)}
                                                 className="bg-blue-600 hover:bg-blue-700 text-white"
                                             >
                                                 <Box className="w-4 h-4 mr-2" />
@@ -423,10 +423,10 @@ const ViewProductPage = ({ shopId, productId }) => {
                                         </label>
                                         <div className="grid grid-cols-2 gap-2">
                                             {currentVariants.map((variant) => {
-                                                const isSelected = selectedVariant?._id === variant._id;
+                                                const isSelected = selectedVariant?.id === variant.id;
                                                 return (
                                                     <button
-                                                        key={variant._id}
+                                                        key={variant.id}
                                                         onClick={() => setSelectedVariant(variant)}
                                                         className={cn(
                                                             "relative flex flex-col items-start p-3 rounded-lg border text-left transition-all hover:bg-slate-50 dark:hover:bg-slate-800",
@@ -466,8 +466,8 @@ const ViewProductPage = ({ shopId, productId }) => {
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-slate-500 flex items-center gap-2"><Box className="w-4 h-4" /> Variant ID</span>
-                                        <span className="font-mono text-xs text-slate-400" title={selectedVariant?._id}>
-                                            ...{selectedVariant?._id?.slice(-8)}
+                                        <span className="font-mono text-xs text-slate-400" title={selectedVariant?.id}>
+                                            ...{selectedVariant?.id?.slice(-8)}
                                         </span>
                                     </div>
                                 </div>

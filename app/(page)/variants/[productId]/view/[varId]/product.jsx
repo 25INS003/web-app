@@ -105,12 +105,12 @@ const ViewProductPage = () => {
     useEffect(() => {
         if (selectedVariant) {
             const variantImageUrl = selectedVariant.images?.[0]?.url;
-            const productImageUrl = currentProduct?.main_image?.url;
+            const productImageUrl = currentProduct?.main_image_url;
             const img = (variantImageUrl && variantImageUrl.trim() !== '') ? variantImageUrl : 
                         (productImageUrl && productImageUrl.trim() !== '') ? productImageUrl : null;
             setActiveImage(img);
-        } else if (currentProduct?.main_image?.url && currentProduct.main_image.url.trim() !== '') {
-            setActiveImage(currentProduct.main_image.url);
+        } else if (currentProduct?.main_image_url && currentProduct.main_image_url.trim() !== '') {
+            setActiveImage(currentProduct.main_image_url);
         } else {
             setActiveImage(null);
         }
@@ -160,7 +160,7 @@ const ViewProductPage = () => {
     const isOutOfStock = stockQty <= 0;
 
     // Images: Combine Product Main Image + Variant Images for the gallery
-    const mainImageUrl = currentProduct.main_image?.url;
+    const mainImageUrl = currentProduct.main_image_url;
     const additionalImages = (currentProduct.images || [])
         .map(img => typeof img === 'string' ? img : img?.url)
         .filter(url => url && url.trim() !== '');
@@ -190,7 +190,7 @@ const ViewProductPage = () => {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => router.push(`/products/${shopId}/edit/${currentProduct._id}`)}
+                                onClick={() => router.push(`/products/${shopId}/edit/${currentProduct.id}`)}
                                 className="text-slate-600 dark:text-slate-300"
                             >
                                 <Settings className="w-4 h-4 mr-2" />
@@ -209,7 +209,7 @@ const ViewProductPage = () => {
                                     {currentProduct.brand}
                                 </span>
                                 <span>•</span>
-                                <span>{currentProduct.category_id?.name || 'Uncategorized'}</span>
+                                <span>{currentProduct.category?.name || 'Uncategorized'}</span>
                                 <span>•</span>
                                 <span>{currentProduct.unit}</span>
                             </div>
@@ -352,8 +352,8 @@ const ViewProductPage = () => {
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-slate-500 flex items-center gap-2"><Box className="w-4 h-4" /> Variant ID</span>
-                                        <span className="font-mono text-xs text-slate-400" title={selectedVariant?._id}>
-                                            ...{selectedVariant?._id?.slice(-8)}
+                                        <span className="font-mono text-xs text-slate-400" title={selectedVariant?.id}>
+                                            ...{selectedVariant?.id?.slice(-8)}
                                         </span>
                                     </div>
                                 </div>

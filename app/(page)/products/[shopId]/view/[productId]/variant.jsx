@@ -72,7 +72,7 @@ const VariantList = ({ variants = [], onEdit, onDelete }) => {
                         const mainImage = variant.images?.[0]?.url || null;
 
                         return (
-                            <TableRow key={variant._id} className="group">
+                            <TableRow key={variant.id} className="group">
                                 {/* --- 1. Image Column --- */}
                                 <TableCell>
                                     <div className="relative w-12 h-12 rounded-md overflow-hidden bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
@@ -191,11 +191,11 @@ const VariantList = ({ variants = [], onEdit, onDelete }) => {
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem >
-                                                <Link href={`/variants/${variant.productId}/edit/${variant._id}`}><Edit className="mr-2 h-4 w-4" /> Edit Variant</Link> 
+                                                <Link href={`/variants/${variant.productId}/edit/${variant.id}`}><Edit className="mr-2 h-4 w-4" /> Edit Variant</Link> 
                                             </DropdownMenuItem>
                                             <DropdownMenuItem 
                                                 className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                                                onClick={() => onDelete && onDelete(variant._id)}
+                                                onClick={() => onDelete && onDelete(variant.id)}
                                             >
                                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                                             </DropdownMenuItem>

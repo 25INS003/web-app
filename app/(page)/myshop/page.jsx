@@ -229,7 +229,7 @@ const MyShopsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {filteredShops.map((shop, index) => (
                         <ShopCard
-                            key={shop._id}
+                            key={shop.id}
                             shop={shop}
                             index={index}
                             onEdit={handleEditShop}
@@ -289,7 +289,7 @@ const ShopCard = ({ shop, index, onEdit, onDeactivate, onActivate, onHardDelete 
                         <div className="h-px bg-slate-700 mb-2" />
                         
                         <DropdownMenuItem 
-                            onClick={() => onEdit(shop._id)} 
+                            onClick={() => onEdit(shop.id)} 
                             className="rounded-xl px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer focus:bg-slate-800 focus:text-white"
                         >
                             <Settings className="mr-3 h-4 w-4 text-slate-400" />
@@ -299,7 +299,7 @@ const ShopCard = ({ shop, index, onEdit, onDeactivate, onActivate, onHardDelete 
                         {/* Active Shop Actions */}
                         {(shop.shop_status === 'active' || !shop.shop_status) && (
                             <DropdownMenuItem 
-                                onClick={() => onDeactivate(shop._id)}
+                                onClick={() => onDeactivate(shop.id)}
                                 className="rounded-xl px-3 py-2.5 text-orange-400 hover:text-orange-300 hover:bg-slate-800 cursor-pointer focus:bg-slate-800 focus:text-orange-300"
                             >
                                 <XCircle className="mr-3 h-4 w-4" />
@@ -311,7 +311,7 @@ const ShopCard = ({ shop, index, onEdit, onDeactivate, onActivate, onHardDelete 
                         {shop.shop_status === 'inactive' && (
                             <>
                                 <DropdownMenuItem 
-                                    onClick={() => onActivate(shop._id)}
+                                    onClick={() => onActivate(shop.id)}
                                     className="rounded-xl px-3 py-2.5 text-green-400 hover:text-green-300 hover:bg-slate-800 cursor-pointer focus:bg-slate-800 focus:text-green-300"
                                 >
                                     <CheckCircle className="mr-3 h-4 w-4" />
@@ -321,7 +321,7 @@ const ShopCard = ({ shop, index, onEdit, onDeactivate, onActivate, onHardDelete 
                                 <div className="h-px bg-slate-700 my-1" />
                                 
                                 <DropdownMenuItem 
-                                    onClick={() => onHardDelete(shop._id)}
+                                    onClick={() => onHardDelete(shop.id)}
                                     className="rounded-xl px-3 py-2.5 text-red-500 hover:text-red-400 hover:bg-slate-800 cursor-pointer focus:bg-slate-800 focus:text-red-400"
                                 >
                                     <Trash2 className="mr-3 h-4 w-4" />
@@ -360,7 +360,7 @@ const ShopCard = ({ shop, index, onEdit, onDeactivate, onActivate, onHardDelete 
                 </span>
                 <Button 
                     size="sm" 
-                    onClick={() => onEdit(shop._id)}
+                    onClick={() => onEdit(shop.id)}
                     className="rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                 >
                     <Edit className="h-3 w-3 mr-1" /> Edit

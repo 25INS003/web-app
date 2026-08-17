@@ -124,10 +124,10 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    const updateSuccess = await updateVariant(variant._id, data);
+    const updateSuccess = await updateVariant(variant.id, data);
     let uploadSuccess = true;
     if (pendingFiles.length > 0) {
-      const res = await uploadVariantImages(variant._id, pendingFiles);
+      const res = await uploadVariantImages(variant.id, pendingFiles);
       if (!res) uploadSuccess = false;
     }
     if (updateSuccess && uploadSuccess) {
@@ -146,7 +146,7 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
 
   const handleDelete = async () => {
     if (!window.confirm("Delete this variant?")) return;
-    const success = await deleteVariant(variant._id);
+    const success = await deleteVariant(variant.id);
     if (success) {
       toast.success("Variant deleted");
       onRefresh();
@@ -169,7 +169,7 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
 
   const handleDeleteImage = async (index) => {
     if (!window.confirm("Remove this saved image?")) return;
-    const success = await deleteVariantImage(variant._id, index);
+    const success = await deleteVariantImage(variant.id, index);
     if (success) {
       toast.success("Image removed");
       onRefresh();
@@ -466,7 +466,7 @@ const AddVariantForm = ({ productId, onRefresh }) => {
     const newVariant = await addVariant(productId, newData);
     if (newVariant) {
       if (imageFile) {
-        await uploadVariantImages(newVariant._id, [imageFile]);
+        await uploadVariantImages(newVariant.id, [imageFile]);
       }
       toast.success("New variant added!");
       setNewData({ name: "", price: 0, stock_quantity: 0, sku: "", cost_price: 0, compare_at_price: 0 });
@@ -612,7 +612,7 @@ const EditProductPage = () => {
   useEffect(() => {
     if (!isInitializing && currentProduct) {
       const catId = typeof currentProduct.category_id === 'object'
-        ? currentProduct.category_id?._id
+        ? currentProduct.category_id?.id
         : currentProduct.category_id;
 
       form.reset({
@@ -623,8 +623,8 @@ const EditProductPage = () => {
         category_id: catId || "",
       });
 
-      if (currentProduct.main_image && currentProduct.main_image?.url) {
-        setExistingImage(currentProduct.main_image.url);
+      if (currentProduct.main_image && currentProduct.main_image_url) {
+        setExistingImage(currentProduct.main_image_url);
       }
     }
   }, [currentProduct, isInitializing, form]);
@@ -814,7 +814,7 @@ const EditProductPage = () => {
             <div className="space-y-4">
               {currentVariants?.map((variant) => (
                 <VariantRow
-                  key={variant._id}
+                  key={variant.id}
                   variant={variant}
                   shopId={shopId}
                   onRefresh={refreshData}

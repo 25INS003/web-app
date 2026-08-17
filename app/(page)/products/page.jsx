@@ -100,7 +100,7 @@ const tableRowVariants = {
 const ProductsListPage = () => {
     // Standardizing selectors for better reactivity
     const currentShop = useShopStore((state) => state.currentShop);
-    const shopId = currentShop?._id ?? null;
+    const shopId = currentShop?.id ?? null;
 
     const products = useProductStore((state) => state.products);
     const pagination = useProductStore((state) => state.pagination);
@@ -379,20 +379,20 @@ const ProductsListPage = () => {
                         ) : (
                             products.map((p, index) => {
                                     const isActive = p.is_active;
-                                    const hasValidImage = p.main_image?.url && p.main_image.url.trim() !== '';
+                                    const hasValidImage = p.main_image_url && p.main_image_url.trim() !== '';
                                     return (
                                         <TableRow
-                                            key={p._id}
+                                            key={p.id}
                                             className={`border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors ${!isActive ? "bg-slate-50/60 dark:bg-slate-900/60 opacity-75" : ""}`}
                                         >
                                             <TableCell>
-                                                <Link href={`/products/${shopId}/view/${p._id}`} className="block">
+                                                <Link href={`/products/${shopId}/view/${p.id}`} className="block">
                                                     <div 
                                                         className="h-12 w-12 relative rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center overflow-hidden ring-2 ring-transparent hover:ring-indigo-500/50 transition-all shadow-sm"
                                                     >
                                                         {hasValidImage ? (
                                                             <Image
-                                                                src={p.main_image.url}
+                                                                src={p.main_image_url}
                                                                 alt="product"
                                                                 fill
                                                                 sizes="150px"
@@ -405,7 +405,7 @@ const ProductsListPage = () => {
                                                 </Link>
                                             </TableCell>
                                             <TableCell>
-                                                <Link href={`/products/${shopId}/view/${p._id}`} className="block group">
+                                                <Link href={`/products/${shopId}/view/${p.id}`} className="block group">
                                                     <div className="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                                         {p.name}
                                                     </div>
@@ -416,7 +416,7 @@ const ProductsListPage = () => {
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline" className="rounded-lg font-medium">
-                                                    {p.category_id?.name || "N/A"}
+                                                    {p.category?.name || "N/A"}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
@@ -444,20 +444,20 @@ const ProductsListPage = () => {
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-slate-200 dark:border-slate-700">
                                                         <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                                                            <Link href={`/products/${shopId}/view/${p._id}`} className="flex items-center gap-2">
+                                                            <Link href={`/products/${shopId}/view/${p.id}`} className="flex items-center gap-2">
                                                                 <Eye className="h-4 w-4 text-indigo-500" />
                                                                 <span>View Details</span>
                                                             </Link>
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                                                            <Link href={`/products/${shopId}/edit/${p._id}`} className="flex items-center gap-2">
+                                                            <Link href={`/products/${shopId}/edit/${p.id}`} className="flex items-center gap-2">
                                                                 <Edit className="h-4 w-4 text-blue-500" />
                                                                 <span>Edit Product</span>
                                                             </Link>
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem 
-                                                            onClick={() => handleSoftDelete(p._id, isActive)}
+                                                            onClick={() => handleSoftDelete(p.id, isActive)}
                                                             className="rounded-lg cursor-pointer"
                                                         >
                                                             {isActive ? (
@@ -474,7 +474,7 @@ const ProductsListPage = () => {
                                                         </DropdownMenuItem>
                                                         {!isActive && (
                                                             <DropdownMenuItem 
-                                                                onClick={() => handleHardDelete(p._id)} 
+                                                                onClick={() => handleHardDelete(p.id)} 
                                                                 className="rounded-lg cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-500/10"
                                                             >
                                                                 <Trash2 className="h-4 w-4 mr-2" />
