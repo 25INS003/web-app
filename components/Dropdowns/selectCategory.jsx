@@ -43,7 +43,7 @@ export default function SelectCategory({
   }, [categories.length, fetchCategories]);
 
   // Find the selected category object
-  const selectedCategory = categories.find((category) => category._id === value);
+  const selectedCategory = categories.find((category) => category.id === value);
 
   const getButtonText = () => {
     if (isLoading) {
@@ -96,11 +96,11 @@ export default function SelectCategory({
             <CommandGroup className="dark:text-slate-200">
               {categories.map((category) => (
                 <CommandItem
-                  key={category._id}
+                  key={category.id}
                   value={category.name}
                   onSelect={() => {
                     // This logic ensures 'null-proof' selection
-                    const newId = category._id === value ? null : category._id;
+                    const newId = category.id === value ? null : category.id;
                     onCateSelect(newId);
                     setOpen(false);
                   }}
@@ -109,7 +109,7 @@ export default function SelectCategory({
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === category._id ? "opacity-100" : "opacity-0"
+                      value === category.id ? "opacity-100" : "opacity-0"
                     )}
                   />
                   {category.name}

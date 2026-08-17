@@ -94,7 +94,8 @@ export const useProductStore = create((set, get) => ({
 
   /**
    * Create Product
-   * Updated to match frontend expectation: returns { product: { _id... } }
+   * Returns { product: { id... } } — `id`, not the Mongo `_id` this note
+   * used to describe; nothing has produced `_id` since the Postgres port.
    */
   createProduct: async (shopId, productData) => {
     set({ isLoading: true, error: null });
@@ -119,7 +120,7 @@ export const useProductStore = create((set, get) => ({
         isLoading: false,
       }));
 
-      // Return structure matches frontend: product.product._id
+      // Return structure matches frontend: product.product.id
       return { product: newProduct };
     } catch (err) {
       set({
@@ -148,7 +149,7 @@ export const useProductStore = create((set, get) => ({
 
       set((state) => ({
         products: state.products.map((p) =>
-          p._id === productId ? updatedProduct : p
+          p.id === productId ? updatedProduct : p
         ),
         currentProduct: updatedProduct,
         isLoading: false,
@@ -177,7 +178,7 @@ export const useProductStore = create((set, get) => ({
 
       set((state) => ({
         products: state.products.map((p) =>
-          p._id === productId ? updatedProduct : p
+          p.id === productId ? updatedProduct : p
         ),
         currentProduct: updatedProduct,
         isLoading: false,
@@ -196,13 +197,13 @@ export const useProductStore = create((set, get) => ({
    * Externally update a product in the list (used by VariantStore)
    */
   updateProductInList: (updatedProduct) => {
-    if (!updatedProduct || !updatedProduct._id) return;
+    if (!updatedProduct || !updatedProduct.id) return;
     set((state) => ({
       products: state.products.map((p) =>
-        p._id === updatedProduct._id ? updatedProduct : p
+        p.id === updatedProduct.id ? updatedProduct : p
       ),
       // Also update currentProduct if it's the same one
-      currentProduct: state.currentProduct?._id === updatedProduct._id ? updatedProduct : state.currentProduct
+      currentProduct: state.currentProduct?.id === updatedProduct.id ? updatedProduct : state.currentProduct
     }));
   },
 
@@ -216,7 +217,7 @@ export const useProductStore = create((set, get) => ({
 
       set((state) => ({
         products: state.products.map((p) =>
-          p._id === productId ? updatedProduct : p
+          p.id === productId ? updatedProduct : p
         ),
         isLoading: false,
       }));
@@ -240,7 +241,7 @@ export const useProductStore = create((set, get) => ({
 
       set((state) => ({
         products: state.products.map((p) =>
-          p._id === productId ? updatedProduct : p
+          p.id === productId ? updatedProduct : p
         ),
         isLoading: false,
       }));
@@ -260,7 +261,7 @@ export const useProductStore = create((set, get) => ({
       await apiClient.delete(`/shops/${shopId}/products/${productId}`);
 
       set((state) => ({
-        products: state.products.filter((p) => p._id !== productId),
+        products: state.products.filter((p) => p.id !== productId),
         pagination: {
           ...state.pagination,
           totalProducts: state.pagination.totalProducts - 1,
@@ -292,7 +293,7 @@ export const useProductStore = create((set, get) => ({
       set((state) => ({
         // Map through the existing list and update ONLY the matching product
         products: state.products.map((p) =>
-          p._id === productId ? fullProductDetail : p
+          p.id === productId ? fullProductDetail : p
         ),
 
         // We still update these so your Detail View component works immediately

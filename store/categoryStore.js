@@ -113,8 +113,8 @@ export const useCategoryStore = create()(
         return categories.filter(cat => {
           const catParentId = cat.parent_category_id;
           if (!catParentId) return false;
-          if (typeof catParentId === "object" && catParentId._id) {
-            return catParentId._id === parentId;
+          if (typeof catParentId === "object" && catParentId.id) {
+            return catParentId.id === parentId;
           }
           return catParentId === parentId;
         });
@@ -127,8 +127,8 @@ export const useCategoryStore = create()(
         return categories.some(cat => {
           const catParentId = cat.parent_category_id;
           if (!catParentId) return false;
-          if (typeof catParentId === "object" && catParentId._id) {
-            return catParentId._id === categoryId;
+          if (typeof catParentId === "object" && catParentId.id) {
+            return catParentId.id === categoryId;
           }
           return catParentId === categoryId;
         });
@@ -184,7 +184,7 @@ export const useCategoryStore = create()(
 
           set((state) => ({
             categories: state.categories.map((cat) =>
-              cat._id === id ? updatedCategory : cat
+              cat.id === id ? updatedCategory : cat
             ),
             childrenCache: {}, // Clear cache to refetch
             isLoading: false,
@@ -209,7 +209,7 @@ export const useCategoryStore = create()(
 
           set((state) => ({
             categories: state.categories.map((cat) =>
-              cat._id === id ? updatedCategory : cat
+              cat.id === id ? updatedCategory : cat
             ),
             isLoading: false,
           }));
@@ -228,7 +228,7 @@ export const useCategoryStore = create()(
         try {
           await apiClient.delete(`/category/categories/${id}`);
           set((state) => ({
-            categories: state.categories.filter((cat) => cat._id !== id),
+            categories: state.categories.filter((cat) => cat.id !== id),
             isLoading: false,
           }));
         } catch (error) {

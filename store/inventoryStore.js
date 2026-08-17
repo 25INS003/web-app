@@ -64,7 +64,7 @@ export const useInventoryStore = create((set, get) => ({
 
                 // 2. Update the product in lowStockProducts if it exists there
                 let updatedLowStock = state.lowStockProducts.map((p) =>
-                    p._id === productId ? { ...p, stock_quantity: updatedProduct.stock_quantity } : p
+                    p.id === productId ? { ...p, stock_quantity: updatedProduct.stock_quantity } : p
                 );
 
                 // 3. Filter logic: If the new stock is above the alert threshold, remove it from the low stock list.

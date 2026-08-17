@@ -69,7 +69,7 @@ export default function CategoriesManager() {
       .map((cat) => ({
         ...cat,
         depth,
-        children: buildCategoryTree(categories, cat._id, depth + 1),
+        children: buildCategoryTree(categories, cat.id, depth + 1),
       }));
   };
 
@@ -90,7 +90,10 @@ export default function CategoriesManager() {
   // Get root categories for parent selector
   const getRootAndParentOptions = () => {
     return categories.map((cat) => ({
-      _id: cat._id,
+      // `id`, matching the API and the two consumers below. This was the one
+      // place still minting a Mongo-shaped `_id` — from `cat.id`, so the
+      // rename was purely a relabelling on the way out.
+      id: cat.id,
       name: cat.name,
       depth: cat.depth || 0,
       parent_category_id: cat.parent_category_id,
@@ -104,7 +107,7 @@ export default function CategoriesManager() {
     let iterations = 0;
     
     while (currentId && iterations < 10) {
-      const cat = categories.find((c) => c._id === currentId);
+      const cat = categories.find((c) => c.id === currentId);
       if (!cat) break;
       paths.unshift(cat.name);
       currentId = cat.parent_category_id;
@@ -166,7 +169,7 @@ export default function CategoriesManager() {
 
     try {
       setIsSubmitting(true);
-      await updateCategory(editingCategory._id, {
+      await updateCategory(editingCategory.id, {
         name: formData.name.trim(),
         description: formData.description.trim(),
         parent_category_id: formData.parent_category_id || null,
@@ -321,7 +324,7 @@ export default function CategoriesManager() {
                     <SelectContent>
                       <SelectItem value="none">No Parent (Root Category)</SelectItem>
                       {getRootAndParentOptions().map((cat) => (
-                        <SelectItem key={cat._id} value={cat._id}>
+                        <SelectItem key={cat.id} value={cat.id}>
                           {"—".repeat(cat.depth || 0)} {cat.name}
                         </SelectItem>
                       ))}
@@ -385,9 +388,9 @@ export default function CategoriesManager() {
                 <SelectContent>
                   <SelectItem value="none">No Parent (Root Category)</SelectItem>
                   {getRootAndParentOptions()
-                    .filter((cat) => cat._id !== editingCategory?._id) // Can't be own parent
+                    .filter((cat) => cat.id !== editingCategory?.id) // Can't be own parent
                     .map((cat) => (
-                      <SelectItem key={cat._id} value={cat._id}>
+                      <SelectItem key={cat.id} value={cat.id}>
                         {"—".repeat(cat.depth || 0)} {cat.name}
                       </SelectItem>
                     ))}
@@ -433,7 +436,7 @@ export default function CategoriesManager() {
               return null;
             }
 
-            const categoryId = cat?._id || cat?.id;
+            const categoryId = cat?.id || cat?.id;
             const categoryName = cat?.name || "Unnamed Category";
             const depth = cat?.depth || 0;
             const childCount = getChildCount(categoryId);

@@ -62,7 +62,7 @@ export const useShopOwnerStore = create((set, get) => ({
             const updatedOwner = response.data.data || response.data;
 
             set((state) => ({
-                shopOwners: state.shopOwners.map((o) => (o._id === ownerId ? updatedOwner : o)),
+                shopOwners: state.shopOwners.map((o) => (o.id === ownerId ? updatedOwner : o)),
                 selectedOwner: updatedOwner,
                 isLoading: false,
             }));
@@ -82,8 +82,8 @@ export const useShopOwnerStore = create((set, get) => ({
             const updatedOwner = response.data.data || response.data;
             
             set((state) => ({
-                shopOwners: state.shopOwners.map((o) => (o._id === ownerId ? updatedOwner : o)),
-                pendingOwners: state.pendingOwners.filter((o) => o._id !== ownerId),
+                shopOwners: state.shopOwners.map((o) => (o.id === ownerId ? updatedOwner : o)),
+                pendingOwners: state.pendingOwners.filter((o) => o.id !== ownerId),
                 selectedOwner: updatedOwner, // Update selected view
                 isLoading: false,
             }));
@@ -102,8 +102,8 @@ export const useShopOwnerStore = create((set, get) => ({
             const updatedOwner = response.data.data || response.data;
             
             set((state) => ({
-                shopOwners: state.shopOwners.map((o) => (o._id === ownerId ? updatedOwner : o)),
-                pendingOwners: state.pendingOwners.filter((o) => o._id !== ownerId),
+                shopOwners: state.shopOwners.map((o) => (o.id === ownerId ? updatedOwner : o)),
+                pendingOwners: state.pendingOwners.filter((o) => o.id !== ownerId),
                 selectedOwner: updatedOwner, // Update selected view
                 isLoading: false,
             }));
@@ -122,10 +122,10 @@ export const useShopOwnerStore = create((set, get) => ({
             const updatedOwner = response.data.data || response.data;
             
             set((state) => ({
-                shopOwners: state.shopOwners.map((o) => (o._id === ownerId ? updatedOwner : o)),
+                shopOwners: state.shopOwners.map((o) => (o.id === ownerId ? updatedOwner : o)),
                 // If revoking means they are no longer pending, filter them out.
                 // If they become pending again, they would be fetched by fetchPendingOwners.
-                pendingOwners: state.pendingOwners.filter((o) => o._id !== ownerId), 
+                pendingOwners: state.pendingOwners.filter((o) => o.id !== ownerId), 
                 selectedOwner: updatedOwner, // Update selected view
                 isLoading: false,
             }));

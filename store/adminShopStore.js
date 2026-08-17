@@ -59,8 +59,8 @@ export const useAdminShopStore = create((set, get) => ({
             const updatedShop = response.data.data || response.data;
 
             set((state) => ({
-                shops: state.shops.map((s) => (s._id === shopId ? updatedShop : s)),
-                pendingShops: state.pendingShops.filter((s) => s._id !== shopId),
+                shops: state.shops.map((s) => (s.id === shopId ? updatedShop : s)),
+                pendingShops: state.pendingShops.filter((s) => s.id !== shopId),
                 selectedShop: updatedShop, // update if currently viewing detail
                 isLoading: false,
             }));

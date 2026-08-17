@@ -120,7 +120,7 @@ const OrderTable = ({
                         </TableHeader>
                         <TableBody>
                             {orders.map((order) => (
-                                <TableRow key={order._id} className="hover:bg-muted/30">
+                                <TableRow key={order.id} className="hover:bg-muted/30">
                                     <TableCell className="font-mono font-medium text-xs">{order.order_id}</TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">

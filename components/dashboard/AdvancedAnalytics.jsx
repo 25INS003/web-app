@@ -133,7 +133,7 @@ export default function AdvancedAnalytics({ stats, loading }) {
             <table>
               <thead><tr><th>Category</th><th>Orders</th><th>Revenue</th></tr></thead>
               <tbody>
-                ${categoryPerformance.map(c => `<tr><td>${c._id}</td><td>${c.orders}</td><td>₹${c.revenue.toLocaleString()}</td></tr>`).join('')}
+                ${categoryPerformance.map(c => `<tr><td>${c.id}</td><td>${c.orders}</td><td>₹${c.revenue.toLocaleString()}</td></tr>`).join('')}
               </tbody>
             </table>
           </div>
@@ -142,7 +142,7 @@ export default function AdvancedAnalytics({ stats, loading }) {
             <table>
               <thead><tr><th>Method</th><th>Usage</th><th>Total Collected</th></tr></thead>
               <tbody>
-                ${paymentMethodStats.map(m => `<tr><td>${m._id}</td><td>${m.count}</td><td>₹${m.revenue.toLocaleString()}</td></tr>`).join('')}
+                ${paymentMethodStats.map(m => `<tr><td>${m.id}</td><td>${m.count}</td><td>₹${m.revenue.toLocaleString()}</td></tr>`).join('')}
               </tbody>
             </table>
           </div>
@@ -400,7 +400,7 @@ export default function AdvancedAnalytics({ stats, loading }) {
                   key={i} 
                   className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl"
                 >
-                  <span className="text-xs font-bold dark:text-white capitalize truncate max-w-[140px]">{r._id.replace(/_/g, ' ')}</span>
+                  <span className="text-xs font-bold dark:text-white capitalize truncate max-w-[140px]">{r.id.replace(/_/g, ' ')}</span>
                   <div className="text-right">
                     <span className="text-xs font-black text-rose-500 block">₹{r.totalRefunded.toLocaleString()}</span>
                     <span className="text-[8px] text-slate-500 uppercase">{r.count} Orders</span>
@@ -478,7 +478,7 @@ export default function AdvancedAnalytics({ stats, loading }) {
                   </div>
                 </div>
                 <Link 
-                  href={`/products/${item.product_id}/edit/${item._id}`}
+                  href={`/products/${item.product_id}/edit/${item.id}`}
                   className="px-4 py-2 bg-slate-900 border border-slate-800 dark:bg-white dark:text-slate-900 text-white dark:border-white rounded-xl text-[10px] font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-slate-900/10"
                 >
                   Restock
@@ -563,7 +563,7 @@ export default function AdvancedAnalytics({ stats, loading }) {
               return (
                 <div key={i} className="space-y-2">
                   <div className="flex items-center justify-between text-xs font-bold dark:text-white">
-                    <span className="truncate max-w-[150px]">{cat._id}</span>
+                    <span className="truncate max-w-[150px]">{cat.id}</span>
                     <span className="text-slate-500">₹{cat.revenue.toLocaleString()}</span>
                   </div>
                   <div className="h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">

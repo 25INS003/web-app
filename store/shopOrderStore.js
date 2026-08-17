@@ -67,7 +67,7 @@ export const useShopOrderStore = create()(
         // Merge updated orders into current state
         set((state) => ({
           orders: state.orders.map((order) => {
-            const updated = updatedOrders.find((o) => o._id === order._id);
+            const updated = updatedOrders.find((o) => o.id === order.id);
             return updated ? updated : order;
           }),
           isLoading: false,
@@ -98,7 +98,7 @@ export const useShopOrderStore = create()(
 
         set((state) => ({
           orders: state.orders.map((order) => {
-            const updated = updatedOrders.find((o) => o._id === order._id);
+            const updated = updatedOrders.find((o) => o.id === order.id);
             return updated ? updated : order;
           }),
           isLoading: false,
@@ -130,7 +130,7 @@ export const useShopOrderStore = create()(
 
         set((state) => ({
           orders: state.orders.map((order) => {
-            const updated = updatedOrders.find((o) => o._id === order._id);
+            const updated = updatedOrders.find((o) => o.id === order.id);
             return updated ? updated : order;
           }),
           isLoading: false,

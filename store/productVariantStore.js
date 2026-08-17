@@ -110,7 +110,7 @@ export const useVariantStore = create((set, get) => ({
             const { variant, product } = response.data.data;
             const current = get().currentVariant;
 
-            if (current && current._id === variantId) {
+            if (current && current.id === variantId) {
                 set({ currentVariant: variant });
             }
 
@@ -141,7 +141,7 @@ export const useVariantStore = create((set, get) => ({
 
             // Clear current variant if it was the one deleted
             const current = get().currentVariant;
-            if (current && current._id === variantId) {
+            if (current && current.id === variantId) {
                 set({ currentVariant: null });
             }
 

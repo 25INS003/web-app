@@ -57,8 +57,8 @@ export default function CascadingCategorySelect({
   const getParentId = React.useCallback((cat) => {
     const parentId = cat?.parent_category_id;
     if (!parentId) return null;
-    if (typeof parentId === "object" && parentId._id) {
-      return parentId._id;
+    if (typeof parentId === "object" && parentId.id) {
+      return parentId.id;
     }
     return parentId;
   }, []);
@@ -109,7 +109,7 @@ export default function CascadingCategorySelect({
 
   // Handle category click
   const handleCategoryClick = (category) => {
-    const children = getChildren(category._id);
+    const children = getChildren(category.id);
     
     if (children.length > 0) {
       // Has children - drill down
@@ -118,12 +118,12 @@ export default function CascadingCategorySelect({
       
       // If allowSelectParent, also select this category
       if (allowSelectParent) {
-        onCategorySelect(category._id);
+        onCategorySelect(category.id);
       }
     } else {
       // Leaf node - select and close
       setSelectedPath(prev => [...prev, category]);
-      onCategorySelect(category._id);
+      onCategorySelect(category.id);
       setOpen(false);
     }
   };
@@ -138,7 +138,7 @@ export default function CascadingCategorySelect({
       // Go to specific level
       const newPath = selectedPath.slice(0, index + 1);
       setSelectedPath(newPath);
-      const parentId = newPath[newPath.length - 1]._id;
+      const parentId = newPath[newPath.length - 1].id;
       const children = getChildren(parentId);
       setCurrentLevel(children.length > 0 ? children : rootCategories);
     }
@@ -146,7 +146,7 @@ export default function CascadingCategorySelect({
 
   // Handle final selection (user clicks "Select" on current category)
   const handleSelectCurrent = (category) => {
-    onCategorySelect(category._id);
+    onCategorySelect(category.id);
     setOpen(false);
   };
 
@@ -191,7 +191,7 @@ export default function CascadingCategorySelect({
   };
 
   // Find selected category
-  const selectedCategory = categories.find(cat => cat._id === value);
+  const selectedCategory = categories.find(cat => cat.id === value);
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -232,7 +232,7 @@ export default function CascadingCategorySelect({
                 Root
               </Button>
               {selectedPath.map((cat, idx) => (
-                <React.Fragment key={cat._id}>
+                <React.Fragment key={cat.id}>
                   <ChevronRight className="h-3 w-3 text-muted-foreground" />
                   <Button
                     variant="ghost"
@@ -256,12 +256,12 @@ export default function CascadingCategorySelect({
             <CommandEmpty>No categories found.</CommandEmpty>
             <CommandGroup className="dark:text-slate-200">
               {currentLevel.map((category) => {
-                const hasChild = hasChildren(category._id);
-                const isSelected = value === category._id;
+                const hasChild = hasChildren(category.id);
+                const isSelected = value === category.id;
                 
                 return (
                   <CommandItem
-                    key={category._id}
+                    key={category.id}
                     value={category.name}
                     onSelect={() => handleCategoryClick(category)}
                     className="hover:dark:bg-slate-800 focus:dark:bg-slate-800 cursor-pointer"
@@ -276,7 +276,7 @@ export default function CascadingCategorySelect({
                     {hasChild && (
                       <div className="flex items-center gap-1">
                         <Badge variant="secondary" className="text-[10px] px-1 py-0">
-                          {getChildren(category._id).length}
+                          {getChildren(category.id).length}
                         </Badge>
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
@@ -291,7 +291,7 @@ export default function CascadingCategorySelect({
           {selectedPath.length > 0 && (
             <div className="border-t dark:border-slate-700 p-2 flex justify-between items-center">
               <span className="text-xs text-muted-foreground">
-                {hasChildren(selectedPath[selectedPath.length - 1]._id) 
+                {hasChildren(selectedPath[selectedPath.length - 1].id) 
                   ? "Select or drill down" 
                   : "Category selected"}
               </span>
