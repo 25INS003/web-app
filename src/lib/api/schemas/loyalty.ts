@@ -72,20 +72,34 @@ export const loyaltyHistoryTypeSchema = z
 export type LoyaltyHistoryType = z.infer<typeof loyaltyHistoryTypeSchema>;
 
 export const loyaltyHistoryEntrySchema = z.object({
-  _id: objectId.optional(),
+  id: objectId.optional(),
   type: loyaltyHistoryTypeSchema,
   points: z.number().catch(0),
   description: z.string().catch(""),
   created_at: z.string().nullish(),
   expiry_date: z.string().nullish(),
   tier_at_transaction: loyaltyTierSchema.nullish(),
-  // Populated by the controller when the row came from an order.
+  // Either a bare foreign key or a populated order, normalised to one shape.
+  //
+  // Under Mongo this was `.populate()`d into an object, and the schema demanded
+  // that object. Postgres sends the plain uuid, so every history row failed
+  // `safeParse` — and because the list drops unparseable rows rather than
+  // failing, the page rendered an empty history for everyone instead of an
+  // error anybody would have chased. Accepting both shapes is what keeps a
+  // future join from breaking it back the other way.
   order_id: z
-    .object({
-      _id: objectId.optional(),
-      order_number: z.string().nullish(),
-      total_amount: z.number().nullish(),
-    })
+    .union([
+      objectId.transform((id) => ({
+        id,
+        order_number: null,
+        total_amount: null,
+      })),
+      z.object({
+        id: objectId.optional(),
+        order_number: z.string().nullish(),
+        total_amount: z.number().nullish(),
+      }),
+    ])
     .nullish(),
 });
 export type LoyaltyHistoryEntry = z.infer<typeof loyaltyHistoryEntrySchema>;
@@ -103,7 +117,10 @@ export const loyaltyHistoryResponseSchema = z.object({
 
 // GET /loyalty/redeem -> the catalogue plus the caller's spendable balance
 export const rewardSchema = z.object({
-  _id: objectId,
+  // `id`, not `_id`. This is a required field inside a plain `z.array()`, so
+  // the Mongo-era name did not degrade to a missing key — it threw, and the
+  // whole rewards catalogue rendered its error state.
+  id: objectId,
   name: z.string().catch(""),
   description: z.string().catch(""),
   short_description: z.string().nullish(),

@@ -248,14 +248,14 @@ function RewardsCatalogue({ balance }: { balance: number }) {
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {rewards.map((reward) => (
           <RewardCard
-            key={reward._id}
+            key={reward.id}
             reward={reward}
             balance={balance}
-            busy={redeem.isPending && pendingId === reward._id}
+            busy={redeem.isPending && pendingId === reward.id}
             disabled={redeem.isPending}
             onRedeem={() => {
-              setPendingId(reward._id);
-              redeem.mutate(reward._id, {
+              setPendingId(reward.id);
+              redeem.mutate(reward.id, {
                 onSettled: () => setPendingId(null),
               });
             }}
@@ -341,7 +341,7 @@ function HistoryList() {
       ) : (
         <ul className="mt-3 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
           {history.map((entry, i) => (
-            <HistoryRow key={entry._id ?? i} entry={entry} />
+            <HistoryRow key={entry.id ?? i} entry={entry} />
           ))}
         </ul>
       )}
