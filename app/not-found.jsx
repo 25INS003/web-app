@@ -1,13 +1,31 @@
 "use client";
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Home, AlertCircle, ArrowLeft } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
+// Where "the app" is depends on who hit the 404. This file is the ROOT
+// not-found, so it also catches the shop-owner and admin sections — and the
+// second button used to send everyone to `/`, the customer storefront. A shop
+// owner who mistyped a URL was dropped into the shopping site with no way back
+// to their own dashboard except the browser's back button, which is what the
+// other button already does.
+const SECTIONS = [
+  { prefixes: ['/dashboard', '/myshop', '/products', '/variants'], href: '/dashboard', label: 'Back to Dashboard' },
+  { prefixes: ['/admin'], href: '/admin', label: 'Back to Admin' },
+];
+
+const homeFor = (pathname) =>
+  SECTIONS.find(({ prefixes }) =>
+    prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  ) ?? { href: '/', label: 'Home Page' };
+
 export default function NotFound() {
   const router = useRouter();
+  const pathname = usePathname() ?? '/';
+  const home = homeFor(pathname);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
@@ -47,9 +65,9 @@ export default function NotFound() {
               Go Back
           </Button>
           <Button asChild className="w-full sm:w-auto">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href={home.href} className="flex items-center gap-2">
               <Home className="h-4 w-4" />
-              Home Page
+              {home.label}
             </Link>
           </Button>
         </CardFooter>
