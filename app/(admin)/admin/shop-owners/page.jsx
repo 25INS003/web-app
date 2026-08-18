@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useShopOwnerStore } from "@/store/adminShopownerStore";
 import { 
@@ -29,17 +30,38 @@ import {
 export default function ShopOwnerListPage() {
     const { shopOwners, isLoading, fetchAllOwners, approveOwner, rejectOwner, verifyOwner } = useShopOwnerStore();
     const [searchTerm, setSearchTerm] = useState("");
+    // ?status=pending — what the dashboard's approval card links to. Kept in
+    // the URL rather than in component state so the link is shareable and the
+    // back button behaves.
+    const searchParams = useSearchParams();
+    const [pendingOnly, setPendingOnly] = useState(
+        searchParams.get("status") === "pending"
+    );
 
     useEffect(() => {
         fetchAllOwners();
     }, [fetchAllOwners]);
 
     // Filter logic
-    const filteredOwners = shopOwners.filter(owner => 
-        owner.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        owner.user_id?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        owner.gst_number?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // The API's populated `user_id` carries first_name and last_name — there is
+    // no `full_name`. Reading one meant every row rendered "Unknown" and the
+    // search below silently matched nothing, which looks like "no results"
+    // rather than like a bug.
+    const ownerName = (owner) =>
+        [owner?.user_id?.first_name, owner?.user_id?.last_name]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+
+    const filteredOwners = shopOwners
+        .filter(owner => !pendingOnly || !owner.is_approved)
+        .filter(owner =>
+            owner.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ownerName(owner).toLowerCase().includes(searchTerm.toLowerCase()) ||
+            owner.gst_number?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+    const pendingCount = shopOwners.filter(o => !o.is_approved).length;
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -89,6 +111,23 @@ export default function ShopOwnerListPage() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    {/* The queue, made visible. Without a control the filter is
+                        invisible state: an admin arriving from the dashboard
+                        link sees a short list and no reason for it. */}
+                    <Button
+                        onClick={() => setPendingOnly((v) => !v)}
+                        variant={pendingOnly ? "default" : "outline"}
+                        className="gap-2"
+                    >
+                        Pending only
+                        <span className={`rounded-full px-2 py-0.5 text-xs tabular-nums ${
+                            pendingCount > 0
+                                ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                : "bg-muted text-muted-foreground"
+                        }`}>
+                            {pendingCount}
+                        </span>
+                    </Button>
                     <Button
                         onClick={() => fetchAllOwners()}
                         variant="outline"
@@ -155,7 +194,7 @@ export default function ShopOwnerListPage() {
                                                         {owner.business_name}
                                                     </span>
                                                     <span className="text-xs text-slate-500 ml-7 flex items-center gap-1">
-                                                        Owner: <span className="font-medium text-slate-700 dark:text-slate-300">{owner.user_id?.full_name || "Unknown"}</span>
+                                                        Owner: <span className="font-medium text-slate-700 dark:text-slate-300">{ownerName(owner) || "Unknown"}</span>
                                                     </span>
                                                 </div>
                                             </td>
