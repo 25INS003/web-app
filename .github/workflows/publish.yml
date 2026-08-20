@@ -132,7 +132,12 @@ jobs:
         run: |
           env_name=dev
           [ "${{ github.ref }}" = "refs/heads/production" ] && env_name=prod
-          echo "tag=${env_name}-$(date -u +%Y%m%d-%H%M)-$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+          # GITHUB_SHA, not `git rev-parse`: web-app's merge job has no
+          # checkout — it only downloads per-arch digests and merges manifests —
+          # so the git call produced an empty sha and the tag came out as
+          # dev-20260820-1057- with nothing after the dash. The runner always
+          # has GITHUB_SHA, checkout or not.
+          echo "tag=${env_name}-$(date -u +%Y%m%d-%H%M)-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
 
       - id: meta
         uses: docker/metadata-action@v5
