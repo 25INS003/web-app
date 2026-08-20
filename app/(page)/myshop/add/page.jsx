@@ -25,7 +25,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import SelectCategory from "@/components/Dropdowns/selectCategory";
 import dynamic from "next/dynamic";
 
 const MapPicker = dynamic(() => import("@/components/Maps/MapPicker"), { 
@@ -53,7 +52,6 @@ const itemVariants = {
 const AddShopPage = () => {
     const router = useRouter();
     const { createNewShop, isLoading, error: storeError } = useShopStore();
-    const [category, setCategory] = useState(null);
     const [pincodes, setPincodes] = useState([]);
     const [currentPincode, setCurrentPincode] = useState("");
 
@@ -68,7 +66,6 @@ const AddShopPage = () => {
         defaultValues: {
             name: "",
             business_name: "",
-            categories: [],
             // delivery_radius_km: 5, // Removed
             preparation_time: 30,
             delivery_fee: 0,
@@ -150,12 +147,6 @@ const AddShopPage = () => {
         await reverseGeocode(lat, lng);
     };
 
-    useEffect(() => {
-        if (category) {
-            setValue("categories", [category], { shouldValidate: true });
-        }
-    }, [category, setValue]);
-
     const handleAddPincode = () => {
         if (!currentPincode) return;
         if (pincodes.includes(currentPincode)) {
@@ -186,7 +177,6 @@ const AddShopPage = () => {
 
         if (result) {
             reset();
-            setCategory(null);
             router.push("/myshop");
         }
     };
@@ -256,13 +246,6 @@ const AddShopPage = () => {
                                     className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
                                 />
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Category *</label>
-                            <SelectCategory value={category} onCateSelect={setCategory} />
-                            <input type="hidden" {...register("categories", { required: "Please select a category" })} />
-                            {errors.categories && <p className="text-xs text-red-500">{errors.categories.message}</p>}
                         </div>
 
                         <div className="space-y-2">

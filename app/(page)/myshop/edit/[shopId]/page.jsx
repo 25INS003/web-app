@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, use } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useShopStore } from "@/store/shopStore";
@@ -30,7 +30,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SelectCategory from "@/components/Dropdowns/selectCategory";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -65,7 +64,7 @@ const EditShopPage = ({ params }) => {
     const [currentPincode, setCurrentPincode] = useState("");
     const [imagePreview, setImagePreview] = useState("");
 
-    const { register, handleSubmit, reset, control, formState: { errors } } = useForm();
+    const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
     useEffect(() => {
         if (myShops.length === 0) {
@@ -92,13 +91,17 @@ const EditShopPage = ({ params }) => {
                 website: shop.website || "",
                 shop_lat: shop.shop_lat || "",
                 shop_lng: shop.shop_lng || "",
-                category: shop.category || "",
-                preparation_time: shop.preparation_time || 30,
+                // The column is `preparation_time_min`; the form field is
+                // `preparation_time`. Reading the form's name off the API row
+                // meant this always fell through to 30, so a shop with a
+                // 45-minute prep time opened its own edit page showing 30 —
+                // and saving the form then wrote that 30 back.
+                preparation_time: shop.preparation_time_min ?? 30,
                 delivery_fee: shop.delivery_fee || 0,
                 min_order_amount: shop.min_order_amount || 0,
                 free_delivery_threshold: shop.free_delivery_threshold || 0,
             });
-            setPincodes(shop.delivery_pincodes || []); 
+            setPincodes(shop.delivery_pincodes || []);
             setImagePreview(shop.image || "");
         } else if (!storeLoading && myShops.length > 0) {
             setErrorMessage("Shop not found.");
@@ -347,19 +350,6 @@ const EditShopPage = ({ params }) => {
                                         />
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Category</label>
-                                        <Controller
-                                            name="category"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <SelectCategory
-                                                    selectedCategory={field.value}
-                                                    setSelectedCategory={field.onChange}
-                                                />
-                                            )}
-                                        />
-                                    </div>
                                 </div>
                             </div>
                         </div>
