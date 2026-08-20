@@ -53,6 +53,22 @@ export default function ShopOwnerListPage() {
             .join(" ")
             .trim();
 
+    // Registration writes "New Enterprise" as a placeholder before the
+    // applicant has filled in any business details, so the pending queue — the
+    // one screen where these rows matter most — showed a column of identical
+    // bold headings that read like branches of one chain. The row falls back
+    // to the person's name, which is the part an admin can actually act on.
+    const PLACEHOLDER_BUSINESS = "New Enterprise";
+    const businessLabel = (owner) => {
+        const name = owner?.business_name?.trim();
+        if (name && name !== PLACEHOLDER_BUSINESS) return name;
+        return ownerName(owner) || "Applicant";
+    };
+    const hasBusinessDetails = (owner) => {
+        const name = owner?.business_name?.trim();
+        return Boolean(name) && name !== PLACEHOLDER_BUSINESS;
+    };
+
     const filteredOwners = shopOwners
         .filter(owner => !pendingOnly || !owner.is_approved)
         .filter(owner =>
@@ -191,10 +207,14 @@ export default function ShopOwnerListPage() {
                                                 <div className="flex flex-col gap-1.5">
                                                     <span className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                                         <Building2 size={18} className="text-slate-400 group-hover:text-blue-500" />
-                                                        {owner.business_name}
+                                                        {businessLabel(owner)}
                                                     </span>
                                                     <span className="text-xs text-slate-500 ml-7 flex items-center gap-1">
-                                                        Owner: <span className="font-medium text-slate-700 dark:text-slate-300">{ownerName(owner) || "Unknown"}</span>
+                                                        {hasBusinessDetails(owner) ? (
+                                                            <>Owner: <span className="font-medium text-slate-700 dark:text-slate-300">{ownerName(owner) || "Unknown"}</span></>
+                                                        ) : (
+                                                            <span className="italic text-slate-400">Business details not provided yet</span>
+                                                        )}
                                                     </span>
                                                 </div>
                                             </td>
