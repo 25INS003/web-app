@@ -107,6 +107,8 @@ jobs:
 
   merge:
     needs: build
+    outputs:
+      tag: ${{ steps.stamp.outputs.tag }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -122,6 +124,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      # An immutable tag, as the backend and bucket publish. Computed here
+      # rather than in `build`, because merge is where the manifest list is
+      # tagged — the per-architecture builds carry digests, not names.
+      - id: stamp
+        run: |
+          env_name=dev
+          [ "${{ github.ref }}" = "refs/heads/production" ] && env_name=prod
+          echo "tag=${env_name}-$(date -u +%Y%m%d-%H%M)-$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
 
       - id: meta
         uses: docker/metadata-action@v5
@@ -139,6 +150,7 @@ jobs:
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=prod,enable=${{ github.ref == 'refs/heads/production' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/production' }}
+            type=raw,value=${{ steps.stamp.outputs.tag }}
             type=sha,format=long
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -156,3 +168,68 @@ jobs:
         run: |
           docker buildx imagetools inspect "${IMAGE}:${{ steps.meta.outputs.version }}" \
             --format '{{ json .Manifest }}' | jq -r '.manifests[]?.platform | "\(.os)/\(.architecture)"'
+
+  write-back:
+    needs: merge
+    runs-on: ubuntu-latest
+    # Tag builds are releases of an image, not a statement about what an
+    # environment should run.
+    if: github.ref_type != 'tag'
+    steps:
+      - name: Is a manifest token configured?
+        id: guard
+        env:
+          TOKEN: ${{ secrets.MANIFEST_TOKEN }}
+        run: echo "ready=${{ env.TOKEN != '' }}" >> "$GITHUB_OUTPUT"
+
+      - if: steps.guard.outputs.ready != 'true'
+        run: |
+          echo "::notice::MANIFEST_TOKEN is not set — skipping write-back."
+          echo "The image published normally; nothing was committed to the manifest repo."
+
+      - if: steps.guard.outputs.ready == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: 25INS003/backend-services
+          token: ${{ secrets.MANIFEST_TOKEN }}
+          # Manifests only. Fetching the submodules here would need credentials
+          # for three more repositories to change one line of YAML.
+          submodules: false
+          ref: main
+
+      - if: steps.guard.outputs.ready == 'true'
+        name: Set the image tag and commit
+        env:
+          TAG: ${{ needs.merge.outputs.tag }}
+        run: |
+          set -euo pipefail
+          overlay=k8s/overlays/dev
+          [ "${{ github.ref }}" = "refs/heads/production" ] && overlay=k8s/overlays/prod
+
+          curl -sSfL -o /usr/local/bin/kustomize.tar.gz \
+            https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz
+          tar -xzf /usr/local/bin/kustomize.tar.gz -C /usr/local/bin && chmod +x /usr/local/bin/kustomize
+
+          cd "$overlay"
+          kustomize edit set image "ghcr.io/25ins003/web-app=ghcr.io/25ins003/web-app:${TAG}"
+          cd - >/dev/null
+
+          if git diff --quiet; then
+            echo "::notice::${overlay} already names ${TAG}; nothing to commit."
+            exit 0
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$overlay"
+          git commit \
+            -m "deploy(web-app): ${TAG}" \
+            -m "Written by the publish workflow of 25INS003/web-app@${GITHUB_SHA}. The image is immutable, so this commit is the whole record of what that environment should run — and reverting it is the rollback."
+          # Someone else's write-back may have landed while this build ran.
+          for attempt in 1 2 3; do
+            if git push origin main; then exit 0; fi
+            echo "push rejected; rebasing on origin/main (attempt ${attempt})"
+            git pull --rebase origin main
+          done
+          echo "::error::Could not push the image tag after three attempts."
+          exit 1
