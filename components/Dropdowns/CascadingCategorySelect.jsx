@@ -46,16 +46,29 @@ export default function CascadingCategorySelect({
     error 
   } = useCategoryStore();
 
-  // Fetch all categories on mount
+  // Refetch on mount, always.
+  //
+  // This ran only when the list was empty, and the store persists to
+  // localStorage — so a browser that had loaded categories once never asked
+  // again. Every option kept pointing at whatever ids it saw first, and once
+  // the catalogue changed, choosing one failed the product create on a foreign
+  // key that reloading could not clear.
+  //
+  // The persisted copy still renders the first paint; this just makes sure it
+  // is replaced by something true.
   React.useEffect(() => {
-    if (categories.length === 0) {
-      fetchCategories();
-    }
-  }, [categories.length, fetchCategories]);
+    fetchCategories();
+  }, [fetchCategories]);
 
   // Helper to get parent ID from either string or populated object
+  //
+  // The column is `parent_id`. `parent_category_id` is the Mongo-era name and
+  // is absent from every row the API returns, so this read `undefined` for all
+  // of them: every category looked like a root, the picker rendered one flat
+  // list of thirty, and drilling into a parent was impossible. Both names are
+  // accepted because the legacy admin pages still emit the old one.
   const getParentId = React.useCallback((cat) => {
-    const parentId = cat?.parent_category_id;
+    const parentId = cat?.parent_id ?? cat?.parent_category_id;
     if (!parentId) return null;
     if (typeof parentId === "object" && parentId.id) {
       return parentId.id;

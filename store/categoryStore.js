@@ -4,6 +4,25 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import apiClient from "@/api/apiClient";
 
+/**
+ * One row per id, first occurrence winning.
+ *
+ * React keys off `category.id`, and a list holding the same id twice produces
+ * "Encountered two children with the same key" — after which React is free to
+ * duplicate or drop either one. The list is assembled from three places (a
+ * fetch, the children cache, and an append on create), so guarding at the one
+ * point they all write through is cheaper than proving none of them can ever
+ * overlap.
+ */
+const dedupeById = (rows) => {
+  if (!Array.isArray(rows)) return [];
+  const seen = new Map();
+  for (const row of rows) {
+    if (row?.id && !seen.has(row.id)) seen.set(row.id, row);
+  }
+  return [...seen.values()];
+};
+
 export const useCategoryStore = create()(
   persist(
     (set, get) => ({
@@ -21,7 +40,7 @@ export const useCategoryStore = create()(
         set({ isLoading: true, error: null });
         try {
           const response = await apiClient.get("/category/categories");
-          const categories = response.data.data || response.data;
+          const categories = dedupeById(response.data.data || response.data);
           set({ categories, isLoading: false });
         } catch (error) {
           set({
@@ -243,10 +262,28 @@ export const useCategoryStore = create()(
     {
       name: "category-storage",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ 
+      // A cache to render from on the first paint, never a source of truth.
+      //
+      // This was persisted with no version, and the one consumer only refetched
+      // when the list was empty — so any browser that had loaded categories
+      // once kept them for good. After the catalogue changed, every option in
+      // the picker pointed at a row that no longer existed, the product create
+      // failed on a foreign key, and reloading the page did not help because
+      // the stale list came straight back out of localStorage.
+      //
+      // `version` retires caches written before this shape; readers refetch on
+      // mount regardless, so a stale entry now survives only until the request
+      // it no longer blocks comes back.
+      version: 2,
+      partialize: (state) => ({
         categories: state.categories,
         rootCategories: state.rootCategories,
         categoryTree: state.categoryTree
+      }),
+      migrate: () => ({
+        categories: [],
+        rootCategories: [],
+        categoryTree: [],
       }),
     }
   )
