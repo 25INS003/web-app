@@ -368,7 +368,12 @@ const ViewProductPage = ({ shopId, productId }) => {
                                         <div className="flex items-center justify-between">
                                             <h3 className="text-lg font-medium">Manage Variants</h3>
                                             <Button 
-                                                onClick={() => router.push(`/variants/${currentProduct.id}/add`)}
+                                                // `?shopId=` because the route is /variants/[productId]/add —
+                                                // there is no shop segment, and the product detail endpoint
+                                                // this page's target has to call is shop-scoped. Without it
+                                                // that page waited for a param that never arrives and
+                                                // rendered its spinner forever.
+                                                onClick={() => router.push(`/variants/${currentProduct.id}/add?shopId=${shopId}`)}
                                                 className="bg-blue-600 hover:bg-blue-700 text-white"
                                             >
                                                 <Box className="w-4 h-4 mr-2" />

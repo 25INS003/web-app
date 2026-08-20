@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { useProductStore } from "@/store/productStore";
 import { useVariantStore } from "@/store/productVariantStore";
 import CascadingCategorySelect from "@/components/Dropdowns/CascadingCategorySelect";
+import { asNumber, fromNumericInput } from "@/lib/forms/number";
 
 // --- Icons ---
 import {
@@ -84,6 +85,18 @@ const formatPrice = (amount) => {
   }).format(amount || 0);
 };
 
+/** The variant payload, with every numeric field a real number. */
+const variantPayload = (data) => ({
+  ...data,
+  price: asNumber(data.price),
+  stock_quantity: asNumber(data.stock_quantity),
+  cost_price: asNumber(data.cost_price),
+  compare_at_price: asNumber(data.compare_at_price),
+  ...(data.per_unit_qty === undefined
+    ? {}
+    : { per_unit_qty: asNumber(data.per_unit_qty, 1) }),
+});
+
 // --- Variant Row Component ---
 const VariantRow = ({ variant, shopId, onRefresh }) => {
   const { updateVariant, deleteVariant, uploadVariantImages, deleteVariantImage, isLoading } = useVariantStore();
@@ -124,7 +137,7 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    const updateSuccess = await updateVariant(variant.id, data);
+    const updateSuccess = await updateVariant(variant.id, variantPayload(data));
     let uploadSuccess = true;
     if (pendingFiles.length > 0) {
       const res = await uploadVariantImages(variant.id, pendingFiles);
@@ -215,22 +228,22 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-500">Selling Price *</label>
-              <Input type="number" value={data.price} onChange={e => setData({ ...data, price: parseFloat(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+              <Input type="number" value={data.price} onChange={e => setData({ ...data, price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-500">Stock Qty *</label>
-              <Input type="number" value={data.stock_quantity} onChange={e => setData({ ...data, stock_quantity: parseFloat(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+              <Input type="number" value={data.stock_quantity} onChange={e => setData({ ...data, stock_quantity: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-500">Cost Price</label>
-              <Input type="number" value={data.cost_price} onChange={e => setData({ ...data, cost_price: parseFloat(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+              <Input type="number" value={data.cost_price} onChange={e => setData({ ...data, cost_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-500">MRP (Compare At)</label>
-              <Input type="number" value={data.compare_at_price} onChange={e => setData({ ...data, compare_at_price: parseFloat(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+              <Input type="number" value={data.compare_at_price} onChange={e => setData({ ...data, compare_at_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-500">SKU</label>
@@ -254,7 +267,7 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-500">Per Unit Qty</label>
-              <Input type="number" value={data.per_unit_qty} onChange={e => setData({ ...data, per_unit_qty: parseFloat(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+              <Input type="number" value={data.per_unit_qty} onChange={e => setData({ ...data, per_unit_qty: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
             </div>
           </div>
 
@@ -429,18 +442,28 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
 
 
 // --- Add Variant Form Component ---
-const AddVariantForm = ({ productId, onRefresh }) => {
+const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
   const { addVariant, uploadVariantImages, isLoading } = useVariantStore();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [newData, setNewData] = useState({
+  // `attributes` belongs here as much as price does.
+  //
+  // A product may hold exactly one variant with no attributes — the database
+  // enforces it on (product_id, combination_signature). This form had no way
+  // to set any, so every variant it created was the attribute-less one, and
+  // the second attempt could only ever fail. There was no combination of
+  // inputs on this screen that produced a working second variant.
+  const EMPTY_VARIANT = {
     name: "",
     price: 0,
     stock_quantity: 0,
     sku: "",
     cost_price: 0,
-    compare_at_price: 0
-  });
+    compare_at_price: 0,
+    attributes: []
+  };
+
+  const [newData, setNewData] = useState(EMPTY_VARIANT);
 
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -463,13 +486,32 @@ const AddVariantForm = ({ productId, onRefresh }) => {
   };
 
   const handleAdd = async () => {
-    const newVariant = await addVariant(productId, newData);
+    // A half-typed row ("Size" with no value) is not an attribute yet, and
+    // sending it would make the signature disagree with what is on screen.
+    const attributes = (newData.attributes || []).filter(
+      (a) => a.name?.trim() && a.value?.trim()
+    );
+
+    // Said here rather than left to the constraint: the rule is about this
+    // product's other variants, which the server can only answer with a 400
+    // after the round trip.
+    if (attributes.length === 0 && existingVariantCount > 0) {
+      toast.error(
+        "Add at least one attribute (e.g. Size / M). This product already has a variant with none."
+      );
+      return;
+    }
+
+    const newVariant = await addVariant(
+      productId,
+      variantPayload({ ...newData, attributes })
+    );
     if (newVariant) {
       if (imageFile) {
         await uploadVariantImages(newVariant.id, [imageFile]);
       }
       toast.success("New variant added!");
-      setNewData({ name: "", price: 0, stock_quantity: 0, sku: "", cost_price: 0, compare_at_price: 0 });
+      setNewData(EMPTY_VARIANT);
       removeImage();
       setIsOpen(false);
       onRefresh();
@@ -503,26 +545,87 @@ const AddVariantForm = ({ productId, onRefresh }) => {
         <div className="grid grid-cols-3 gap-4">
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-500">Selling Price *</label>
-            <Input type="number" value={newData.price} onChange={e => setNewData({ ...newData, price: parseFloat(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+            <Input type="number" value={newData.price} onChange={e => setNewData({ ...newData, price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-500">Stock Qty *</label>
-            <Input type="number" value={newData.stock_quantity} onChange={e => setNewData({ ...newData, stock_quantity: parseFloat(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+            <Input type="number" value={newData.stock_quantity} onChange={e => setNewData({ ...newData, stock_quantity: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-500">Cost Price</label>
-            <Input type="number" value={newData.cost_price} onChange={e => setNewData({ ...newData, cost_price: parseFloat(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+            <Input type="number" value={newData.cost_price} onChange={e => setNewData({ ...newData, cost_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-500">MRP (Compare At)</label>
-            <Input type="number" value={newData.compare_at_price} onChange={e => setNewData({ ...newData, compare_at_price: parseFloat(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+            <Input type="number" value={newData.compare_at_price} onChange={e => setNewData({ ...newData, compare_at_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-500">SKU</label>
             <Input placeholder="Optional" value={newData.sku} onChange={e => setNewData({ ...newData, sku: e.target.value })} className="h-10 rounded-xl dark:bg-slate-800" />
+          </div>
+        </div>
+
+        {/* Attributes — what actually distinguishes this variant from the
+            others. A product may hold only one variant with none, so from the
+            second onwards these are required, not decorative. */}
+        <div className="space-y-3 border-t pt-4 dark:border-slate-700">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-slate-500">
+              Attributes (Color, Size, etc.)
+            </label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-[10px] rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10"
+              onClick={() => setNewData({ ...newData, attributes: [...(newData.attributes || []), { name: "", value: "" }] })}
+            >
+              + Add Attribute
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {(newData.attributes || []).map((attr, idx) => (
+              <div key={idx} className="flex gap-2 items-center">
+                <Input
+                  placeholder="Name (e.g. Color)"
+                  value={attr.name}
+                  onChange={(e) => {
+                    const newAttrs = [...newData.attributes];
+                    newAttrs[idx] = { ...newAttrs[idx], name: e.target.value };
+                    setNewData({ ...newData, attributes: newAttrs });
+                  }}
+                  className="h-9 text-xs flex-1 rounded-xl dark:bg-slate-800"
+                />
+                <Input
+                  placeholder="Value (e.g. Red)"
+                  value={attr.value}
+                  onChange={(e) => {
+                    const newAttrs = [...newData.attributes];
+                    newAttrs[idx] = { ...newAttrs[idx], value: e.target.value };
+                    setNewData({ ...newData, attributes: newAttrs });
+                  }}
+                  className="h-9 text-xs flex-1 rounded-xl dark:bg-slate-800"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-red-500 hover:text-red-600 rounded-xl"
+                  onClick={() => setNewData({ ...newData, attributes: newData.attributes.filter((_, i) => i !== idx) })}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            {(newData.attributes || []).length === 0 && (
+              <p className="text-[10px] text-slate-400 italic">
+                No attributes yet — add one (e.g. Size / M) so this variant is
+                distinguishable from the others.
+              </p>
+            )}
           </div>
         </div>
 
@@ -823,7 +926,11 @@ const EditProductPage = () => {
             </div>
 
             <div className="mt-6">
-              <AddVariantForm productId={productId} onRefresh={refreshData} />
+              <AddVariantForm
+                productId={productId}
+                onRefresh={refreshData}
+                existingVariantCount={currentVariants?.length ?? 0}
+              />
             </div>
           </div>
 

@@ -57,11 +57,15 @@ export const useVariantStore = create((set, get) => ({
 
             return variant;
         } catch (err) {
-            set({
-                error: err.response?.data?.message || "Failed to create variant",
-                isLoading: false,
-            });
-            return false;
+            // Rethrow, so the caller can show the server's reason. Returning
+            // `false` meant every failure looked identical to the page, which
+            // reported "An unexpected error occurred" and left the real
+            // message — "this product already has a variant with those
+            // attributes" — visible only as a 400 in the console.
+            const message =
+                err.response?.data?.message || err.message || "Failed to create variant";
+            set({ error: message, isLoading: false });
+            throw new Error(message);
         }
     },
 

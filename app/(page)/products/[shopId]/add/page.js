@@ -82,6 +82,31 @@ const variantSchema = z.object({
   tax: z.record(z.string(), z.coerce.number().min(0)).optional()
 });
 
+// A blank variant, in one place.
+//
+// The initial variant and the "Add Variant" button built this object
+// separately, and they disagreed: neither set `name`, and the append also
+// omitted `sku`, `compare_at_price` and `cost_price`. A field react-hook-form
+// has no value for renders `value={undefined}`, which React treats as an
+// uncontrolled input — so the first keystroke in the variant name flipped it to
+// controlled and produced the warning.
+//
+// Every key registered below must appear here. A factory rather than a shared
+// constant because `attributes` and `tax` are mutable: one object handed to two
+// variants would let an attribute typed into the second appear in the first.
+const emptyVariant = () => ({
+  name: "",
+  sku: "",
+  price: 0,
+  compare_at_price: 0,
+  cost_price: 0,
+  stock_quantity: 0,
+  unit: "piece",
+  per_unit_qty: 1,
+  attributes: [],
+  tax: {},
+});
+
 const productSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().optional(),
@@ -225,19 +250,7 @@ const AddProductPage = () => {
       brand: "",
       category_id: "",
       is_active: true,
-      variants: [
-        {
-          price: 0,
-          compare_at_price: 0,
-          cost_price: 0,
-          stock_quantity: 0,
-          sku: "",
-          unit: "piece",
-          per_unit_qty: 1,
-          attributes: [],
-          tax: {}
-        }
-      ]
+      variants: [emptyVariant()]
     },
   });
 
@@ -309,8 +322,13 @@ const AddProductPage = () => {
       const createdProduct = response?.product;
 
       if (!createdProduct || !createdProduct.id) {
-        toast.error("Product created but ID missing. Check console.");
-        return;
+        // Only reachable now if the request succeeded and the body was
+        // malformed. A rejected request throws, so it lands in the catch below
+        // carrying the server's own reason — this used to swallow those and
+        // report that the product had been created, which it had not.
+        throw new Error(
+          "The server accepted the product but did not return it. Nothing was saved — please try again."
+        );
       }
 
       const productId = createdProduct.id;
@@ -542,7 +560,7 @@ const AddProductPage = () => {
               </div>
               <Button
                 type="button"
-                onClick={() => appendVariant({ price: 0, stock_quantity: 0, unit: "piece", per_unit_qty: 1, attributes: [], tax: {} })}
+                onClick={() => appendVariant(emptyVariant())}
                 className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-500/25"
               >
                 <Plus className="w-4 h-4 mr-2" /> Add Variant

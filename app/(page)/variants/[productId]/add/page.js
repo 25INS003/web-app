@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation"; 
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useVariantStore } from "@/store/productVariantStore";
 import { useProductStore } from "@/store/productStore"; // Import product store
 import { 
@@ -19,7 +19,23 @@ import { toast } from "sonner"; // Assuming sonner is used for toasts
 export default function AddVariantPage() {
   const router = useRouter();
   const params = useParams();
-  const { productId, shopId } = params; // Ensure shopId is available in params if needed
+  const searchParams = useSearchParams();
+
+  // The route is /variants/[productId]/add — there is no shop segment, so
+  // `params.shopId` was always undefined. The init effect below required it
+  // before it would clear `isInitializing`, so the page sat on its spinner
+  // forever and the "Add Variant" button looked like it did nothing.
+  //
+  // The product detail endpoint is shop-scoped, so the id has to come from
+  // somewhere: the caller passes it as `?shopId=`, and a product already in
+  // the store covers a reload or a link that predates that.
+  const { productId } = params;
+  const { products } = useProductStore();
+  const shopId =
+    params.shopId ??
+    searchParams.get("shopId") ??
+    products.find((p) => p.id === productId)?.shop_id ??
+    null;
 
   // --- Store Actions ---
   const { addVariant, uploadVariantImages, updateVariant, isLoading } = useVariantStore();
@@ -54,11 +70,18 @@ export default function AddVariantPage() {
   });
 
   // --- Initialization ---
+  //
+  // `setIsInitializing(false)` runs whatever happens. It used to sit inside
+  // the `if`, so a missing shopId did not fail — it simply never finished
+  // loading, and the page showed a spinner with no error and no way forward.
   useEffect(() => {
     const init = async () => {
-      if (productId && shopId) {
-        // Fetch product & variants to check if we are in the "First Variant" scenario
-        await getProductDetails(shopId, productId);
+      try {
+        if (productId && shopId) {
+          // Fetch product & variants to check if we are in the "First Variant" scenario
+          await getProductDetails(shopId, productId);
+        }
+      } finally {
         setIsInitializing(false);
       }
     };
@@ -192,6 +215,19 @@ export default function AddVariantPage() {
             attributes: formData.attributes.filter(attr => attr.name && attr.value)
         };
 
+        // A product may hold exactly one variant with no attributes — that is
+        // the "plain" one, and the database enforces it as a unique key on
+        // (product_id, combination_signature). Adding a second is the common
+        // mistake here, because leaving the attribute rows blank looks like
+        // "no opinion" rather than like a choice, so say it before the round
+        // trip instead of turning a constraint into a toast.
+        if (cleanedData.attributes.length === 0 && currentVariants?.length > 0) {
+            toast.error(
+                "Give this variant at least one attribute — for example Size / M. This product already has a plain variant."
+            );
+            return;
+        }
+
         const newVariant = await addVariant(productId, cleanedData);
 
         if (newVariant && newVariant.id) {
@@ -203,13 +239,44 @@ export default function AddVariantPage() {
         }
 
     } catch (error) {
+        // The server's own reason, not a stand-in for it. This said "An
+        // unexpected error occurred" for every failure, so the one message
+        // that explained what to do next never reached the screen.
         console.error(error);
-        toast.error("An unexpected error occurred");
+        toast.error(error?.message || "An unexpected error occurred");
     }
   };
 
   if (isInitializing) {
       return <div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-600"/></div>
+  }
+
+  // Say so, rather than rendering a form that cannot submit.
+  //
+  // Without the product loaded there is no name to build a default variant
+  // name from and no way to tell whether the existing default needs renaming
+  // first — so the form would look ready and then fail on submit.
+  if (!currentProduct) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+        <AlertTriangle className="h-10 w-10 text-amber-500" />
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            Could not load this product
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Open it from the product page so the shop is known, then add the
+            variant from there.
+          </p>
+        </div>
+        <button
+          onClick={() => router.back()}
+          className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          Go back
+        </button>
+      </div>
+    );
   }
 
   return (
