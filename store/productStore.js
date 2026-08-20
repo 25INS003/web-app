@@ -123,11 +123,14 @@ export const useProductStore = create((set, get) => ({
       // Return structure matches frontend: product.product.id
       return { product: newProduct };
     } catch (err) {
-      set({
-        error: err.response?.data?.message || "Failed to create product",
-        isLoading: false,
-      });
-      return false;
+      // Rethrow rather than returning `false`. The caller could not tell a
+      // failed request from a successful one with a malformed body, so every
+      // error surfaced as "Product created but ID missing" — telling the owner
+      // their product exists when the request had in fact been rejected.
+      const message =
+        err.response?.data?.message || err.message || "Failed to create product";
+      set({ error: message, isLoading: false });
+      throw new Error(message);
     }
   },
 
