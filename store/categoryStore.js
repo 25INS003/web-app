@@ -3,25 +3,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import apiClient from "@/api/apiClient";
-
-/**
- * One row per id, first occurrence winning.
- *
- * React keys off `category.id`, and a list holding the same id twice produces
- * "Encountered two children with the same key" — after which React is free to
- * duplicate or drop either one. The list is assembled from three places (a
- * fetch, the children cache, and an append on create), so guarding at the one
- * point they all write through is cheaper than proving none of them can ever
- * overlap.
- */
-const dedupeById = (rows) => {
-  if (!Array.isArray(rows)) return [];
-  const seen = new Map();
-  for (const row of rows) {
-    if (row?.id && !seen.has(row.id)) seen.set(row.id, row);
-  }
-  return [...seen.values()];
-};
+// Shared with the picker, which keys its breadcrumb off the same ids.
+import { dedupeById, parentIdOf } from "@/lib/categories/tree";
 
 export const useCategoryStore = create()(
   persist(
@@ -125,33 +108,21 @@ export const useCategoryStore = create()(
       },
 
       // --- Get children from cache or all categories ---
+      //
+      // `parentIdOf` reads `parent_id`, which is the column. Both of these
+      // checked only `parent_category_id` — the Mongo-era name, absent from
+      // every row the API returns — so `getChildrenOf` always returned nothing
+      // and `hasChildren` was always false. Any caller asking "does this
+      // category have sub-categories?" was told no.
       getChildrenOf: (parentId) => {
         const { categories, childrenCache } = get();
         if (childrenCache[parentId]) return childrenCache[parentId];
-        // Handle both populated (object) and unpopulated (string) parent_category_id
-        return categories.filter(cat => {
-          const catParentId = cat.parent_category_id;
-          if (!catParentId) return false;
-          if (typeof catParentId === "object" && catParentId.id) {
-            return catParentId.id === parentId;
-          }
-          return catParentId === parentId;
-        });
+        return categories.filter((cat) => parentIdOf(cat) === parentId);
       },
 
       // --- Check if category has children ---
-      hasChildren: (categoryId) => {
-        const { categories } = get();
-        // Handle both populated (object) and unpopulated (string) parent_category_id
-        return categories.some(cat => {
-          const catParentId = cat.parent_category_id;
-          if (!catParentId) return false;
-          if (typeof catParentId === "object" && catParentId.id) {
-            return catParentId.id === categoryId;
-          }
-          return catParentId === categoryId;
-        });
-      },
+      hasChildren: (categoryId) =>
+        get().categories.some((cat) => parentIdOf(cat) === categoryId),
 
       // --- Clear children cache ---
       clearChildrenCache: () => set({ childrenCache: {} }),
@@ -173,7 +144,9 @@ export const useCategoryStore = create()(
           const newCategory = response.data.data || response.data;
 
           set((state) => ({
-            categories: [...state.categories, newCategory],
+            // Deduped: a create that races a refetch would otherwise put the
+            // same category in the list twice, and the list is rendered by id.
+            categories: dedupeById([...state.categories, newCategory]),
             childrenCache: {}, // Clear cache to refetch
             isLoading: false,
           }));

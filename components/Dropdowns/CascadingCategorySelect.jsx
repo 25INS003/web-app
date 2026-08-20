@@ -21,6 +21,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 import { useCategoryStore } from "@/store/categoryStore";
+import {
+  categoryPath,
+  dedupeById,
+  parentIdOf,
+} from "@/lib/categories/tree";
 
 /**
  * Cascading Category Selector with unlimited nesting depth.
@@ -67,14 +72,7 @@ export default function CascadingCategorySelect({
   // of them: every category looked like a root, the picker rendered one flat
   // list of thirty, and drilling into a parent was impossible. Both names are
   // accepted because the legacy admin pages still emit the old one.
-  const getParentId = React.useCallback((cat) => {
-    const parentId = cat?.parent_id ?? cat?.parent_category_id;
-    if (!parentId) return null;
-    if (typeof parentId === "object" && parentId.id) {
-      return parentId.id;
-    }
-    return parentId;
-  }, []);
+  const getParentId = React.useCallback((cat) => parentIdOf(cat), []);
 
   // Get root categories (no parent)
   const rootCategories = React.useMemo(() => {
@@ -94,7 +92,11 @@ export default function CascadingCategorySelect({
       if (value && categories.length > 0) {
         const ancestry = await fetchCategoryAncestry(value);
         if (ancestry && ancestry.length > 0) {
-          setSelectedPath(ancestry);
+          // Deduped for the same reason the click handler derives its path:
+          // this array is rendered with `key={cat.id}` and comes from a second
+          // source, so the two must not be able to disagree about whether a
+          // node can appear twice.
+          setSelectedPath(dedupeById(ancestry));
           // Set current level to siblings of the selected category
           const lastCat = ancestry[ancestry.length - 1];
           const lastCatParentId = getParentId(lastCat);
@@ -115,6 +117,13 @@ export default function CascadingCategorySelect({
     return categories.filter(cat => getParentId(cat) === parentId);
   }, [categories, getParentId]);
 
+  // The breadcrumb for a category: its ancestors, then itself. Derived from
+  // the tree rather than accumulated from clicks — see lib/categories/tree.
+  const pathTo = React.useCallback(
+    (category) => categoryPath(categories, category),
+    [categories]
+  );
+
   // Check if a category has children
   const hasChildren = React.useCallback((categoryId) => {
     return categories.some(cat => getParentId(cat) === categoryId);
@@ -123,19 +132,22 @@ export default function CascadingCategorySelect({
   // Handle category click
   const handleCategoryClick = (category) => {
     const children = getChildren(category.id);
-    
+
+    // `pathTo`, not `[...prev, category]` — see the note on pathTo. Appending
+    // assumed every click was a step down from the level on screen, and the
+    // breadcrumb could end up holding the same category twice.
+    setSelectedPath(pathTo(category));
+
     if (children.length > 0) {
       // Has children - drill down
-      setSelectedPath(prev => [...prev, category]);
       setCurrentLevel(children);
-      
+
       // If allowSelectParent, also select this category
       if (allowSelectParent) {
         onCategorySelect(category.id);
       }
     } else {
       // Leaf node - select and close
-      setSelectedPath(prev => [...prev, category]);
       onCategorySelect(category.id);
       setOpen(false);
     }
@@ -151,9 +163,16 @@ export default function CascadingCategorySelect({
       // Go to specific level
       const newPath = selectedPath.slice(0, index + 1);
       setSelectedPath(newPath);
-      const parentId = newPath[newPath.length - 1].id;
-      const children = getChildren(parentId);
-      setCurrentLevel(children.length > 0 ? children : rootCategories);
+      const target = newPath[newPath.length - 1];
+      const children = getChildren(target.id);
+
+      // A leaf shows its siblings, not the root list. Falling back to the
+      // roots put the picker on a level the breadcrumb did not describe —
+      // "Beverages / Juices" above a list of every top-level category — and
+      // the next click was then appended to a path it did not belong to.
+      const parentId = getParentId(target);
+      const siblings = parentId ? getChildren(parentId) : rootCategories;
+      setCurrentLevel(children.length > 0 ? children : siblings);
     }
   };
 
