@@ -34,10 +34,13 @@ export default function ShopOwnerListPage() {
         fetchAllOwners();
     }, [fetchAllOwners]);
 
-    // Filter logic
-    const filteredOwners = shopOwners.filter(owner => 
+    // Filter logic. `user_id` is hydrated into the user record by the admin
+    // list endpoints, but it carries `first_name`/`last_name` — there is no
+    // `full_name`, so searching by an applicant's name matched nothing.
+    const filteredOwners = shopOwners.filter(owner =>
         owner.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        owner.user_id?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `${owner.user_id?.first_name ?? ""} ${owner.user_id?.last_name ?? ""}`.trim().toLowerCase().includes(searchTerm.toLowerCase()) ||
+        owner.user_id?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         owner.gst_number?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
