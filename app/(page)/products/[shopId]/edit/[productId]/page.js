@@ -86,16 +86,29 @@ const formatPrice = (amount) => {
 };
 
 /** The variant payload, with every numeric field a real number. */
-const variantPayload = (data) => ({
-  ...data,
-  price: asNumber(data.price),
-  stock_quantity: asNumber(data.stock_quantity),
-  cost_price: asNumber(data.cost_price),
-  compare_at_price: asNumber(data.compare_at_price),
-  ...(data.per_unit_qty === undefined
-    ? {}
-    : { per_unit_qty: asNumber(data.per_unit_qty, 1) }),
-});
+/**
+ * The variant payload, with every numeric field present turned into a number.
+ *
+ * Presence-aware on purpose. Coercing unconditionally would turn a field the
+ * caller deliberately left out into `asNumber(undefined)` — zero — so a save
+ * of just the price would post a stock of 0 alongside it. Absent has to stay
+ * absent, because that is what tells the API to leave the column alone.
+ */
+const NUMERIC_VARIANT_FIELDS = {
+  price: 0,
+  stock_quantity: 0,
+  cost_price: 0,
+  compare_at_price: 0,
+  per_unit_qty: 1,
+};
+
+const variantPayload = (data) => {
+  const out = { ...data };
+  for (const [field, fallback] of Object.entries(NUMERIC_VARIANT_FIELDS)) {
+    if (field in out) out[field] = asNumber(out[field], fallback);
+  }
+  return out;
+};
 
 // --- Variant Row Component ---
 const VariantRow = ({ variant, shopId, onRefresh }) => {
@@ -112,18 +125,39 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
     return [];
   };
 
-  const [data, setData] = useState({
-    name: variant.name || "",
-    price: variant.price || 0,
-    stock_quantity: variant.stock_quantity || 0,
-    sku: variant.sku || "",
-    cost_price: variant.cost_price || 0,
-    compare_at_price: variant.compare_at_price || 0,
-    unit: variant.unit || "piece",
-    per_unit_qty: variant.per_unit_qty || 1,
-    tax: normalizeTax(variant.tax),
-    attributes: variant.attributes || []
+  // The row's editable copy of the variant.
+  const fromVariant = (v) => ({
+    name: v.name || "",
+    price: v.price || 0,
+    stock_quantity: v.stock_quantity || 0,
+    sku: v.sku || "",
+    cost_price: v.cost_price || 0,
+    compare_at_price: v.compare_at_price || 0,
+    unit: v.unit || "piece",
+    per_unit_qty: v.per_unit_qty || 1,
+    tax: normalizeTax(v.tax),
+    attributes: v.attributes || []
   });
+
+  const [data, setData] = useState(() => fromVariant(variant));
+
+  // Re-read the variant whenever the server's copy moves.
+  //
+  // `useState` runs its initialiser once, so this held a snapshot taken when
+  // the page first loaded and nothing ever refreshed it. Combined with a save
+  // that posts every field, that made editing one field rewrite the others
+  // from stale values — sell three units, change the price, and the save put
+  // the pre-sale stock back. After the first save the row still held the old
+  // snapshot, so saving twice re-sent it.
+  //
+  // Keyed on `updated_at`: a row the user is typing in has not moved on the
+  // server, so their edits are never yanked out from under them — only a row
+  // that actually changed is re-read.
+  const serverVersion = variant.updated_at;
+  useEffect(() => {
+    setData(fromVariant(variant));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variant.id, serverVersion]);
 
   const [pendingFiles, setPendingFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
@@ -137,7 +171,28 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    const updateSuccess = await updateVariant(variant.id, variantPayload(data));
+
+    // Only the fields this row actually changed.
+    //
+    // Posting the whole variant meant every save asserted a value for stock,
+    // price and the rest — so editing one field silently rewrote the others
+    // from whatever the form was holding. The API leaves absent fields alone,
+    // so sending only what moved makes a save say what it means.
+    const current = fromVariant(variant);
+    const changed = Object.fromEntries(
+      Object.entries(data).filter(
+        ([key, value]) =>
+          JSON.stringify(value) !== JSON.stringify(current[key])
+      )
+    );
+
+    if (Object.keys(changed).length === 0 && pendingFiles.length === 0) {
+      toast.info("Nothing to save");
+      setIsSaving(false);
+      return;
+    }
+
+    const updateSuccess = await updateVariant(variant.id, variantPayload(changed));
     let uploadSuccess = true;
     if (pendingFiles.length > 0) {
       const res = await uploadVariantImages(variant.id, pendingFiles);
