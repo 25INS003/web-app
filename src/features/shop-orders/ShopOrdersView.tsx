@@ -157,8 +157,11 @@ export function ShopOrdersView() {
             label="Total orders"
             value={stats.data.overview.total_orders ?? 0}
           />
+          {/* Revenue counts delivered, settled orders only — an order that
+              has been placed is not money taken. The label says which, so
+              "3 orders, ₹0" reads as a fact rather than as a bug. */}
           <Tile
-            label="Revenue"
+            label={`Revenue (${stats.data.overview.revenue_orders ?? 0} delivered)`}
             value={formatPrice(stats.data.overview.total_revenue ?? 0)}
           />
         </div>
@@ -227,6 +230,7 @@ export function ShopOrdersView() {
               <tr>
                 <th className="px-4 py-3 font-medium">Order</th>
                 <th className="px-4 py-3 font-medium">Customer</th>
+                <th className="px-4 py-3 font-medium">Items</th>
                 <th className="px-4 py-3 font-medium">Placed</th>
                 <th className="px-4 py-3 text-right font-medium">Total</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -303,6 +307,24 @@ function OrderRow({
             {address.city}
             {address.pincode ? ` · ${address.pincode}` : ""}
           </p>
+        )}
+      </td>
+      {/* What to pack. The board listed orders without ever saying what was in
+          them, so the only way to find out was to ask the customer. */}
+      <td className="px-4 py-3">
+        {order.items.length === 0 ? (
+          <span className="text-xs text-muted-foreground">—</span>
+        ) : (
+          <ul className="space-y-0.5">
+            {order.items.map((item, i) => (
+              <li key={i} className="text-sm">
+                <span className="tabular-nums text-muted-foreground">
+                  {item.quantity}×
+                </span>{" "}
+                {item.product_name ?? "Item"}
+              </li>
+            ))}
+          </ul>
         )}
       </td>
       <td className="px-4 py-3 text-muted-foreground">

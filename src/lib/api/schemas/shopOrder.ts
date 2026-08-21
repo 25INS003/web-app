@@ -59,6 +59,21 @@ export const shopOrderSchema = z.object({
   accepted_time: z.string().nullish(),
   delivered_time: z.string().nullish(),
 
+  // What the shop has to pack. A board that shows an order arrived without
+  // showing what is in it cannot be worked from.
+  items: z
+    .array(
+      z.object({
+        product_name: z.string().nullish(),
+        quantity: z.number().catch(1),
+        // Rupees. The lines were served in paise beside a rupee order total
+        // until the board asked for them.
+        unit_price: z.number().nullish(),
+        total_price: z.number().nullish(),
+      }),
+    )
+    .catch([]),
+
   delivery_address_snapshot: addressSnapshotSchema,
   customer: z
     .object({
@@ -94,6 +109,7 @@ export const shopOrderStatsSchema = z.object({
       thisWeek: z.number().catch(0),
       thisMonth: z.number().catch(0),
       total_orders: z.number().catch(0),
+      revenue_orders: z.number().catch(0),
       total_revenue: z.number().catch(0),
       avg_order_value: z.number().catch(0),
     })
