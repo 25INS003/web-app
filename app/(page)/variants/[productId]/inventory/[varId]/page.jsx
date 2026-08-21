@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useProductStore } from "@/store/productStore";
 import { useInventoryStore } from "@/store/inventoryStore";
 import { toast } from "sonner";
@@ -25,11 +25,38 @@ function cn(...inputs) {
 
 export default function UpdateStockPage() {
   const router = useRouter();
-  const { shopId, productId } = useParams();
+  const params = useParams();
+  const searchParams = useSearchParams();
+
+  // The route is /variants/[productId]/inventory/[varId] — there is no shop
+  // segment, so `params.shopId` was always undefined and the fetch below went
+  // to /shops/undefined/products/…. The page only rendered at all when the
+  // product happened to be left in the store by the screen before it.
+  const { productId, varId } = params;
+  const { products } = useProductStore();
+  const shopId =
+    params.shopId ??
+    searchParams.get("shopId") ??
+    products.find((p) => p.id === productId)?.shop_id ??
+    null;
 
   // Store hooks
   const { updateStock, isLoading: isUpdating } = useInventoryStore();
-  const { getProductDetails, currentProduct, isLoading: isLoadingProduct } = useProductStore();
+  const {
+    getProductDetails,
+    currentProduct,
+    currentVariants,
+    isLoading: isLoadingProduct,
+  } = useProductStore();
+
+  // Stock belongs to a variant, and this screen was opened for one.
+  //
+  // The preview read `currentProduct.stock_quantity`, which is not a column —
+  // a product carries `total_stock_quantity`, the sum across its variants. So
+  // the baseline was undefined, `|| 0` made it zero, and "restock +5" on a
+  // variant holding 6 set it to 5 rather than 11. Every relative adjustment
+  // was computed against nothing.
+  const variant = (currentVariants ?? []).find((v) => v.id === varId) ?? null;
 
   // Local state
   const [quantityInput, setQuantityInput] = useState("");
@@ -39,16 +66,16 @@ export default function UpdateStockPage() {
 
   // Initial Fetch
   useEffect(() => {
-    if (productId) {
+    if (productId && shopId) {
       getProductDetails(shopId, productId);
     }
-  }, [productId, getProductDetails]);
+  }, [productId, shopId, getProductDetails]);
 
   // Update preview whenever input changes
   useEffect(() => {
-    if (!currentProduct) return;
+    if (!variant) return;
 
-    const current = currentProduct.stock_quantity || 0;
+    const current = variant.stock_quantity ?? 0;
     const inputVal = parseInt(quantityInput) || 0;
 
     let calculated = current;
@@ -71,7 +98,7 @@ export default function UpdateStockPage() {
     }
 
     setPreviewStock(calculated < 0 ? 0 : calculated);
-  }, [quantityInput, changeType, currentProduct]);
+  }, [quantityInput, changeType, variant]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -82,6 +109,9 @@ export default function UpdateStockPage() {
         new_stock: previewStock,
         change_type: changeType,
         reason: reason,
+        // Which variant. Without it the API moves the product's default one,
+        // so opening "Large" and restocking silently changed "Small".
+        variant_id: varId,
       });
 
       await getProductDetails(shopId, productId);
@@ -94,11 +124,36 @@ export default function UpdateStockPage() {
     }
   };
 
-  if (isLoadingProduct || !currentProduct) {
+  if (isLoadingProduct || !currentProduct || !currentVariants) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-950 text-slate-400">
         <Loader2 className="h-8 w-8 animate-spin mr-3" />
         <span className="text-sm font-medium">Loading inventory data...</span>
+      </div>
+    );
+  }
+
+  // The variant this screen was opened for. Without it there is no stock to
+  // adjust, and rendering the form would offer to set a number against
+  // nothing — which is how "restock +5" came to write 5.
+  if (!variant) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-slate-950 p-6 text-center text-slate-400">
+        <AlertCircle className="h-10 w-10 text-amber-500" />
+        <div>
+          <h2 className="text-lg font-semibold text-slate-100">
+            Could not find this variant
+          </h2>
+          <p className="mt-1 text-sm">
+            Open it from the product page so the shop and variant are known.
+          </p>
+        </div>
+        <button
+          onClick={() => router.back()}
+          className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          Go back
+        </button>
       </div>
     );
   }
@@ -152,7 +207,7 @@ export default function UpdateStockPage() {
                 Current Stock
               </span>
               <span className="text-3xl font-mono font-bold text-slate-100 tracking-tighter">
-                {currentProduct.stock_quantity}
+                {variant.stock_quantity}
               </span>
             </div>
           </div>
@@ -236,12 +291,12 @@ export default function UpdateStockPage() {
                   </span>
                   <div className="flex items-center gap-3">
                     <span className="text-slate-500 line-through text-sm font-mono opacity-60">
-                      {currentProduct.stock_quantity}
+                      {variant.stock_quantity}
                     </span>
                     <span className="text-slate-600 text-xs">→</span>
                     <span className={cn(
                       "text-xl font-bold font-mono transition-colors duration-300",
-                      previewStock < (currentProduct.min_stock_alert || 5)
+                      previewStock < (variant.low_stock_threshold ?? 5)
                         ? "text-red-400"
                         : "text-emerald-400"
                     )}>
