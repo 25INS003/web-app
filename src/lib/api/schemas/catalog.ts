@@ -22,7 +22,10 @@ export const catalogProductSchema = z.object({
   id: objectId,
   product_id: z.string().optional(),
   name: z.string(),
-  slug: z.string().optional(),
+  // `.nullish()`, not `.optional()`: the column is nullable and the API sends
+  // null for a product whose slug was never generated. `optional` permits
+  // undefined only, so null failed the parse.
+  slug: z.string().nullish(),
   brand: z.string().nullish(),
   description: z.string().nullish(),
   unit: z.string().nullish(),
@@ -49,7 +52,19 @@ export type CatalogProduct = z.infer<typeof catalogProductSchema>;
 
 // GET /catalog/get -> { data, total, page, limit, pages }
 export const productListSchema = z.object({
-  data: z.array(catalogProductSchema),
+  // Rows the client cannot read are dropped, not thrown on.
+  //
+  // This was a plain `z.array()`, so one unparseable product failed the whole
+  // response and the storefront rendered an empty catalogue. That is exactly
+  // what happened: products created through the app had `slug: null` against a
+  // schema expecting a string, and three such rows out of 268 blanked the shop
+  // for every visitor. A bad row should cost that row.
+  data: z.array(z.unknown()).transform((rows) =>
+    rows.flatMap((row) => {
+      const parsed = catalogProductSchema.safeParse(row);
+      return parsed.success ? [parsed.data] : [];
+    }),
+  ),
   total: z.number(),
   page: z.number(),
   limit: z.number(),
