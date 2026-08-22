@@ -211,13 +211,35 @@ jobs:
           overlay=k8s/overlays/dev
           [ "${{ github.ref }}" = "refs/heads/production" ] && overlay=k8s/overlays/prod
 
-          curl -sSfL -o /usr/local/bin/kustomize.tar.gz \
-            https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz
-          tar -xzf /usr/local/bin/kustomize.tar.gz -C /usr/local/bin && chmod +x /usr/local/bin/kustomize
-
-          cd "$overlay"
-          kustomize edit set image "ghcr.io/25ins003/web-app=ghcr.io/25ins003/web-app:${TAG}"
-          cd - >/dev/null
+          # Rewrite the one `newTag:` line, rather than `kustomize edit set
+          # image`. Functionally they agree — the rendered output of both is
+          # identical, and that was checked by diffing `kubectl kustomize` over
+          # the two versions. But `kustomize edit` re-serialises the whole file
+          # through its own emitter: it reindents every list, re-wraps comment
+          # blocks, and adds a redundant `newName:` equal to `name:`. The first
+          # write-back commit was 128 insertions and 106 deletions to change one
+          # tag.
+          #
+          # That matters because of what these commits are FOR. The claim is
+          # "git states what the cluster runs, and reverting this commit is the
+          # rollback" — and neither survives a 234-line diff nobody can read.
+          # A revert would drag the reformat along with the tag.
+          python3 - "$overlay/kustomization.yaml" "$TAG" <<'EDIT'
+          import re, sys
+          path, tag = sys.argv[1], sys.argv[2]
+          src = open(path, encoding="utf-8").read()
+          # The `newTag:` belonging to this image, and no other: anchor on the
+          # image name, then take the first newTag after it. `[^\n]*\n` rather
+          # than DOTALL so the search cannot run past the end of the entry into
+          # a sibling image and retag the wrong service.
+          pat = re.compile(
+              r"(-\s+name:\s*ghcr\.io/25ins003/web-app\b(?:[^\n]*\n(?!\s*-\s+name:)){0,4}?\s*newTag:\s*)([^\s#]+)"
+          )
+          out, n = pat.subn(lambda m: m.group(1) + tag, src, count=1)
+          if n != 1:
+              sys.exit(f"expected exactly 1 newTag for web-app, matched {n} — refusing to guess")
+          open(path, "w", encoding="utf-8").write(out)
+          EDIT
 
           if git diff --quiet; then
             echo "::notice::${overlay} already names ${TAG}; nothing to commit."
