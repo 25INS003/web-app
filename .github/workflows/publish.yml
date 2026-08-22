@@ -181,22 +181,22 @@ jobs:
     # environment should run.
     if: github.ref_type != 'tag'
     steps:
-      - name: Is a manifest token configured?
+      - name: Is the manifest deploy key configured?
         id: guard
         env:
-          TOKEN: ${{ secrets.MANIFEST_TOKEN }}
-        run: echo "ready=${{ env.TOKEN != '' }}" >> "$GITHUB_OUTPUT"
+          KEY: ${{ secrets.MANIFEST_SSH_KEY }}
+        run: echo "ready=${{ env.KEY != '' }}" >> "$GITHUB_OUTPUT"
 
       - if: steps.guard.outputs.ready != 'true'
         run: |
-          echo "::notice::MANIFEST_TOKEN is not set — skipping write-back."
+          echo "::notice::MANIFEST_SSH_KEY is not set — skipping write-back."
           echo "The image published normally; nothing was committed to the manifest repo."
 
       - if: steps.guard.outputs.ready == 'true'
         uses: actions/checkout@v4
         with:
           repository: 25INS003/backend-services
-          token: ${{ secrets.MANIFEST_TOKEN }}
+          ssh-key: ${{ secrets.MANIFEST_SSH_KEY }}
           # Manifests only. Fetching the submodules here would need credentials
           # for three more repositories to change one line of YAML.
           submodules: false
