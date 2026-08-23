@@ -17,6 +17,7 @@ import {
     Edit,
     MoreHorizontal,
     Loader2,
+    AlertCircle,
     ImageIcon,
     Eye,
     Filter,
@@ -110,6 +111,17 @@ const ProductsListPage = () => {
     const queryParams = useProductStore((state) => state.queryParams);
     const { setFilters, deleteProduct, softDeleteProduct } = useProductStore();
 
+    // Whether the empty list is the shop's real state or just this filter.
+    //
+    // The empty row told everyone to "try adjusting your filters", which is
+    // unhelpful advice for a shop that has never had a product — there is
+    // nothing to adjust, and it reads as though something was hidden.
+    const isFiltered =
+        Boolean(queryParams?.search) ||
+        queryParams?.inStock === "false" ||
+        queryParams?.is_active === "false" ||
+        queryParams?.is_available === "false";
+
     const [tempFilters, setTempFilters] = useState({
         search: "",
         is_available: "true",
@@ -122,9 +134,19 @@ const ProductsListPage = () => {
         // Guard: Stop if no shop selected, or if already loading
         if (!shopId || isLoading) return;
 
-        // Fetch fresh data if the shop ID has changed, 
-        // OR if the products list is empty (e.g. page refresh)
-        const needsFetch = currentShopId !== shopId || (products.length === 0 && !error);
+        // Fetch when this is a shop we have not loaded yet.
+        //
+        // The second half of this used to be `products.length === 0 && !error`,
+        // meant to cover a page refresh. It also matched a shop that genuinely
+        // has no products — and since `products.length` and `isLoading` are
+        // both dependencies here, the effect re-ran after every fetch and asked
+        // for the same empty list again. A new shop sat on "Loading products…"
+        // forever and never reached the empty state below.
+        //
+        // `currentShopId` is null until a fetch succeeds and is not persisted,
+        // so this one comparison already covers the refresh case it was added
+        // for, without treating "no products" as "not fetched yet".
+        const needsFetch = currentShopId !== shopId;
 
         if (needsFetch) {
             const isNewShop = currentShopId !== shopId;
@@ -141,7 +163,7 @@ const ProductsListPage = () => {
             setTempFilters(initialFilters);
             setFilters(initialFilters, shopId);
         }
-    }, [shopId, currentShopId, products.length, isLoading, error, setFilters]);
+    }, [shopId, currentShopId, isLoading, setFilters]);
 
     const handleApplyFilters = () => {
         setFilters({
@@ -357,6 +379,35 @@ const ProductsListPage = () => {
                                     </div>
                                 </TableCell>
                             </TableRow>
+                        ) : error ? (
+                            /* A failed request is not an empty shop. `error` was
+                               read from the store and never rendered, so a
+                               network failure looked exactly like a shop with
+                               nothing in it — and the empty state below now
+                               tells people to add their first product, which
+                               would be wrong advice and hide a real fault. */
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-20">
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
+                                            <AlertCircle className="h-8 w-8 text-red-500" />
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-900 dark:text-white font-medium">
+                                                Could not load products
+                                            </p>
+                                            <p className="text-sm text-slate-500 max-w-sm">{error}</p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            className="rounded-xl"
+                                            onClick={() => setFilters(queryParams, shopId)}
+                                        >
+                                            Try again
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
                         ) : products.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="text-center py-20">
@@ -364,15 +415,44 @@ const ProductsListPage = () => {
                                         <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                                             <Package className="h-8 w-8 text-slate-400" />
                                         </div>
-                                        <div>
-                                            <p className="text-slate-900 dark:text-white font-medium">No products found</p>
-                                            <p className="text-sm text-slate-500">Try adjusting your filters or add a new product</p>
-                                        </div>
-                                        <Link href={`/products/${shopId}/add`}>
-                                            <Button className="rounded-xl bg-indigo-600 hover:bg-indigo-500">
-                                                <Plus className="h-4 w-4 mr-2" /> Add Product
-                                            </Button>
-                                        </Link>
+                                        {isFiltered ? (
+                                            <>
+                                                <div>
+                                                    <p className="text-slate-900 dark:text-white font-medium">
+                                                        No products match these filters
+                                                    </p>
+                                                    <p className="text-sm text-slate-500">
+                                                        This shop has products — none of them match what you are
+                                                        filtering for.
+                                                    </p>
+                                                </div>
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={handleResetFilters}
+                                                    className="rounded-xl"
+                                                >
+                                                    Clear filters
+                                                </Button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div>
+                                                    <p className="text-slate-900 dark:text-white font-medium">
+                                                        No products yet
+                                                    </p>
+                                                    <p className="text-sm text-slate-500">
+                                                        {currentShop?.name
+                                                            ? `${currentShop.name} has nothing listed. Add your first product to start selling.`
+                                                            : "This shop has nothing listed. Add your first product to start selling."}
+                                                    </p>
+                                                </div>
+                                                <Link href={`/products/${shopId}/add`}>
+                                                    <Button className="rounded-xl bg-indigo-600 hover:bg-indigo-500">
+                                                        <Plus className="h-4 w-4 mr-2" /> Add your first product
+                                                    </Button>
+                                                </Link>
+                                            </>
+                                        )}
                                     </div>
                                 </TableCell>
                             </TableRow>
