@@ -27,13 +27,13 @@ export function useReorder() {
   const router = useRouter();
   return useMutation({
     mutationFn: async (order: Order) => {
-      const items = order.items.filter((it) => it.product_var_id);
+      const items = order.items.filter((it) => it.variant_id);
       if (items.length === 0) {
         throw new ApiError("This order has no items to reorder", 0);
       }
       const results = await Promise.allSettled(
         items.map((it) =>
-          cartApi.addItem(it.product_var_id as string, it.quantity),
+          cartApi.addItem(it.variant_id as string, it.quantity),
         ),
       );
       const added = results.filter((r) => r.status === "fulfilled").length;
