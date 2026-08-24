@@ -44,7 +44,12 @@ export type TicketStatus = z.infer<typeof ticketStatusSchema>;
 
 export const ticketSchema = z.object({
   id: objectId,
-  ticket_id: z.string(),
+  // There is no `ticket_id` on a support ticket. It is a Mongo-era mirror of
+  // the primary key — the same shape `_id`/`id` and `order_id`/`order_number`
+  // had — and `support_tickets` has only `id`. Declaring it as a required
+  // string meant every response failed to parse, and because a ZodError is not
+  // an ApiError the page fell through to "Could not submit your request". The
+  // ticket had in fact been created; only the reply could not be read.
   subject: z.string(),
   description: z.string(),
   ticket_type: ticketTypeSchema,

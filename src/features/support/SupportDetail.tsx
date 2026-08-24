@@ -72,7 +72,10 @@ export function SupportDetail({
             {ticket.subject}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground">
-            {TICKET_TYPE_LABELS[ticket.ticket_type]} · #{ticket.ticket_id}
+            {/* The id is a uuid and there is no separate reference number;
+                the first block is enough to quote and short enough to read. */}
+            {TICKET_TYPE_LABELS[ticket.ticket_type]} · #
+            {ticket.id.slice(0, 8)}
             {ticket.created_at ? ` · ${formatDate(ticket.created_at)}` : ""}
           </p>
         </div>
