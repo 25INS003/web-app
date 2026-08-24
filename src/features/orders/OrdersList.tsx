@@ -67,8 +67,12 @@ export function OrdersList() {
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {formatDate(o.order_time ?? o.created_at)} ·{" "}
-                {orderShopName(o) ?? "Shop"} · {o.items.length} item
-                {o.items.length === 1 ? "" : "s"}
+                {/* `items_count` comes with the list; the detail response
+                    sends the lines themselves instead. Counting the array
+                    alone reported 0 for every order here, because the list
+                    has never carried one. */}
+                {orderShopName(o) ?? "Shop"} · {o.items_count ?? o.items.length}{" "}
+                item{(o.items_count ?? o.items.length) === 1 ? "" : "s"}
               </p>
             </div>
             <span className="font-mono text-sm font-bold tabular-nums">
