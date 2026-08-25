@@ -2,6 +2,7 @@
 
 import { FileText, Paperclip, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -142,6 +143,22 @@ export const ATTACHMENT_ACCEPT =
 export const MAX_ATTACHMENTS = 5;
 
 /**
+ * The largest file the stack will take, in MB.
+ *
+ * Must match MAX_FILE_SIZE on the backend and the bucket. Checked here as
+ * well as there so the answer is instant: without it the only way to learn a
+ * file is too big is to upload it and be told afterwards, which on a phone
+ * photo over a slow connection is the worst possible moment.
+ *
+ * NEXT_PUBLIC_* is inlined at BUILD time, so changing the limit means
+ * rebuilding this image, not just editing a ConfigMap.
+ */
+export const MAX_ATTACHMENT_MB = Number(
+  process.env.NEXT_PUBLIC_MAX_UPLOAD_MB ?? 10,
+);
+const MAX_ATTACHMENT_BYTES = MAX_ATTACHMENT_MB * 1024 * 1024;
+
+/**
  * The attach control and the queue of files waiting to go.
  *
  * Files are held here until the message is sent rather than uploaded on
@@ -157,12 +174,32 @@ export function useAttachmentPicker() {
 
   const add = (picked: FileList | null) => {
     if (!picked?.length) return;
-    setFiles((prev) => {
+
+    // Rejected before it is queued, and named — "one of your files was too
+    // big" leaves someone removing them one at a time to find out which.
+    const chosen = Array.from(picked);
+    const tooBig = chosen.filter((f) => f.size > MAX_ATTACHMENT_BYTES);
+    for (const f of tooBig) {
+      toast.error(
+        `${f.name} is ${formatBytes(f.size)} — the limit is ${MAX_ATTACHMENT_MB} MB per file.`,
+      );
+    }
+    const fits = chosen.filter((f) => f.size <= MAX_ATTACHMENT_BYTES);
+
+    // Counted against `files` out here rather than inside the updater: React
+    // may run an updater twice, and a toast fired from one would be shown
+    // twice with it. `files` is current for the render this handler belongs
+    // to, and a file picker cannot deliver two selections in one tick.
+    const room = MAX_ATTACHMENTS - files.length;
+    if (fits.length > room) {
       // Silently dropping the overflow would look like the picker ignored
-      // them, so take what fits and let the count speak for itself.
-      const room = MAX_ATTACHMENTS - prev.length;
-      return room <= 0 ? prev : [...prev, ...Array.from(picked).slice(0, room)];
-    });
+      // them.
+      toast.error(
+        `Only ${MAX_ATTACHMENTS} files per message — the rest were not added.`,
+      );
+    }
+    const accepted = fits.slice(0, Math.max(room, 0));
+    if (accepted.length) setFiles((prev) => [...prev, ...accepted]);
     // Cleared so re-picking the SAME file fires change again — without this,
     // removing a file and choosing it a second time does nothing.
     if (inputRef.current) inputRef.current.value = "";
