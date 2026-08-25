@@ -56,8 +56,8 @@ export function useCreateTicket(basePath = "/support") {
 export function useSendMessage(ticketId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (messageText: string) =>
-      supportApi.sendMessage(ticketId, messageText),
+    mutationFn: ({ text, files }: { text: string; files?: File[] }) =>
+      supportApi.sendMessage(ticketId, text, files ?? []),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.support.ticket(ticketId) });
       qc.invalidateQueries({ queryKey: queryKeys.support.tickets() });

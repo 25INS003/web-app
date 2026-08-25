@@ -29,9 +29,11 @@ import {
 } from "@/features/support/hooks";
 import { useShopOwnerOptions } from "./shopOwners";
 import {
+  AttachmentList,
   formatDateTime,
   MessageScroller,
   StatusBadge,
+  useAttachmentPicker,
 } from "@/features/support/ui";
 
 /**
@@ -48,9 +50,21 @@ import {
 
 // The moves worth offering, and what each one means to the person waiting.
 const NEXT_STATUS: { value: TicketStatus; label: string; hint: string }[] = [
-  { value: "in_progress", label: "Start working", hint: "Tells the customer someone has picked this up" },
-  { value: "resolved", label: "Mark resolved", hint: "Stamps the resolution time" },
-  { value: "closed", label: "Close", hint: "No further replies from either side" },
+  {
+    value: "in_progress",
+    label: "Start working",
+    hint: "Tells the customer someone has picked this up",
+  },
+  {
+    value: "resolved",
+    label: "Mark resolved",
+    hint: "Stamps the resolution time",
+  },
+  {
+    value: "closed",
+    label: "Close",
+    hint: "No further replies from either side",
+  },
 ];
 
 export function AdminTicketThread({
@@ -116,7 +130,9 @@ export function AdminTicketThread({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {!ticket.assigned_admin_id && <Badge variant="outline">Unassigned</Badge>}
+          {!ticket.assigned_admin_id && (
+            <Badge variant="outline">Unassigned</Badge>
+          )}
           <StatusBadge status={ticket.ticket_status} />
         </div>
       </div>
@@ -151,10 +167,7 @@ export function AdminTicketThread({
         <ReplyBox ticketId={ticketId} />
       )}
 
-      <TriagePanel
-        ticketId={ticketId}
-        current={ticket.ticket_priority}
-      />
+      <TriagePanel ticketId={ticketId} current={ticket.ticket_priority} />
 
       <ParticipantsPanel
         ticketId={ticketId}
@@ -179,7 +192,9 @@ export function AdminTicketThread({
                 disabled={setStatus.isPending}
                 onClick={() => setStatus.mutate(s.value)}
               >
-                {setStatus.isPending && <Loader2 className="size-4 animate-spin" />}
+                {setStatus.isPending && (
+                  <Loader2 className="size-4 animate-spin" />
+                )}
                 {s.label}
               </Button>
             ),
@@ -229,7 +244,12 @@ function MessageBubble({
             {senderName}
           </p>
         )}
-        <p className="whitespace-pre-wrap break-words">{message.message_text}</p>
+        {message.message_text && (
+          <p className="whitespace-pre-wrap break-words">
+            {message.message_text}
+          </p>
+        )}
+        <AttachmentList attachments={message.attachments} mine={mine} />
         <p
           className={cn(
             "mt-1 text-[10px]",
@@ -246,31 +266,47 @@ function MessageBubble({
 function ReplyBox({ ticketId }: { ticketId: string }) {
   const [text, setText] = useState("");
   const send = useSendMessage(ticketId);
+  const attach = useAttachmentPicker();
+
+  // An agent sending back a shipping label or a marked-up photo is the same
+  // shape as a customer sending one, so either alone is enough to send.
+  const canSend = Boolean(text.trim() || attach.files.length);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const body = text.trim();
-    if (!body) return;
-    send.mutate(body, { onSuccess: () => setText("") });
+    if (!canSend) return;
+    send.mutate(
+      { text: text.trim(), files: attach.files },
+      {
+        onSuccess: () => {
+          setText("");
+          attach.clear();
+        },
+      },
+    );
   };
 
   return (
-    <form onSubmit={submit} className="flex items-end gap-2">
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={2}
-        placeholder="Reply to the customer…"
-        className="min-h-[3rem] flex-1 resize-y rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
-      />
-      <Button type="submit" disabled={send.isPending || !text.trim()}>
-        {send.isPending ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Send className="size-4" />
-        )}
-        Send
-      </Button>
+    <form onSubmit={submit}>
+      {attach.queue}
+      <div className="flex items-end gap-2">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={2}
+          placeholder="Reply to the customer…"
+          className="min-h-[3rem] flex-1 resize-y rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
+        />
+        {attach.control}
+        <Button type="submit" disabled={send.isPending || !canSend}>
+          {send.isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Send className="size-4" />
+          )}
+          Send
+        </Button>
+      </div>
     </form>
   );
 }
@@ -366,7 +402,9 @@ function ParticipantsPanel({
               className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs"
             >
               <UserPlus className="size-3 text-muted-foreground" />
-              {[p.user.first_name, p.user.last_name].filter(Boolean).join(" ") ||
+              {[p.user.first_name, p.user.last_name]
+                .filter(Boolean)
+                .join(" ") ||
                 p.user.email ||
                 "Participant"}
               {p.user.user_type ? (

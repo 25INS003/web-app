@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { threadSenderNamer, ticketRaiserName } from "./support";
+import {
+  isImageAttachment,
+  threadSenderNamer,
+  ticketMessageSchema,
+  ticketRaiserName,
+} from "./support";
 
 // Naming the people in a thread, which is the whole job of a support screen.
 //
@@ -85,5 +90,75 @@ describe("ticketRaiserName", () => {
     expect(
       ticketRaiserName({ user_id: { id: CUSTOMER, first_name: "Solo" } }),
     ).toBe("Solo");
+  });
+});
+
+// Attachments on a message.
+//
+// The column shipped with the table and defaulted to `[]` for the whole of its
+// existence, so there is no legacy data — but the declared type was
+// `string[]`, and being able to read one costs a line.
+
+const message = (attachments: unknown) =>
+  ticketMessageSchema.parse({
+    id: "m1",
+    ticket_id: "t1",
+    sender_id: "u1",
+    message_text: "see attached",
+    attachments,
+  });
+
+describe("message attachments", () => {
+  it("reads the record the backend writes", () => {
+    const [a] = message([
+      {
+        url: "http://bucket/support-attachments/t1/1_x_receipt.pdf",
+        name: "receipt.pdf",
+        mime_type: "application/pdf",
+        size: 2048,
+      },
+    ]).attachments;
+
+    expect(a.name).toBe("receipt.pdf");
+    expect(a.size).toBe(2048);
+    expect(isImageAttachment(a)).toBe(false);
+  });
+
+  it("still reads a bare URL, which is what the old type promised", () => {
+    const [a] = message(["http://bucket/x/mug.png"]).attachments;
+    // No name was stored, so the URL tail is the only name there is.
+    expect(a.name).toBe("mug.png");
+    expect(isImageAttachment(a)).toBe(true);
+  });
+
+  it("treats an untyped image as an image, by its extension", () => {
+    const [a] = message([
+      { url: "http://bucket/x/photo.JPG", name: "photo.JPG" },
+    ]).attachments;
+    expect(isImageAttachment(a)).toBe(true);
+  });
+
+  it("does not mistake a pdf for an image because of its name", () => {
+    const [a] = message([
+      { url: "http://bucket/x/png-guide.pdf", mime_type: "application/pdf" },
+    ]).attachments;
+    expect(isImageAttachment(a)).toBe(false);
+  });
+
+  it("drops one unreadable attachment rather than the whole message", () => {
+    // A message whose files fail to parse is still a message worth showing —
+    // a hard z.array() here would blank the text along with them.
+    const m = message([
+      { url: "http://bucket/x/ok.png", mime_type: "image/png" },
+      { name: "no url at all" },
+      42,
+    ]);
+
+    expect(m.attachments).toHaveLength(1);
+    expect(m.message_text).toBe("see attached");
+  });
+
+  it("defaults to none when the field is absent", () => {
+    expect(message(undefined).attachments).toEqual([]);
   });
 });

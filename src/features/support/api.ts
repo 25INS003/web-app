@@ -120,15 +120,31 @@ export const supportApi = {
     return participantsResponseSchema.parse(data).participants;
   },
 
-  // Messages live under /message (not /support) in the backend route table.
+  /**
+   * Post a message, with or without files.
+   *
+   * Multipart only when there is something to attach. A text-only reply stays
+   * plain JSON — it is the overwhelmingly common case, and there is no reason
+   * for every "thanks" to travel as a file upload. axios sets the multipart
+   * boundary itself for FormData.
+   */
   async sendMessage(
     ticketId: string,
     messageText: string,
+    files: File[] = [],
   ): Promise<TicketMessage> {
-    const data = await api.post<unknown>(
-      `/message/tickets/${ticketId}/messages`,
-      { message_text: messageText },
-    );
+    const url = `/message/tickets/${ticketId}/messages`;
+
+    if (!files.length) {
+      const data = await api.post<unknown>(url, { message_text: messageText });
+      return ticketMessageSchema.parse(data);
+    }
+
+    const fd = new FormData();
+    fd.append("message_text", messageText);
+    for (const file of files) fd.append("attachments", file);
+
+    const data = await api.post<unknown>(url, fd);
     return ticketMessageSchema.parse(data);
   },
 };

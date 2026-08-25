@@ -13,10 +13,12 @@ import type { TicketMessage } from "@/lib/api/schemas/support";
 import { cn } from "@/lib/utils";
 import { useSendMessage, useTicket } from "./hooks";
 import {
+  AttachmentList,
   formatDate,
   formatDateTime,
   MessageScroller,
   StatusBadge,
+  useAttachmentPicker,
 } from "./ui";
 
 /**
@@ -62,7 +64,8 @@ export function SupportDetail({
         </span>
         <h1 className="font-display text-2xl font-bold">Ticket not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This request may have been removed, or you don&apos;t have access to it.
+          This request may have been removed, or you don&apos;t have access to
+          it.
         </p>
         <Button asChild className="mt-6">
           <Link href={basePath}>Back to support</Link>
@@ -95,8 +98,7 @@ export function SupportDetail({
           <p className="mt-1 text-xs text-muted-foreground">
             {/* The id is a uuid and there is no separate reference number;
                 the first block is enough to quote and short enough to read. */}
-            {TICKET_TYPE_LABELS[ticket.ticket_type]} · #
-            {ticket.id.slice(0, 8)}
+            {TICKET_TYPE_LABELS[ticket.ticket_type]} · #{ticket.id.slice(0, 8)}
             {ticket.created_at ? ` · ${formatDate(ticket.created_at)}` : ""}
           </p>
         </div>
@@ -151,7 +153,12 @@ function MessageBubble({
             {senderName}
           </p>
         )}
-        <p className="whitespace-pre-wrap break-words">{message.message_text}</p>
+        {message.message_text && (
+          <p className="whitespace-pre-wrap break-words">
+            {message.message_text}
+          </p>
+        )}
+        <AttachmentList attachments={message.attachments} mine={mine} />
         <p
           className={cn(
             "mt-1 text-[10px]",
@@ -168,40 +175,56 @@ function MessageBubble({
 function ReplyBox({ ticketId }: { ticketId: string }) {
   const [text, setText] = useState("");
   const send = useSendMessage(ticketId);
+  const attach = useAttachmentPicker();
+
+  // A photo of the damaged item with nothing typed is a complete message, so
+  // the send button unlocks on either.
+  const canSend = Boolean(text.trim() || attach.files.length);
 
   const submit = () => {
-    const trimmed = text.trim();
-    if (!trimmed || send.isPending) return;
-    send.mutate(trimmed, { onSuccess: () => setText("") });
+    if (!canSend || send.isPending) return;
+    send.mutate(
+      { text: text.trim(), files: attach.files },
+      {
+        onSuccess: () => {
+          setText("");
+          attach.clear();
+        },
+      },
+    );
   };
 
   return (
-    <div className="mt-6 flex items-end gap-2">
-      <textarea
-        rows={2}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            submit();
-          }
-        }}
-        placeholder="Type your reply…"
-        className="min-h-[44px] flex-1 resize-y rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
-      />
-      <Button
-        type="button"
-        onClick={submit}
-        disabled={send.isPending || !text.trim()}
-        aria-label="Send reply"
-      >
-        {send.isPending ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Send className="size-4" />
-        )}
-      </Button>
+    <div className="mt-6">
+      {attach.queue}
+      <div className="flex items-end gap-2">
+        <textarea
+          rows={2}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              submit();
+            }
+          }}
+          placeholder="Type your reply…"
+          className="min-h-[44px] flex-1 resize-y rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
+        />
+        {attach.control}
+        <Button
+          type="button"
+          onClick={submit}
+          disabled={send.isPending || !canSend}
+          aria-label="Send reply"
+        >
+          {send.isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Send className="size-4" />
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -70,13 +70,62 @@ export const ticketSchema = z.object({
 });
 export type Ticket = z.infer<typeof ticketSchema>;
 
+/**
+ * A file sent on a message.
+ *
+ * Stored as `{ name, url, mime_type, size }` — the shape the shop-owner
+ * document upload already uses — but parsed tolerantly from a bare string too.
+ * The column has existed, defaulting to `[]`, since the table shipped; nothing
+ * ever wrote to it, so there is no legacy data to migrate, but a URL is what
+ * the old declared type promised and accepting one costs a line.
+ *
+ * `name` matters because a bucket key ends in `1724_ab12_receipt.pdf`: a
+ * thread that renders the URL shows a timestamp where a filename belongs.
+ */
+export const attachmentSchema = z
+  .union([
+    z.string().transform((url) => ({ url, name: "", mime_type: "", size: 0 })),
+    z.object({
+      url: z.string(),
+      name: z.string().nullish(),
+      mime_type: z.string().nullish(),
+      size: z.number().nullish(),
+    }),
+  ])
+  .transform((a) => ({
+    url: a.url,
+    // Falls back to the tail of the URL so something nameable always shows.
+    name: a.name || decodeURIComponent(a.url.split("/").pop() ?? "") || "File",
+    mime_type: a.mime_type ?? "",
+    size: a.size ?? 0,
+  }));
+export type Attachment = z.infer<typeof attachmentSchema>;
+
+/** Whether to show this inline or as a file to download. */
+export const isImageAttachment = (a: Attachment): boolean =>
+  a.mime_type.startsWith("image/") ||
+  // A record written before mime_type existed, or one the browser sent
+  // untyped, still renders inline when the URL says what it is.
+  (!a.mime_type && /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(a.url));
+
 export const ticketMessageSchema = z.object({
   id: objectId,
   message_id: z.string().optional(),
   ticket_id: objectId,
   sender_id: userRefSchema,
   message_text: z.string(),
-  attachments: z.array(z.string()).optional().default([]),
+  // One unreadable attachment costs that attachment, not the whole message —
+  // and a message whose files fail to parse is still a message worth showing.
+  attachments: z
+    .array(z.unknown())
+    .optional()
+    .default([])
+    .transform((rows) =>
+      rows.flatMap((row) => {
+        const parsed = attachmentSchema.safeParse(row);
+        return parsed.success ? [parsed.data] : [];
+      }),
+    ),
   is_read: z.boolean().optional(),
   sent_at: isoDate.nullish(),
 });
