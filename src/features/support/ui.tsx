@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Paperclip, X } from "lucide-react";
+import { Check, CheckCheck, FileText, Paperclip, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +51,68 @@ export function formatDateTime(iso?: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? "" : dateTimeFmt.format(d);
+}
+
+/**
+ * How many messages are waiting on this ticket for whoever is looking.
+ *
+ * Nothing at all at zero, rather than a grey "0": a badge that is always
+ * present stops being a signal, and the row's own weight already says
+ * whether it has been read.
+ */
+export function UnreadBadge({ count }: { count: number }) {
+  if (!count) return null;
+  return (
+    <span
+      aria-label={`${count} unread ${count === 1 ? "message" : "messages"}`}
+      className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary-foreground"
+    >
+      {/* Past 9 the exact number stops mattering and the badge starts
+          stretching the row. */}
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
+
+/**
+ * Who has read a message you sent.
+ *
+ * Only ever shown on your own messages — somebody else's read state is the
+ * record of YOU opening the thread, which is not news to you.
+ *
+ * Named, not counted. On a thread with a customer, an agent and a shop owner,
+ * "read" without a name leaves the sender unable to tell whether the party
+ * who actually needs to act has seen it. Each reader has their own cursor, so
+ * this can say.
+ */
+export function ReadReceipt({
+  readBy,
+}: {
+  readBy: { id: string; first_name?: string | null; last_name?: string | null }[];
+}) {
+  const names = readBy
+    .map((r) => `${r.first_name ?? ""} ${r.last_name ?? ""}`.trim())
+    .filter(Boolean);
+
+  const label = names.length
+    ? `Read by ${names.join(", ")}`
+    : // Delivered, nobody has opened it. "Sent" rather than "Unread": unread
+      // is a statement about a reader, and there is no reader yet.
+      "Sent";
+
+  return (
+    <span
+      title={label}
+      aria-label={label}
+      className="ml-1 inline-flex align-middle"
+    >
+      {names.length ? (
+        <CheckCheck className="size-3.5" />
+      ) : (
+        <Check className="size-3.5 opacity-70" />
+      )}
+    </span>
+  );
 }
 
 /** 12 KB reads as nothing; "12.4 KB" is what a person checks against a limit. */

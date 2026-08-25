@@ -5,6 +5,8 @@ import {
   AttachmentList,
   MAX_ATTACHMENT_MB,
   MAX_ATTACHMENTS,
+  ReadReceipt,
+  UnreadBadge,
   useAttachmentPicker,
 } from "./ui";
 import type { Attachment } from "@/lib/api/schemas/support";
@@ -156,5 +158,68 @@ describe("useAttachmentPicker", () => {
     pick(container, [bigFile("huge.png", MAX_ATTACHMENT_MB + 1)]);
 
     expect(vi.mocked(toast.error)).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("UnreadBadge", () => {
+  it("shows nothing at zero", () => {
+    // A badge that is always present stops being a signal.
+    const { container } = render(<UnreadBadge count={0} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("shows the count, and names it for a screen reader", () => {
+    render(<UnreadBadge count={3} />);
+    expect(screen.getByText("3")).toBeTruthy();
+    expect(screen.getByLabelText("3 unread messages")).toBeTruthy();
+  });
+
+  it("says message, singular, for one", () => {
+    render(<UnreadBadge count={1} />);
+    expect(screen.getByLabelText("1 unread message")).toBeTruthy();
+  });
+
+  it("caps the display past nine", () => {
+    // The exact number stops mattering and the badge starts stretching the row.
+    render(<UnreadBadge count={42} />);
+    expect(screen.getByText("9+")).toBeTruthy();
+    // The real figure is still announced.
+    expect(screen.getByLabelText("42 unread messages")).toBeTruthy();
+  });
+});
+
+describe("ReadReceipt", () => {
+  const reader = (first: string, id = first) => ({
+    id,
+    first_name: first,
+    last_name: "Agent",
+  });
+
+  it("says Sent when nobody has opened it", () => {
+    // "Sent" rather than "Unread": unread is a statement about a reader, and
+    // there is no reader yet.
+    render(<ReadReceipt readBy={[]} />);
+    expect(screen.getByLabelText("Sent")).toBeTruthy();
+  });
+
+  it("names the single person who read it", () => {
+    // The whole point of the per-reader cursor. "Read" alone leaves a sender
+    // unable to tell whether the party who needs to act has seen it.
+    render(<ReadReceipt readBy={[reader("Support")]} />);
+    expect(screen.getByLabelText("Read by Support Agent")).toBeTruthy();
+  });
+
+  it("names every reader on a three-party thread", () => {
+    render(<ReadReceipt readBy={[reader("Support"), reader("Shop")]} />);
+    expect(
+      screen.getByLabelText("Read by Support Agent, Shop Agent"),
+    ).toBeTruthy();
+  });
+
+  it("falls back to Sent when a reader has no name to show", () => {
+    // A row with no name would otherwise render "Read by " with nothing after
+    // it, which reads worse than not claiming a reader at all.
+    render(<ReadReceipt readBy={[{ id: "u1" }]} />);
+    expect(screen.getByLabelText("Sent")).toBeTruthy();
   });
 });

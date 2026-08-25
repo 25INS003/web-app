@@ -32,6 +32,7 @@ import {
   AttachmentList,
   formatDateTime,
   MessageScroller,
+  ReadReceipt,
   StatusBadge,
   useAttachmentPicker,
 } from "@/features/support/ui";
@@ -257,6 +258,7 @@ function MessageBubble({
           )}
         >
           {formatDateTime(message.sent_at)}
+          {mine && <ReadReceipt readBy={message.read_by} />}
         </p>
       </div>
     </div>

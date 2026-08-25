@@ -4,8 +4,9 @@ import { LifeBuoy, Plus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { TICKET_TYPE_LABELS } from "@/lib/api/schemas/support";
+import { cn } from "@/lib/utils";
 import { useTickets } from "./hooks";
-import { formatDate, StatusBadge } from "./ui";
+import { formatDate, StatusBadge, UnreadBadge } from "./ui";
 
 /**
  * Somebody's own support conversations.
@@ -79,13 +80,26 @@ export function SupportList({ basePath = "/support" }: { basePath?: string }) {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate font-medium">{t.subject}</p>
+                {/* Bolder when something is waiting — the same cue every
+                    inbox uses, so the list can be scanned without reading
+                    the badge on each row. */}
+                <p
+                  className={cn(
+                    "truncate",
+                    t.unread_count > 0 ? "font-semibold" : "font-medium",
+                  )}
+                >
+                  {t.subject}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {TICKET_TYPE_LABELS[t.ticket_type]}
                   {t.created_at ? ` · ${formatDate(t.created_at)}` : ""}
                 </p>
               </div>
-              <StatusBadge status={t.ticket_status} />
+              <div className="flex shrink-0 items-center gap-2">
+                <UnreadBadge count={t.unread_count} />
+                <StatusBadge status={t.ticket_status} />
+              </div>
             </div>
           </Link>
         ))}

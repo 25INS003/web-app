@@ -12,7 +12,7 @@ import {
 } from "@/lib/api/schemas/support";
 import type { Ticket } from "@/lib/api/schemas/support";
 import { useAllTickets } from "@/features/support/hooks";
-import { formatDate, StatusBadge } from "@/features/support/ui";
+import { formatDate, StatusBadge, UnreadBadge } from "@/features/support/ui";
 
 /**
  * The support queue.
@@ -137,7 +137,16 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
       >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium">{ticket.subject}</span>
+            {/* Bolder while somebody is waiting on a reply — on a queue this
+                is the difference between "needs me" and "already handled". */}
+            <span
+              className={
+                ticket.unread_count > 0 ? "font-semibold" : "font-medium"
+              }
+            >
+              {ticket.subject}
+            </span>
+            <UnreadBadge count={ticket.unread_count} />
             <Badge variant={PRIORITY_VARIANT[ticket.ticket_priority] ?? "outline"}>
               {TICKET_PRIORITY_LABELS[ticket.ticket_priority]}
             </Badge>

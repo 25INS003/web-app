@@ -17,6 +17,7 @@ import {
   formatDate,
   formatDateTime,
   MessageScroller,
+  ReadReceipt,
   StatusBadge,
   useAttachmentPicker,
 } from "./ui";
@@ -166,6 +167,9 @@ function MessageBubble({
           )}
         >
           {formatDateTime(message.sent_at)}
+          {/* Only on your own: is_read on somebody else's message records
+              YOU opening the thread, which is not news to you. */}
+          {mine && <ReadReceipt readBy={message.read_by} />}
         </p>
       </div>
     </div>

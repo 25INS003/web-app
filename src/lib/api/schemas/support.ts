@@ -65,6 +65,10 @@ export const ticketSchema = z.object({
   // thread, where knowing who you are talking to is the point.
   user: userRefSchema,
   assigned_admin: userRefSchema,
+  // How many messages on this ticket the current viewer has not seen. Their
+  // own never count. Sent by the list; absent on the detail, where the act of
+  // fetching it is what clears the count.
+  unread_count: z.number().optional().default(0),
   resolved_at: isoDate.nullish(),
   created_at: isoDate.nullish(),
 });
@@ -126,7 +130,23 @@ export const ticketMessageSchema = z.object({
         return parsed.success ? [parsed.data] : [];
       }),
     ),
+  // Legacy: one boolean for the whole message, so it says "somebody read
+  // this", not who. Kept because the backend still maintains it; `read_by` is
+  // what the UI shows.
   is_read: z.boolean().optional(),
+  // Everyone except the sender whose read cursor has reached this message.
+  // Empty is the normal state for something just sent.
+  read_by: z
+    .array(
+      z.object({
+        id: objectId,
+        first_name: z.string().nullish(),
+        last_name: z.string().nullish(),
+        user_type: z.string().nullish(),
+      }),
+    )
+    .optional()
+    .default([]),
   sent_at: isoDate.nullish(),
 });
 export type TicketMessage = z.infer<typeof ticketMessageSchema>;
