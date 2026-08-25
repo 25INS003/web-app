@@ -3,6 +3,7 @@
 import {
   FolderTree,
   LayoutDashboard,
+  LifeBuoy,
   LogOut,
   Menu,
   Package,
@@ -32,12 +33,17 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     // shop orders live under /dashboard to avoid colliding with the customer
     // storefront's /orders (built in Phase 3)
     { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
+    // Owners are on tickets two ways: ones they raise, and ones an admin adds
+    // them to. Both need a door into the owner area — the storefront /support
+    // screen wears the shopping chrome and is not linked from anywhere here.
+    { href: "/dashboard/support", label: "Support", icon: LifeBuoy },
   ],
   admin: [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/shops", label: "Shops", icon: Store },
     { href: "/admin/shop-owners", label: "Shop Owners", icon: Users },
     { href: "/admin/categories", label: "Categories", icon: FolderTree },
+    { href: "/admin/support", label: "Support", icon: LifeBuoy },
     { href: "/admin/reports", label: "Reports", icon: ShieldCheck },
   ],
 };

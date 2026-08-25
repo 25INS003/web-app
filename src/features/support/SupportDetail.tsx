@@ -6,20 +6,37 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   TICKET_TYPE_LABELS,
+  threadSenderNamer,
   userRefId,
-  userRefName,
 } from "@/lib/api/schemas/support";
 import type { TicketMessage } from "@/lib/api/schemas/support";
 import { cn } from "@/lib/utils";
 import { useSendMessage, useTicket } from "./hooks";
-import { formatDate, formatDateTime, StatusBadge } from "./ui";
+import {
+  formatDate,
+  formatDateTime,
+  MessageScroller,
+  StatusBadge,
+} from "./ui";
 
+/**
+ * One conversation, from the outside — whoever is not support.
+ *
+ * Serves the customer who raised the ticket and, under /dashboard/support, a
+ * shop owner an admin pulled in. Deliberately the same component: both post to
+ * the same endpoint and read the same message list, so a second rendering of a
+ * thread would only be a second chance to disagree about what was said.
+ *
+ * `basePath` keeps each audience inside its own area — see SupportList.
+ */
 export function SupportDetail({
   ticketId,
   currentUserId,
+  basePath = "/support",
 }: {
   ticketId: string;
   currentUserId: string;
+  basePath?: string;
 }) {
   const q = useTicket(ticketId);
 
@@ -48,7 +65,7 @@ export function SupportDetail({
           This request may have been removed, or you don&apos;t have access to it.
         </p>
         <Button asChild className="mt-6">
-          <Link href="/support">Back to support</Link>
+          <Link href={basePath}>Back to support</Link>
         </Button>
       </div>
     );
@@ -56,11 +73,15 @@ export function SupportDetail({
 
   const ticket = q.data;
   const closed = ticket.ticket_status === "closed";
+  // A thread can now hold three people — the customer, support, and a shop
+  // owner an admin brought in — so "not me" is no longer enough to label a
+  // message by.
+  const senderName = threadSenderNamer(ticket);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <Link
-        href="/support"
+        href={basePath}
         className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
       >
         <ArrowLeft className="size-4" /> Support
@@ -82,14 +103,17 @@ export function SupportDetail({
         <StatusBadge status={ticket.ticket_status} />
       </div>
 
-      <div className="mt-6 space-y-3">
-        {ticket.messages.map((m) => (
-          <MessageBubble
-            key={m.id}
-            message={m}
-            mine={userRefId(m.sender_id) === currentUserId}
-          />
-        ))}
+      <div className="mt-6">
+        <MessageScroller count={ticket.messages.length}>
+          {ticket.messages.map((m) => (
+            <MessageBubble
+              key={m.id}
+              message={m}
+              mine={userRefId(m.sender_id) === currentUserId}
+              senderName={senderName(m.sender_id)}
+            />
+          ))}
+        </MessageScroller>
       </div>
 
       {closed ? (
@@ -106,9 +130,11 @@ export function SupportDetail({
 function MessageBubble({
   message,
   mine,
+  senderName,
 }: {
   message: TicketMessage;
   mine: boolean;
+  senderName: string;
 }) {
   return (
     <div className={cn("flex", mine ? "justify-end" : "justify-start")}>
@@ -122,7 +148,7 @@ function MessageBubble({
       >
         {!mine && (
           <p className="mb-0.5 text-xs font-semibold text-muted-foreground">
-            {userRefName(message.sender_id)}
+            {senderName}
           </p>
         )}
         <p className="whitespace-pre-wrap break-words">{message.message_text}</p>

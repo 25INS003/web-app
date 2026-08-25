@@ -7,7 +7,20 @@ import { TICKET_TYPE_LABELS } from "@/lib/api/schemas/support";
 import { useTickets } from "./hooks";
 import { formatDate, StatusBadge } from "./ui";
 
-export function SupportList() {
+/**
+ * Somebody's own support conversations.
+ *
+ * Rendered for customers under /support and for shop owners under
+ * /dashboard/support — the same list, because the backend answers the same
+ * endpoint for both. A shop owner sees the tickets they raised AND the ones an
+ * admin brought them into, which is the whole point of the participant table:
+ * being added to a conversation you cannot find is the same as not being added.
+ *
+ * `basePath` is what differs. The two areas sit in different route groups with
+ * different chrome, so a hardcoded /support link would tip an owner out of
+ * their dashboard mid-conversation.
+ */
+export function SupportList({ basePath = "/support" }: { basePath?: string }) {
   const q = useTickets();
 
   if (q.isPending) {
@@ -36,7 +49,7 @@ export function SupportList() {
           Raise a support request and our team will get back to you here.
         </p>
         <Button asChild className="mt-6">
-          <Link href="/support/new">
+          <Link href={`${basePath}/new`}>
             <Plus className="size-4" /> New request
           </Link>
         </Button>
@@ -51,7 +64,7 @@ export function SupportList() {
           Support
         </h1>
         <Button asChild size="sm">
-          <Link href="/support/new">
+          <Link href={`${basePath}/new`}>
             <Plus className="size-4" /> New request
           </Link>
         </Button>
@@ -61,7 +74,7 @@ export function SupportList() {
         {tickets.map((t) => (
           <Link
             key={t.id}
-            href={`/support/${t.id}`}
+            href={`${basePath}/${t.id}`}
             className="block rounded-2xl border border-border bg-card p-4 shadow-xs transition hover:border-primary/40 hover:shadow-md"
           >
             <div className="flex items-start justify-between gap-3">

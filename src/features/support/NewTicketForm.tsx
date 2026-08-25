@@ -18,8 +18,30 @@ import type { CreateTicketInput } from "@/lib/api/schemas/support";
 import { cn } from "@/lib/utils";
 import { useCreateTicket } from "./hooks";
 
-export function NewTicketForm() {
-  const create = useCreateTicket();
+/**
+ * Raise a support request.
+ *
+ * Shared by customers and shop owners — an owner has their own things to ask
+ * about (a payout, a rejected listing), and the ticket types already cover
+ * them. `basePath` keeps the back link and the post-submit redirect inside
+ * whichever area the form was opened from.
+ *
+ * `canSetPriority` is off for customers and on for shop owners. Asking a
+ * customer to rate their own urgency does not sort a queue — everyone picks
+ * the top of the scale for their own problem, so the field stops
+ * distinguishing anything. Their tickets open at the column default, `medium`,
+ * and an admin triages from there. A shop owner is reporting on the
+ * operational side rather than pleading their own case, so their reading is
+ * worth having; an admin can still retriage it afterwards.
+ */
+export function NewTicketForm({
+  basePath = "/support",
+  canSetPriority = false,
+}: {
+  basePath?: string;
+  canSetPriority?: boolean;
+}) {
+  const create = useCreateTicket(basePath);
   const {
     register,
     handleSubmit,
@@ -32,7 +54,10 @@ export function NewTicketForm() {
       subject: "",
       description: "",
       ticket_type: "general",
-      ticket_priority: "medium",
+      // Left undefined when the picker is hidden, so the request omits the
+      // field entirely rather than sending a value nobody chose — the server
+      // default is then the single place "medium" is decided.
+      ticket_priority: canSetPriority ? "medium" : undefined,
     },
   });
 
@@ -42,7 +67,7 @@ export function NewTicketForm() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <Link
-        href="/support"
+        href={basePath}
         className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
       >
         <ArrowLeft className="size-4" /> Support
@@ -93,26 +118,31 @@ export function NewTicketForm() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label>Priority</Label>
-          <div className="flex flex-wrap gap-2">
-            {ticketPriorityValues.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setValue("ticket_priority", p)}
-                className={cn(
-                  "rounded-lg border px-3 py-1.5 text-sm font-medium transition",
-                  priority === p
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {TICKET_PRIORITY_LABELS[p]}
-              </button>
-            ))}
+        {canSetPriority && (
+          <div className="space-y-2">
+            <Label>Priority</Label>
+            <div className="flex flex-wrap gap-2">
+              {ticketPriorityValues.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setValue("ticket_priority", p)}
+                  className={cn(
+                    "rounded-lg border px-3 py-1.5 text-sm font-medium transition",
+                    priority === p
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {TICKET_PRIORITY_LABELS[p]}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              A starting point — support may retriage it.
+            </p>
           </div>
-        </div>
+        )}
 
         <div className="space-y-1.5">
           <Label htmlFor="description">Description</Label>

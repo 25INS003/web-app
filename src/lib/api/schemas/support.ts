@@ -57,6 +57,14 @@ export const ticketSchema = z.object({
   ticket_status: ticketStatusSchema,
   user_id: userRefSchema,
   assigned_admin_id: userRefSchema,
+
+  // The people behind those ids, attached by the list and the detail.
+  //
+  // `user_id` is a bare uuid on every response, so `userRefName` on it always
+  // fell back to "User" — which is exactly the wrong answer on a support
+  // thread, where knowing who you are talking to is the point.
+  user: userRefSchema,
+  assigned_admin: userRefSchema,
   resolved_at: isoDate.nullish(),
   created_at: isoDate.nullish(),
 });
@@ -75,9 +83,25 @@ export const ticketMessageSchema = z.object({
 export type TicketMessage = z.infer<typeof ticketMessageSchema>;
 
 // GET /support/tickets/:id returns the ticket with its embedded thread.
+/** Somebody brought into the conversation who did not raise it. */
+export const ticketParticipantSchema = z.object({
+  id: objectId,
+  created_at: isoDate.nullish(),
+  user: z.object({
+    id: objectId,
+    first_name: z.string().nullish(),
+    last_name: z.string().nullish(),
+    email: z.string().nullish(),
+    user_type: z.string().nullish(),
+  }),
+});
+export type TicketParticipant = z.infer<typeof ticketParticipantSchema>;
+
 export const ticketDetailSchema = ticketSchema.extend({
   messages: z.array(ticketMessageSchema).optional().default([]),
   message_count: z.number().optional(),
+  // Who else can read this. Sent by the detail; absent elsewhere.
+  participants: z.array(ticketParticipantSchema).optional().default([]),
 });
 export type TicketDetail = z.infer<typeof ticketDetailSchema>;
 
@@ -94,8 +118,13 @@ export const ticketListResponseSchema = z.object({
 
 // --- form input ---
 
-// ticket_priority has no .default() so the zod input/output types stay aligned
-// for react-hook-form's resolver; the form supplies the default via defaultValues.
+// ticket_priority is optional, and the CUSTOMER form does not send it: the
+// column defaults to `medium` server-side, and self-rated urgency sorts
+// nothing because everyone rates their own problem at the top. A shop owner
+// raising one does set it — they are reporting on the operational side rather
+// than pleading their own case — and an admin can retriage anything afterwards
+// through the priority endpoint. No .default() here, so the zod input/output
+// types stay aligned for react-hook-form's resolver.
 export const createTicketInputSchema = z.object({
   subject: z
     .string()
@@ -142,10 +171,74 @@ export function userRefId(ref: UserRef): string | undefined {
   return typeof ref === "object" ? ref.id : ref;
 }
 
+/**
+ * A ticket's raiser, named.
+ *
+ * Prefers the populated `user` over `user_id`, which is a bare uuid on every
+ * response — reading the id alone always produced the "User" fallback.
+ */
+export function ticketRaiserName(ticket: {
+  user?: UserRef;
+  user_id?: UserRef;
+}): string {
+  const named = userRefName(ticket.user ?? null);
+  return named === "User" ? userRefName(ticket.user_id ?? null) : named;
+}
+
 export function userRefName(ref: UserRef): string {
   if (ref && typeof ref === "object") {
     const name = `${ref.first_name ?? ""} ${ref.last_name ?? ""}`.trim();
     if (name) return name;
   }
   return "User";
+}
+
+/** A person, named as well as what we hold allows. */
+function personName(p: {
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+}): string {
+  return (
+    `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || p.email || "Participant"
+  );
+}
+
+/**
+ * Names the sender of a message, from what the ticket already carries.
+ *
+ * `sender_id` is a bare uuid on every message, so naming it directly always
+ * produced the "User" fallback — precisely the wrong answer on a thread, where
+ * knowing who is talking is the point. The ticket knows everybody who is on
+ * it: whoever raised it, and whoever an admin brought in. Anyone else posting
+ * is support, which also covers the status lines the server writes.
+ *
+ * Shared rather than reimplemented per screen: once a thread can hold three
+ * people, a customer view and an admin view that each guess separately will
+ * eventually put different names on the same message.
+ */
+export function threadSenderNamer(ticket: {
+  user?: UserRef;
+  user_id?: UserRef;
+  participants?: {
+    user: {
+      id: string;
+      first_name?: string | null;
+      last_name?: string | null;
+      email?: string | null;
+    };
+  }[];
+}): (ref: UserRef) => string {
+  const byId = new Map<string, string>();
+
+  const raiserId = userRefId(ticket.user_id) ?? userRefId(ticket.user);
+  if (raiserId) byId.set(raiserId, ticketRaiserName(ticket));
+  for (const p of ticket.participants ?? []) {
+    byId.set(p.user.id, personName(p.user));
+  }
+
+  return (ref: UserRef) => {
+    const id = userRefId(ref);
+    return (id && byId.get(id)) || "Support";
+  };
 }

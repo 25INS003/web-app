@@ -1,4 +1,5 @@
 import { Clock } from "lucide-react";
+import Link from "next/link";
 import { SignOutButton } from "@/features/auth/SignOutButton";
 
 export const metadata = { title: "Under review · Nedyway" };
@@ -15,6 +16,17 @@ export default function StatusPage() {
       <p className="mt-2 text-sm text-muted-foreground">
         Thanks for submitting your shop details. Our team is reviewing your
         application — you&apos;ll get access to your dashboard once approved.
+      </p>
+      {/* Support is in the dashboard, and this page exists precisely because
+          the dashboard is still shut. Someone whose application has sat here
+          for a week has nobody to ask otherwise — /support needs only a
+          session, not an approved shop. */}
+      <p className="mt-4 text-sm text-muted-foreground">
+        Waiting longer than you expected?{" "}
+        <Link href="/support" className="font-medium text-primary hover:underline">
+          Contact support
+        </Link>
+        .
       </p>
       <div className="mt-6">
         <SignOutButton />
