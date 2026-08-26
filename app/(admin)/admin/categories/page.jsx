@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useCategoryStore } from "@/store/categoryStore";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import {
     Plus,
     Search,
@@ -78,7 +79,7 @@ const CategoryCard = ({ category, onEdit, index }) => {
             {/* Image Header */}
             <div className="relative h-40 w-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                 {imageUrl ? (
-                    <img
+                    <ProgressiveImage
                         src={imageUrl}
                         alt={category.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

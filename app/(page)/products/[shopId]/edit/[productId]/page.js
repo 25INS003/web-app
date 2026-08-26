@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import { useProductStore } from "@/store/productStore";
 import { useVariantStore } from "@/store/productVariantStore";
 import CascadingCategorySelect from "@/components/Dropdowns/CascadingCategorySelect";
@@ -250,7 +251,7 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-xl flex items-center justify-center overflow-hidden shadow-sm">
             {variant.images && variant.images.length > 0 && variant.images[0]?.url && variant.images[0].url.trim() !== '' ? (
-              <img src={variant.images[0].url} className="h-full w-full object-cover" alt="variant" />
+              <ProgressiveImage src={variant.images[0].url} className="h-full w-full object-cover" alt="variant" />
             ) : (
               <Package className="h-5 w-5 text-slate-400" />
             )}
@@ -442,7 +443,7 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
             <div className="flex flex-wrap gap-2">
               {variant.images?.filter(img => img?.url && img.url.trim() !== '').map((img, idx) => (
                 <div key={`existing-${idx}`} className="relative h-16 w-16 rounded-xl border-2 dark:border-slate-600 overflow-hidden group shadow-sm">
-                  <img src={img.url} className="h-full w-full object-cover" alt={`variant-${idx}`} />
+                  <ProgressiveImage src={img.url} className="h-full w-full object-cover" alt={`variant-${idx}`} />
                   <div className="absolute top-0 right-0 bg-sky-500 text-[8px] text-white px-1.5 py-0.5 rounded-bl-lg font-medium">Saved</div>
                   <button
                     onClick={() => handleDeleteImage(idx)}

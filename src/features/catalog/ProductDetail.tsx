@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import { useAddToCart } from "@/features/cart/useCart";
 import { useAddToWishlist } from "@/features/wishlist/useWishlist";
 import {
@@ -60,8 +61,7 @@ export function ProductDetail({ productId }: { productId: string }) {
         {/* gallery */}
         <div className="relative aspect-square overflow-hidden rounded-3xl border border-border bg-card">
           {img ? (
-            // eslint-disable-next-line @next/next/no-img-element -- varied image hosts
-            <img src={img} alt={product.name} className="size-full object-contain p-8" />
+            <ProgressiveImage src={img} alt={product.name} className="size-full object-contain p-8" />
           ) : (
             <div className="grid size-full place-items-center bg-gradient-to-br from-primary/10 to-success/10 text-7xl">
               🛒

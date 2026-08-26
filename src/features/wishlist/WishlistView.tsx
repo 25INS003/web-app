@@ -3,6 +3,7 @@
 import { Heart, ShoppingBag, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import {
   wishlistItemImage,
   wishlistItemPrice,
@@ -78,8 +79,7 @@ function WishlistRow({ item }: { item: WishlistItem }) {
         className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl bg-muted"
       >
         {img ? (
-          // eslint-disable-next-line @next/next/no-img-element -- varied hosts
-          <img src={img} alt={item.product.name} className="size-full object-cover" />
+          <ProgressiveImage src={img} alt={item.product.name} className="size-full object-cover" />
         ) : (
           <span className="text-2xl">🛒</span>
         )}

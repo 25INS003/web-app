@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useCategoryStore } from "@/store/categoryStore";
 import { motion } from "framer-motion";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import { 
     ArrowLeft, 
     Edit, 
@@ -171,7 +172,7 @@ export default function CategoryDetailPage() {
                                             >
                                                 <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0">
                                                     {sub.image_url ? (
-                                                         <img src={sub.image_url} alt="" className="h-full w-full object-cover" />
+                                                         <ProgressiveImage src={sub.image_url} alt="" className="h-full w-full object-cover" />
                                                     ) : (
                                                         <FolderTree className="h-6 w-6 text-slate-400" />
                                                     )}
@@ -211,9 +212,9 @@ export default function CategoryDetailPage() {
                     <Card className="border-slate-200 dark:border-slate-800 shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
                          <div className="aspect-square w-full bg-slate-100 dark:bg-slate-800 relative flex items-center justify-center p-1">
                             {category?.image_url || category?.image ? (
-                                <img 
-                                    src={category.image_url || category.image} 
-                                    alt={category.name} 
+                                <ProgressiveImage
+                                    src={category.image_url || category.image}
+                                    alt={category.name}
                                     className="w-full h-full object-cover rounded-t-lg"
                                 />
                             ) : (

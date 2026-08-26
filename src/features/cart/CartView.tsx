@@ -3,6 +3,7 @@
 import { Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import { cartItemShop } from "@/lib/api/schemas/cart";
 import type { CartItem } from "@/lib/api/schemas/cart";
 import { ComplementRow } from "@/features/suggestions/ComplementRow";
@@ -138,8 +139,7 @@ function CartRow({ item }: { item: CartItem }) {
     <div className="flex gap-4 rounded-2xl border border-border bg-card p-4 shadow-xs">
       <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl bg-muted">
         {img ? (
-          // eslint-disable-next-line @next/next/no-img-element -- varied hosts
-          <img src={img} alt={v.name} className="size-full object-cover" />
+          <ProgressiveImage src={img} alt={v.name} className="size-full object-cover" />
         ) : (
           <span className="text-2xl">🛒</span>
         )}

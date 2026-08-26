@@ -1,6 +1,7 @@
 import { Star } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import { productImage, shopName } from "@/lib/api/schemas/catalog";
 import type { CatalogProduct } from "@/lib/api/schemas/catalog";
 import { formatPrice } from "@/lib/utils";
@@ -21,11 +22,9 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {img ? (
-          // eslint-disable-next-line @next/next/no-img-element -- product image hosts vary; next/image whitelist comes later
-          <img
+          <ProgressiveImage
             src={img}
             alt={product.name}
-            loading="lazy"
             className="size-full object-cover transition duration-300 group-hover:scale-105"
           />
         ) : (

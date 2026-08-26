@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import {
   isImageAttachment,
   TICKET_STATUS_LABELS,
@@ -165,10 +166,9 @@ export function AttachmentList({
             title={a.name}
             className="block overflow-hidden rounded-lg border border-border/60 transition hover:opacity-90"
           >
-            {/* Plain <img>: these are arbitrary bucket URLs, and next/image
-                would need every one allow-listed in next.config. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            {/* Bucket-hosted attachments: the preview loads first, the full
+                image swaps in behind it. */}
+            <ProgressiveImage
               src={a.url}
               alt={a.name}
               className="max-h-44 max-w-[12rem] object-cover"

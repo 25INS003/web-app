@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import { motion } from "framer-motion";
 import { useProductStore } from "@/store/productStore";
 import { useShopStore } from "@/store/shopStore";
@@ -471,12 +471,10 @@ const ProductsListPage = () => {
                                                         className="h-12 w-12 relative rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center overflow-hidden ring-2 ring-transparent hover:ring-indigo-500/50 transition-all shadow-sm"
                                                     >
                                                         {hasValidImage ? (
-                                                            <Image
+                                                            <ProgressiveImage
                                                                 src={p.main_image_url}
                                                                 alt="product"
-                                                                fill
-                                                                sizes="150px"
-                                                                className="object-cover"
+                                                                className="absolute inset-0 h-full w-full object-cover"
                                                             />
                                                         ) : (
                                                             <ImageIcon className="h-5 w-5 text-slate-400" />
