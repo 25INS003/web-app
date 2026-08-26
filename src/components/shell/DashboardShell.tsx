@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   ShoppingCart,
   Store,
+  Tag,
   Users,
   X,
 } from "lucide-react";
@@ -43,6 +44,7 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     { href: "/admin/shops", label: "Shops", icon: Store },
     { href: "/admin/shop-owners", label: "Shop Owners", icon: Users },
     { href: "/admin/categories", label: "Categories", icon: FolderTree },
+    { href: "/admin/promotions", label: "Discount codes", icon: Tag },
     { href: "/admin/support", label: "Support", icon: LifeBuoy },
     { href: "/admin/reports", label: "Reports", icon: ShieldCheck },
   ],
