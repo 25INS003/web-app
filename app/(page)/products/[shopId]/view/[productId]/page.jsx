@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useProductStore } from "@/store/productStore";
@@ -297,12 +297,10 @@ const ViewProductPage = () => {
                                                         <ImageOff className="w-6 h-6 text-red-400" />
                                                     </div>
                                                 ) : (
-                                                    <Image
+                                                    <ProgressiveImage
                                                         src={src}
                                                         alt={`Thumbnail ${idx + 1}`}
-                                                        fill
-                                                        className="object-cover"
-                                                        sizes="(max-width: 768px) 100vw, 150px"
+                                                        className="absolute inset-0 h-full w-full object-cover"
                                                         onError={() => handleImageError(src)}
                                                     />
                                                 )}
@@ -316,13 +314,10 @@ const ViewProductPage = () => {
                                     <div className="order-1 md:order-2 col-span-1 md:col-span-4 relative bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-8 h-[450px]">
                                         {activeImage && !failedImages.has(activeImage) ? (
                                             <div className="relative w-full h-full">
-                                                <Image
+                                                <ProgressiveImage
                                                     src={activeImage}
                                                     alt={currentProduct.name}
-                                                    fill
-                                                    className="object-contain transition-all duration-300"
-                                                    priority
-                                                    sizes="(max-width: 768px) 100vw, 800px"
+                                                    className="absolute inset-0 h-full w-full object-contain transition-all duration-300"
                                                     onError={() => handleImageError(activeImage)}
                                                 />
                                             </div>

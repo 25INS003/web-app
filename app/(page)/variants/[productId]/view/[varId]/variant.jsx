@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import { 
     MoreHorizontal, 
     AlertCircle, 
@@ -77,12 +77,10 @@ const VariantList = ({ variants = [], onEdit, onDelete }) => {
                                 <TableCell>
                                     <div className="relative w-12 h-12 rounded-md overflow-hidden bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
                                         {hasValidImage ? (
-                                            <Image 
-                                                src={mainImageUrl} 
+                                            <ProgressiveImage
+                                                src={mainImageUrl}
                                                 alt={variant.sku}
-                                                fill
-                                                className="object-cover"
-                                                sizes="48px"
+                                                className="absolute inset-0 h-full w-full object-cover"
                                             />
                                         ) : (
                                             <div className="flex items-center justify-center w-full h-full text-slate-400">

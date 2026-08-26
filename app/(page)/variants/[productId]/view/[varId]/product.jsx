@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image"; // Import Next.js Image
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 import { useParams, useRouter } from "next/navigation";
 import { useProductStore } from "@/store/productStore";
 // --- Icons ---
@@ -246,12 +246,10 @@ const ViewProductPage = () => {
                                                 )}
                                             >
                                                 {/* Optimized Thumbnail Image */}
-                                                <Image
+                                                <ProgressiveImage
                                                     src={src}
                                                     alt={`Thumbnail ${idx + 1}`}
-                                                    fill
-                                                    className="object-cover"
-                                                    sizes="(max-width: 768px) 100vw, 150px"
+                                                    className="absolute inset-0 h-full w-full object-cover"
                                                 />
                                             </button>
                                         )) : (
@@ -264,13 +262,10 @@ const ViewProductPage = () => {
                                         {activeImage ? (
                                             <div className="relative w-full h-full">
                                                 {/* Optimized Main Image */}
-                                                <Image
+                                                <ProgressiveImage
                                                     src={activeImage}
                                                     alt={currentProduct.name || "Product Image"}
-                                                    fill
-                                                    className="object-contain transition-all duration-300"
-                                                    priority
-                                                    sizes="(max-width: 768px) 100vw, 800px"
+                                                    className="absolute inset-0 h-full w-full object-contain transition-all duration-300"
                                                 />
                                             </div>
                                         ) : (
