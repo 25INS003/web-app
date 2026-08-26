@@ -76,10 +76,34 @@ export function useSetDefaultAddress() {
   });
 }
 
+/**
+ * Try a code against the basket.
+ *
+ * A failed quote is not an error state worth a red screen — a wrong code is
+ * the normal case while somebody is typing one — so the message is surfaced
+ * and the caller decides.
+ */
+export function useQuotePromotion() {
+  return useMutation({
+    mutationFn: (input: Parameters<typeof checkoutApi.quotePromotion>[0]) =>
+      checkoutApi.quotePromotion(input),
+    onError: (err) =>
+      toast.error(
+        err instanceof ApiError ? err.message : "Could not apply that code",
+      ),
+  });
+}
+
 export function usePlaceOrder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (addressId: string) => checkoutApi.placeOrder(addressId),
+    mutationFn: ({
+      addressId,
+      promotionCode,
+    }: {
+      addressId: string;
+      promotionCode?: string | null;
+    }) => checkoutApi.placeOrder(addressId, promotionCode),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cart"] });
     },

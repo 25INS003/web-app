@@ -183,6 +183,18 @@ export function OrderDetail({ orderId }: { orderId: string }) {
         <dl className="mt-3 space-y-1.5 border-t border-border pt-3 text-sm">
           <SummaryRow label="Subtotal" value={order.order_amount} />
           <SummaryRow label="Delivery" value={order.delivery_fee} />
+          {order.discount_amount > 0 && (
+            <SummaryRow
+              // Named, not just "Discount": months later the code is what
+              // reminds somebody why this order cost less than its items.
+              label={
+                order.promotion_code
+                  ? `Discount (${order.promotion_code})`
+                  : "Discount"
+              }
+              value={-order.discount_amount}
+            />
+          )}
           <SummaryRow label="Total" value={order.total_amount} strong />
         </dl>
         <p className="mt-3 text-xs text-muted-foreground">

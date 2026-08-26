@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, PackageOpen } from "lucide-react";
+import { ChevronRight, PackageOpen, Tag } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,15 @@ export function OrdersList() {
                 <Badge variant={statusBadgeVariant(o.order_status)}>
                   {STATUS_LABEL[o.order_status]}
                 </Badge>
+                {/* On the row, because a total lower than the items bought is
+                    otherwise unexplained until you open the order. */}
+                {o.discount_amount > 0 && (
+                  <Badge variant="success">
+                    <Tag className="size-3" />
+                    {o.promotion_code ?? "Discount"} −
+                    {formatPrice(o.discount_amount)}
+                  </Badge>
+                )}
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {formatDate(o.order_time ?? o.created_at)} ·{" "}
