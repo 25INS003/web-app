@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export default function ShopOwnerListPage() {
-    const { shopOwners, isLoading, fetchAllOwners, approveOwner, rejectOwner, verifyOwner } = useShopOwnerStore();
+    const { shopOwners, isLoading, fetchAllOwners, approveOwner, rejectOwner } = useShopOwnerStore();
     const [searchTerm, setSearchTerm] = useState("");
     // ?status=pending — what the dashboard's approval card links to. Kept in
     // the URL rather than in component state so the link is shareable and the
@@ -304,19 +304,19 @@ export default function ShopOwnerListPage() {
                                                         </>
                                                     )}
 
-                                                    <TooltipProvider delayDuration={0}>
+<TooltipProvider delayDuration={0}>
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
-                                                                <Button 
-                                                                    size="icon" 
-                                                                    variant="ghost" 
-                                                                    onClick={() => verifyOwner(owner.id)}
-                                                                    className="h-9 w-9 text-purple-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl"
+                                                                <Link
+                                                                    href={`/admin/shop-owners/${owner.id}`}
+                                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-purple-500 transition hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
                                                                 >
                                                                     <ShieldCheck size={18} />
-                                                                </Button>
+                                                                </Link>
                                                             </TooltipTrigger>
-                                                            <TooltipContent>Verify Documents</TooltipContent>
+                                                            <TooltipContent>
+                                                                Review application{owner.document_count ? ` (${owner.document_count} document${owner.document_count === 1 ? "" : "s"})` : " — no documents"}
+                                                            </TooltipContent>
                                                         </Tooltip>
                                                     </TooltipProvider>
                                                 </div>

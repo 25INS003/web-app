@@ -9,6 +9,28 @@ import {
     Receipt, Calendar, Check, X, FileText, Download
 } from "lucide-react";
 
+// `createdAt` is a Mongo-era name. The column is `created_at`, so this read
+// was `undefined`, and `new Date(undefined)` is an Invalid Date that
+// `toLocaleDateString()` prints verbatim — the same silent field drift that
+// `_id`/`id` and `order_id`/`order_number` caused elsewhere.
+//
+// Both dates are also genuinely absent for most owners — `business_since` is
+// null on every seeded row — so a missing value has to read as missing rather
+// than as a broken clock.
+const formatDate = (value, options) => {
+    if (!value) return "Not provided";
+    const d = new Date(value);
+    return Number.isNaN(d.getTime())
+        ? "Not provided"
+        : d.toLocaleDateString("en-IN", options);
+};
+
+const formatMonthYear = (value) =>
+    formatDate(value, { month: "long", year: "numeric" });
+
+const formatDay = (value) =>
+    formatDate(value, { day: "numeric", month: "short", year: "numeric" });
+
 export default function ShopOwnerDetailPage() {
     const { ownerId } = useParams();
     const router = useRouter();
@@ -140,13 +162,13 @@ export default function ShopOwnerDetailPage() {
                             <InfoTile
                                 icon={<Calendar className="text-purple-600" />}
                                 label="In Business Since"
-                                value={new Date(selectedOwner.business_since).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                value={formatMonthYear(selectedOwner.business_since)}
                                 color="bg-purple-50 dark:bg-purple-500/10"
                             />
                             <InfoTile
                                 icon={<Calendar className="text-slate-600 dark:text-slate-400" />}
                                 label="Application Date"
-                                value={new Date(selectedOwner.createdAt).toLocaleDateString()}
+                                value={formatDay(selectedOwner.created_at)}
                                 color="bg-slate-50 dark:bg-slate-800"
                             />
                         </div>
