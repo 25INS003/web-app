@@ -17,13 +17,14 @@ export default function StatusPage() {
         Thanks for submitting your shop details. Our team is reviewing your
         application — you&apos;ll get access to your dashboard once approved.
       </p>
-      {/* Support is in the dashboard, and this page exists precisely because
-          the dashboard is still shut. Someone whose application has sat here
-          for a week has nobody to ask otherwise — /support needs only a
-          session, not an approved shop. */}
+      {/* /help, not /support. Support is in the dashboard and the dashboard is
+          exactly what is shut to this person — but the storefront copy at
+          /support wears the shopping header, so the one link offered to
+          somebody waiting on approval used to drop them into the customer shop
+          with a cart and a checkout. Same tickets, no doorway. */}
       <p className="mt-4 text-sm text-muted-foreground">
         Waiting longer than you expected?{" "}
-        <Link href="/support" className="font-medium text-primary hover:underline">
+        <Link href="/help" className="font-medium text-primary hover:underline">
           Contact support
         </Link>
         .
