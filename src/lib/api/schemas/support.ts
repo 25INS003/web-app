@@ -65,6 +65,26 @@ export const ticketSchema = z.object({
   // thread, where knowing who you are talking to is the point.
   user: userRefSchema,
   assigned_admin: userRefSchema,
+
+  // What the ticket is about, when it is about something. Named by the
+  // backend rather than left as ids — an agent wants "#ORD-100042, Amul Milk",
+  // not two uuids to go and look up. Both null on a general enquiry.
+  order: z
+    .object({
+      id: objectId,
+      order_number: z.string().nullish(),
+      order_status: z.string().nullish(),
+      total_amount: z.number().nullish(),
+      created_at: isoDate.nullish(),
+    })
+    .nullish(),
+  product: z
+    .object({
+      id: objectId,
+      name: z.string().nullish(),
+      main_image_url: z.string().nullish(),
+    })
+    .nullish(),
   // How many messages on this ticket the current viewer has not seen. Their
   // own never count. Sent by the list; absent on the detail, where the act of
   // fetching it is what clears the count.
@@ -207,6 +227,10 @@ export const createTicketInputSchema = z.object({
     .max(2000, "Keep it under 2000 characters"),
   ticket_type: z.enum(ticketTypeValues),
   ticket_priority: z.enum(ticketPriorityValues).optional(),
+  // Optional, and the server re-checks both against the caller's own orders —
+  // an id sent from here is a claim, not evidence.
+  order_id: z.string().optional(),
+  product_id: z.string().optional(),
 });
 export type CreateTicketInput = z.infer<typeof createTicketInputSchema>;
 

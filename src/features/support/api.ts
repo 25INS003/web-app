@@ -39,6 +39,8 @@ export const supportApi = {
   },
 
   async createTicket(input: CreateTicketInput): Promise<Ticket> {
+    // Only the ids travel. The server checks the order is the caller's and
+    // the item is on it before storing either — see resolveTicketSubject.
     const body = createTicketInputSchema.parse(input);
     const data = await api.post<unknown>("/support/tickets", body);
     return ticketSchema.parse(data);

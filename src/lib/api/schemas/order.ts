@@ -84,6 +84,28 @@ export const orderSchema = z.object({
   discount_amount: z.number().optional().default(0),
   promotion_code: z.string().nullish(),
   promotion_name: z.string().nullish(),
+  // The shop, as it was when the order was placed. `orderShopName` reads a
+  // POPULATED `shop_id`, which the list does not send — it sends a bare uuid
+  // and puts the name here — so without this the list has no shop name at all.
+  shop_details_snapshot: z
+    .object({ name: z.string().nullish(), logo: z.string().nullish() })
+    .nullish(),
+  is_multi_shop: z.boolean().optional(),
+
+  // A few lines from the order, so a list can say what was IN it. Capped
+  // server-side — `items_count` carries the real total. Sent by the list
+  // only; the detail has the lines themselves.
+  item_preview: z
+    .array(
+      z.object({
+        product_id: objectId.nullish(),
+        product_name: z.string(),
+        image_url: z.string().nullish(),
+        quantity: z.number(),
+      }),
+    )
+    .optional()
+    .default([]),
   total_amount: z.number(),
   payment_method: z.string().optional(),
   payment_status: z.string().optional(),

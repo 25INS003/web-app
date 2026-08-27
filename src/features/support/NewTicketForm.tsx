@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import {
 import type { CreateTicketInput } from "@/lib/api/schemas/support";
 import { cn } from "@/lib/utils";
 import { useCreateTicket } from "./hooks";
+import { OrderPicker } from "./OrderPicker";
 
 /**
  * Raise a support request.
@@ -62,6 +64,9 @@ export function NewTicketForm({
   });
 
   const ticketType = watch("ticket_type");
+  // Held outside the form: they are ids resolved from two dependent selects,
+  // not typed values, and react-hook-form buys nothing for them.
+  const [about, setAbout] = useState({ orderId: "", productId: "" });
   const priority = watch("ticket_priority");
 
   return (
@@ -81,7 +86,15 @@ export function NewTicketForm({
       </p>
 
       <form
-        onSubmit={handleSubmit((v) => create.mutate(v))}
+        onSubmit={handleSubmit((v) =>
+          create.mutate({
+            ...v,
+            // Omitted rather than sent empty: the server reads an absent order
+            // as "not about one", and "" is not an id.
+            ...(about.orderId ? { order_id: about.orderId } : {}),
+            ...(about.productId ? { product_id: about.productId } : {}),
+          }),
+        )}
         noValidate
         className="mt-6 space-y-6"
       >
@@ -143,6 +156,12 @@ export function NewTicketForm({
             </p>
           </div>
         )}
+
+        <OrderPicker
+          orderId={about.orderId}
+          productId={about.productId}
+          onChange={setAbout}
+        />
 
         <div className="space-y-1.5">
           <Label htmlFor="description">Description</Label>

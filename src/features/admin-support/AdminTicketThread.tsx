@@ -34,6 +34,7 @@ import {
   MessageScroller,
   ReadReceipt,
   StatusBadge,
+  TicketSubject,
   useAttachmentPicker,
 } from "@/features/support/ui";
 
@@ -137,6 +138,9 @@ export function AdminTicketThread({
           <StatusBadge status={ticket.ticket_status} />
         </div>
       </div>
+
+      {/* No href: staff have no customer-facing order page to send them to. */}
+      <TicketSubject order={ticket.order} product={ticket.product} />
 
       {ticket.description && (
         <p className="rounded-2xl border border-border bg-card p-4 text-sm whitespace-pre-wrap">

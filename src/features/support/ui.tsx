@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, CheckCheck, FileText, Paperclip, X } from "lucide-react";
+import { Check, CheckCheck, FileText, Package, Paperclip, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -113,6 +114,53 @@ export function ReadReceipt({
         <Check className="size-3.5 opacity-70" />
       )}
     </span>
+  );
+}
+
+/**
+ * What the ticket is about, when it is about something.
+ *
+ * The reason the ids are stored: an agent opening a thread should start from
+ * the order and the line, not from a search through prose. Links through to
+ * the order so it is one click, not a copied number.
+ */
+export function TicketSubject({
+  order,
+  product,
+  orderHref,
+}: {
+  order?: { id: string; order_number?: string | null } | null;
+  product?: { name?: string | null; main_image_url?: string | null } | null;
+  /** Omitted for staff, who have no customer-facing order page to visit. */
+  orderHref?: string;
+}) {
+  if (!order && !product) return null;
+
+  const body = (
+    <>
+      <Package className="size-4 shrink-0 text-muted-foreground" />
+      <span className="truncate">
+        {order?.order_number ? `#${order.order_number}` : "Order"}
+        {product?.name ? ` · ${product.name}` : ""}
+      </span>
+    </>
+  );
+
+  return (
+    <div className="mt-2">
+      {orderHref && order ? (
+        <Link
+          href={`${orderHref}/${order.id}`}
+          className="inline-flex max-w-full items-center gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-1.5 text-xs transition hover:border-primary/40 hover:bg-muted"
+        >
+          {body}
+        </Link>
+      ) : (
+        <span className="inline-flex max-w-full items-center gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-1.5 text-xs">
+          {body}
+        </span>
+      )}
+    </div>
   );
 }
 

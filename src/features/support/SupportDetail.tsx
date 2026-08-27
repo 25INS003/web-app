@@ -19,6 +19,7 @@ import {
   MessageScroller,
   ReadReceipt,
   StatusBadge,
+  TicketSubject,
   useAttachmentPicker,
 } from "./ui";
 
@@ -105,6 +106,12 @@ export function SupportDetail({
         </div>
         <StatusBadge status={ticket.ticket_status} />
       </div>
+
+      <TicketSubject
+        order={ticket.order}
+        product={ticket.product}
+        orderHref="/orders"
+      />
 
       <div className="mt-6">
         <MessageScroller count={ticket.messages.length}>
