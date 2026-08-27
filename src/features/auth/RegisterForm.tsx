@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordStrengthMeter } from "./PasswordStrengthMeter";
 import { registerInputSchema } from "@/lib/api/schemas/auth";
 import type { RegisterInput } from "@/lib/api/schemas/auth";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,14 @@ export function RegisterForm() {
     },
   });
   const role = watch("user_type");
+  // Watched so the meter can refuse a password containing the person's own
+  // name or address — it has to see the other fields to do that.
+  const [password, email, firstName, lastName] = watch([
+    "password",
+    "email",
+    "first_name",
+    "last_name",
+  ]);
 
   return (
     <form
@@ -65,23 +74,40 @@ export function RegisterForm() {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label htmlFor="first_name">First name</Label>
-          <Input id="first_name" autoComplete="given-name" {...register("first_name")} />
+          <Input
+            id="first_name"
+            autoComplete="given-name"
+            {...register("first_name")}
+          />
           {errors.first_name && (
-            <p className="text-xs text-destructive">{errors.first_name.message}</p>
+            <p className="text-xs text-destructive">
+              {errors.first_name.message}
+            </p>
           )}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="last_name">Last name</Label>
-          <Input id="last_name" autoComplete="family-name" {...register("last_name")} />
+          <Input
+            id="last_name"
+            autoComplete="family-name"
+            {...register("last_name")}
+          />
           {errors.last_name && (
-            <p className="text-xs text-destructive">{errors.last_name.message}</p>
+            <p className="text-xs text-destructive">
+              {errors.last_name.message}
+            </p>
           )}
         </div>
       </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" autoComplete="email" {...register("email")} />
+        <Input
+          id="email"
+          type="email"
+          autoComplete="email"
+          {...register("email")}
+        />
         {errors.email && (
           <p className="text-xs text-destructive">{errors.email.message}</p>
         )}
@@ -91,7 +117,12 @@ export function RegisterForm() {
         <Label htmlFor="phone">
           Phone <span className="text-muted-foreground">(optional)</span>
         </Label>
-        <Input id="phone" type="tel" autoComplete="tel" {...register("phone")} />
+        <Input
+          id="phone"
+          type="tel"
+          autoComplete="tel"
+          {...register("phone")}
+        />
       </div>
 
       <div className="space-y-1.5">
@@ -99,15 +130,36 @@ export function RegisterForm() {
         <PasswordInput
           id="password"
           autoComplete="new-password"
-          placeholder="At least 6 characters"
+          // Spelled out here because the checklist below only appears once
+          // there is something to check — before the first keystroke this
+          // placeholder is the only statement of the rules.
+          placeholder="8+ characters, with A-Z, 0-9 and a symbol"
           {...register("password")}
         />
-        {errors.password && (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
+        {/* The meter carries its own advice line, so showing the resolver's
+            message too would print the same sentence twice — the field error
+            only renders once the form has been submitted and the meter is
+            somehow silent. */}
+        {password ? (
+          <PasswordStrengthMeter
+            password={password}
+            identity={{ email, first_name: firstName, last_name: lastName }}
+          />
+        ) : (
+          errors.password && (
+            <p className="text-xs text-destructive">
+              {errors.password.message}
+            </p>
+          )
         )}
       </div>
 
-      <Button type="submit" size="lg" className="w-full" disabled={signup.isPending}>
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full"
+        disabled={signup.isPending}
+      >
         {signup.isPending && <Loader2 className="animate-spin" />}
         {role === "shop_owner" ? "Create seller account" : "Create account"}
       </Button>

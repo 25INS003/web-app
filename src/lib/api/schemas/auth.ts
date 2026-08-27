@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  MIN_PASSWORD_LENGTH,
+  scorePassword,
+} from "@/features/auth/password-strength";
 import { objectId } from "./common";
 
 export const userTypeSchema = z.enum([
@@ -70,16 +74,37 @@ export type LoginInput = z.infer<typeof loginInputSchema>;
 
 // Web sign-up is for customers (default) or shop owners; admins are provisioned
 // out-of-band.
-export const registerInputSchema = z.object({
-  first_name: z.string().min(1, "First name is required"),
-  last_name: z.string().min(1, "Last name is required"),
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(6, "At least 6 characters"),
-  // No .default() here — the form supplies the default via defaultValues, which
-  // keeps the zod input/output types aligned for react-hook-form's resolver.
-  user_type: z.enum(["customer", "shop_owner"]),
-  phone: z.string().optional(),
-});
+export const registerInputSchema = z
+  .object({
+    first_name: z.string().min(1, "First name is required"),
+    last_name: z.string().min(1, "Last name is required"),
+    email: z.string().email("Enter a valid email"),
+    password: z.string().min(MIN_PASSWORD_LENGTH, "At least 8 characters"),
+    // No .default() here — the form supplies the default via defaultValues, which
+    // keeps the zod input/output types aligned for react-hook-form's resolver.
+    user_type: z.enum(["customer", "shop_owner"]),
+    phone: z.string().optional(),
+  })
+  // The strength rule sits on the whole object rather than the password field,
+  // because it reads the name and email too — a password containing either is
+  // refused, and the field alone cannot see them.
+  //
+  // This mirrors what the API enforces. It is here so the form fails at the
+  // field instead of after a round trip; it is NOT the thing keeping weak
+  // passwords out, which is `assertStrongPassword` on the server.
+  .superRefine((values, ctx) => {
+    const result = scorePassword(values.password, {
+      email: values.email,
+      first_name: values.first_name,
+      last_name: values.last_name,
+    });
+    if (result.acceptable) return;
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["password"],
+      message: result.reasons[0] ?? "Choose a stronger password",
+    });
+  });
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 
 export const verifyEmailInputSchema = z.object({

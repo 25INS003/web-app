@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
+import { scorePassword } from "./password-strength";
+import { PasswordStrengthMeter } from "./PasswordStrengthMeter";
 import { ApiError } from "@/lib/api/types";
 import { authApi } from "./api";
 
@@ -114,7 +116,12 @@ export function PasswordResetFlow() {
             />
           </div>
           <FieldError message={error} />
-          <Button type="submit" size="lg" className="w-full" disabled={send.isPending}>
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full"
+            disabled={send.isPending}
+          >
             {send.isPending && <Loader2 className="animate-spin" />}
             Send code
           </Button>
@@ -145,7 +152,12 @@ export function PasswordResetFlow() {
             />
           </div>
           <FieldError message={error} />
-          <Button type="submit" size="lg" className="w-full" disabled={verify.isPending}>
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full"
+            disabled={verify.isPending}
+          >
             {verify.isPending && <Loader2 className="animate-spin" />}
             Verify code
           </Button>
@@ -164,7 +176,14 @@ export function PasswordResetFlow() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (password.length < 6) return setError("At least 6 characters");
+            // Same rule the API applies, checked here so a weak password
+            // fails before the reset token is spent on it.
+            const strength = scorePassword(password, { email });
+            if (!strength.acceptable) {
+              return setError(
+                strength.reasons[0] ?? "Choose a stronger password",
+              );
+            }
             if (password !== confirm) return setError("Passwords don't match");
             reset.mutate(password);
           }}
@@ -180,6 +199,7 @@ export function PasswordResetFlow() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <PasswordStrengthMeter password={password} identity={{ email }} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="confirm">Confirm password</Label>
@@ -192,7 +212,12 @@ export function PasswordResetFlow() {
             />
           </div>
           <FieldError message={error} />
-          <Button type="submit" size="lg" className="w-full" disabled={reset.isPending}>
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full"
+            disabled={reset.isPending}
+          >
             {reset.isPending && <Loader2 className="animate-spin" />}
             Update password
           </Button>
@@ -200,7 +225,10 @@ export function PasswordResetFlow() {
       )}
 
       <div className="mt-5 text-center text-sm">
-        <Link href="/login" className="text-muted-foreground hover:text-foreground">
+        <Link
+          href="/login"
+          className="text-muted-foreground hover:text-foreground"
+        >
           Back to sign in
         </Link>
       </div>
