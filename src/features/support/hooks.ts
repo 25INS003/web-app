@@ -12,19 +12,51 @@ import type {
 } from "@/lib/api/schemas/support";
 import { supportApi } from "./api";
 
+/**
+ * How often an open support screen looks for new messages.
+ *
+ * A thread is a live conversation, so it checks often; a list is a glance at
+ * what is waiting, so it checks less. Both are only paid while the tab is
+ * open — react-query pauses `refetchInterval` on a hidden tab by default, and
+ * the focus refetch below is what catches up on return. The two are chosen to
+ * complement each other rather than overlap.
+ */
+const THREAD_POLL = 10_000;
+const LIST_POLL = 30_000;
+
 export function useTickets() {
   return useQuery({
     queryKey: queryKeys.support.tickets(),
     queryFn: supportApi.getTickets,
     staleTime: 30_000,
+    refetchInterval: LIST_POLL,
+    // Set here rather than globally: `refetchOnWindowFocus` is off across the
+    // whole app by default, and turning it on for every screen to fix support
+    // would change the behaviour of pages nobody asked about.
+    refetchOnWindowFocus: true,
   });
 }
 
+/**
+ * One thread, kept current.
+ *
+ * It used to fetch once and never again — no interval, and
+ * `refetchOnWindowFocus` is off app-wide — so a reply only appeared on a full
+ * page reload. Polling covers the case that matters most, somebody watching a
+ * conversation as it happens; the focus refetch covers tabbing away and back,
+ * which is when polling is paused.
+ *
+ * Worth knowing: this endpoint also moves the reader's read cursor, so
+ * polling an open thread keeps it current — which is correct, they are
+ * looking at it — at the cost of one small upsert per poll.
+ */
 export function useTicket(ticketId: string) {
   return useQuery({
     queryKey: queryKeys.support.ticket(ticketId),
     queryFn: () => supportApi.getTicket(ticketId),
     enabled: Boolean(ticketId),
+    refetchInterval: THREAD_POLL,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -80,7 +112,8 @@ export function useAllTickets(status?: string) {
   return useQuery({
     queryKey: [...queryKeys.support.tickets(), "all", status ?? "any"] as const,
     queryFn: () => supportApi.getAllTickets(status),
-    refetchInterval: 30_000,
+    refetchInterval: LIST_POLL,
+    refetchOnWindowFocus: true,
     placeholderData: (previous) => previous,
   });
 }
