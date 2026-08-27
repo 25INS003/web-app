@@ -13,26 +13,29 @@ import type {
 import { supportApi } from "./api";
 
 /**
- * How often an open support screen looks for new messages.
+ * How often an open CONVERSATION looks for new messages.
  *
- * A thread is a live conversation, so it checks often; a list is a glance at
- * what is waiting, so it checks less. Both are only paid while the tab is
- * open — react-query pauses `refetchInterval` on a hidden tab by default, and
- * the focus refetch below is what catches up on return. The two are chosen to
- * complement each other rather than overlap.
+ * Only the thread polls. A list is a glance at what is waiting, and a wrong
+ * answer there costs somebody a slightly stale badge until they look again —
+ * a thread is a live back-and-forth, where a wrong answer is a reply nobody
+ * sees. The lists refetch when the tab regains focus instead, which covers
+ * the case that actually happens without a timer running behind it.
+ *
+ * Paid only while the tab is open: react-query pauses `refetchInterval` on a
+ * hidden tab, and only while a component is subscribed — so leaving the page
+ * stops it.
  */
 const THREAD_POLL = 10_000;
-const LIST_POLL = 30_000;
 
 export function useTickets() {
   return useQuery({
     queryKey: queryKeys.support.tickets(),
     queryFn: supportApi.getTickets,
     staleTime: 30_000,
-    refetchInterval: LIST_POLL,
-    // Set here rather than globally: `refetchOnWindowFocus` is off across the
-    // whole app by default, and turning it on for every screen to fix support
-    // would change the behaviour of pages nobody asked about.
+    // No interval: see THREAD_POLL. Focus is set here rather than globally —
+    // `refetchOnWindowFocus` is off across the whole app by default, and
+    // turning it on everywhere to fix support would change the behaviour of
+    // pages nobody asked about.
     refetchOnWindowFocus: true,
   });
 }
@@ -104,15 +107,15 @@ export function useSendMessage(ticketId: string) {
 /**
  * The whole support queue, for an admin.
  *
- * Polled, because a ticket is somebody waiting: a queue that only updates on
- * reload is one an admin has to remember to reload. 30s is often enough to
- * notice a new request and cheap enough for a screen left open all day.
+ * This used to poll every 30s, from before the thread did. It no longer does:
+ * polling is now the conversation's alone. A queue left open all day is the
+ * screen where a timer costs most and buys least — an admin returning to the
+ * tab refetches on focus, which is when they were going to look anyway.
  */
 export function useAllTickets(status?: string) {
   return useQuery({
     queryKey: [...queryKeys.support.tickets(), "all", status ?? "any"] as const,
     queryFn: () => supportApi.getAllTickets(status),
-    refetchInterval: LIST_POLL,
     refetchOnWindowFocus: true,
     placeholderData: (previous) => previous,
   });

@@ -60,17 +60,53 @@ describe("useTicket", () => {
   });
 });
 
+describe("leaving the support page", () => {
+  // Polling is scoped by SUBSCRIPTION, not by a route check: React Query runs
+  // `refetchInterval` only while a query has a mounted observer, so navigating
+  // away stops it without anything having to know what a route is.
+  //
+  // Worth pinning, because it is the sort of guarantee that reads like an
+  // implementation detail until somebody relies on it. The thing it would NOT
+  // catch is a support query subscribed from a layout or header — that would
+  // poll app-wide, and no test here can see it.
+  it("stops polling the thread once the component unmounts", async () => {
+    const { unmount } = renderHook(() => useTicket("t1"), { wrapper });
+    await waitFor(() => expect(supportApi.getTicket).toHaveBeenCalledTimes(1));
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    await waitFor(() => expect(supportApi.getTicket).toHaveBeenCalledTimes(2));
+
+    unmount();
+
+    // Half a minute of wall clock after leaving the page.
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(supportApi.getTicket).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves nothing running after the thread unmounts", async () => {
+    const { unmount } = renderHook(() => useTicket("t1"), { wrapper });
+    await waitFor(() => expect(supportApi.getTicket).toHaveBeenCalledTimes(1));
+
+    unmount();
+
+    // Three minutes after leaving: the timer is gone with the observer, not
+    // merely idle.
+    await vi.advanceTimersByTimeAsync(180_000);
+    expect(supportApi.getTicket).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("useTickets", () => {
-  it("refreshes the list on a slower beat than the thread", async () => {
+  it("does not poll at all — only the conversation does", async () => {
+    // A list is a glance at what is waiting, where a stale badge costs
+    // somebody one extra look. A thread is a live back-and-forth, where a
+    // stale view is a reply nobody sees. Only the second earns a timer; the
+    // list refetches when the tab regains focus instead.
     renderHook(() => useTickets(), { wrapper });
     await waitFor(() => expect(supportApi.getTickets).toHaveBeenCalledTimes(1));
 
-    // A list is a glance at what is waiting, not a live conversation — at the
-    // thread's interval it should not have moved yet.
-    await vi.advanceTimersByTimeAsync(10_000);
+    // Three minutes of an open support list.
+    await vi.advanceTimersByTimeAsync(180_000);
     expect(supportApi.getTickets).toHaveBeenCalledTimes(1);
-
-    await vi.advanceTimersByTimeAsync(20_000);
-    await waitFor(() => expect(supportApi.getTickets).toHaveBeenCalledTimes(2));
   });
 });
