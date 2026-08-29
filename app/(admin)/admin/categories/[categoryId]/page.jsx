@@ -15,8 +15,7 @@ import {
     CheckCircle,
     XCircle,
     FolderTree,
-    Plus,
-    ChevronRight
+    Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +23,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { CategoryDialog } from "../components/CategoryDialog";
 import { EditCategoryDialog } from "../components/EditCategoryDialog";
-import { childrenOf } from "@/lib/categories/tree";
+import { buildCategoryTree, childrenOf, findTreeNode } from "@/lib/categories/tree";
+import { CategoryTree } from "../components/CategoryTree";
 
 export default function CategoryDetailPage() {
     const params = useParams();
@@ -35,6 +35,10 @@ export default function CategoryDetailPage() {
     // Dialog states
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isAddSubOpen, setIsAddSubOpen] = useState(false);
+    // Which node the "+" on a tree row is adding under. Defaults to the
+    // category being viewed, which is what the empty-state button means.
+    const [addSubParent, setAddSubParent] = useState(null);
+    const [editingCategory, setEditingCategory] = useState(null);
 
     // We try to find the category from the store first
     const category = categories.find(c => c.id === categoryId);
@@ -44,6 +48,32 @@ export default function CategoryDetailPage() {
     // on write but never returned — so the direct read matched nothing and this
     // page showed every category as childless.
     const subcategories = childrenOf(categories, categoryId);
+
+    // Everything below this category, not just its direct children — the card
+    // renders the full subtree, so a bare "2" next to five visible rows would
+    // misdescribe what is on screen.
+    const descendantCount = (() => {
+        const tree = buildCategoryTree(categories ?? []);
+        return findTreeNode(tree, categoryId)?.descendantCount ?? 0;
+    })();
+
+    // Opening the create dialog from a tree row parents onto THAT row, not the
+    // page's category — otherwise a "+" three levels down would silently add a
+    // direct child of the category being viewed.
+    const handleAddSub = (parent) => {
+        setAddSubParent(parent?.id ?? categoryId);
+        setIsAddSubOpen(true);
+    };
+
+    const handleAddDirectSub = () => {
+        setAddSubParent(categoryId);
+        setIsAddSubOpen(true);
+    };
+
+    const handleEditNode = (node) => {
+        setEditingCategory(node);
+        setIsEditOpen(true);
+    };
 
     useEffect(() => {
         if (!categories.length) {
@@ -123,12 +153,12 @@ export default function CategoryDetailPage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" className="gap-2 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800" onClick={() => setIsEditOpen(true)}>
+                    <Button variant="outline" className="gap-2 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800" onClick={() => handleEditNode(category)}>
                         <Edit className="h-4 w-4" /> Edit
                     </Button>
                     <Button 
                         className="gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 border-0"
-                        onClick={() => setIsAddSubOpen(true)}
+                        onClick={handleAddDirectSub}
                     >
                         <Plus className="h-4 w-4" /> Add Subcategory
                     </Button>
@@ -162,35 +192,19 @@ export default function CategoryDetailPage() {
                                 <CardTitle className="text-lg font-semibold text-slate-800 dark:text-slate-200">Subcategories</CardTitle>
                                 <Badge variant="secondary" className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-0.5 rounded-lg">
                                     {subcategories.length}
+                                    {descendantCount > subcategories.length
+                                        ? ` / ${descendantCount}`
+                                        : ""}
                                 </Badge>
                             </CardHeader>
                             <CardContent className="p-6">
                                 {subcategories.length > 0 ? (
-                                    <div className="grid gap-3">
-                                        {subcategories.map(sub => (
-                                            <motion.div 
-                                                key={sub.id}
-                                                whileHover={{ scale: 1.01, x: 4 }}
-                                                onClick={() => router.push(`/admin/categories/${sub.id}`)}
-                                                className="group flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-500/30 hover:shadow-md cursor-pointer transition-all"
-                                            >
-                                                <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0">
-                                                    {sub.image_url ? (
-                                                         <ProgressiveImage src={sub.image_url} alt="" className="h-full w-full object-cover" />
-                                                    ) : (
-                                                        <FolderTree className="h-6 w-6 text-slate-400" />
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-500 transition-colors">{sub.name}</h4>
-                                                    <p className="text-sm text-slate-500 truncate">{sub.description || "No description"}</p>
-                                                </div>
-                                                <div className="p-2 rounded-full bg-slate-50 dark:bg-slate-900 text-slate-400 group-hover:text-blue-500 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/10 transition-colors">
-                                                    <ChevronRight className="h-5 w-5" />
-                                                </div>
-                                            </motion.div>
-                                        ))}
-                                    </div>
+                                    <CategoryTree
+                                        categories={categories}
+                                        rootId={categoryId}
+                                        onEdit={handleEditNode}
+                                        onAddSub={handleAddSub}
+                                    />
                                 ) : (
                                     <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-800/20">
                                         <div className="p-4 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
@@ -200,7 +214,7 @@ export default function CategoryDetailPage() {
                                         <p className="text-sm text-slate-500 mt-1 mb-6 max-w-xs mx-auto">
                                             Create subcategories to organize your items inside {category?.name}.
                                         </p>
-                                        <Button variant="outline" onClick={() => setIsAddSubOpen(true)} className="rounded-xl">
+                                        <Button variant="outline" onClick={handleAddDirectSub} className="rounded-xl">
                                             <Plus className="mr-2 h-4 w-4" /> Add Subcategory
                                         </Button>
                                     </div>
@@ -280,14 +294,18 @@ export default function CategoryDetailPage() {
             <EditCategoryDialog 
                 open={isEditOpen} 
                 onOpenChange={setIsEditOpen} 
-                category={category}
+                category={editingCategory ?? category}
                 onSuccess={() => fetchCategories()} 
             />
             
-            <CategoryDialog 
-                open={isAddSubOpen} 
-                onOpenChange={setIsAddSubOpen} 
-                parentId={categoryId} 
+            <CategoryDialog
+                // Remounted per parent: the form seeds parent_id from this prop
+                // when it opens, so one shared instance would carry the
+                // previous row's parent into the next add.
+                key={addSubParent ?? categoryId}
+                open={isAddSubOpen}
+                onOpenChange={setIsAddSubOpen}
+                parentId={addSubParent ?? categoryId}
             />
         </motion.div>
     );

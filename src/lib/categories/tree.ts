@@ -68,6 +68,120 @@ export const childrenOf = (
   parentId: string | null,
 ): CategoryNode[] => categories.filter((c) => parentIdOf(c) === parentId);
 
+export type CategoryTreeNode<T> = {
+  category: T;
+  depth: number;
+  children: CategoryTreeNode<T>[];
+  /** Nodes at or below this one, excluding itself. */
+  descendantCount: number;
+};
+
+/**
+ * The flat category list as a nested tree, roots first.
+ *
+ * Built by linking ids in one pass rather than by filtering the whole list at
+ * every level: the recursive-filter shape is O(n²) and, more importantly, has
+ * no way to notice a node it never reached.
+ *
+ * Two kinds of bad data are handled rather than ignored, because both make
+ * rows silently invisible — the worst outcome for an admin screen whose job is
+ * to show you everything that exists:
+ *
+ *  - **Orphans.** A `parent_id` pointing at a row that isn't in the list (a
+ *    deleted parent, or a filtered-out one) would leave the child attached to
+ *    nothing and absent from the render. Orphans are promoted to roots.
+ *  - **Cycles.** A → B → A never reaches a root, so neither node would appear.
+ *    Any node not reachable from a root after the walk is promoted too, which
+ *    breaks the cycle at an arbitrary but stable point instead of recursing
+ *    forever.
+ *
+ * Sibling order follows the input, so the API's
+ * `ORDER BY display_order, name, id` carries through at every level.
+ */
+export const buildCategoryTree = <T extends CategoryNode>(
+  categories: T[],
+): CategoryTreeNode<T>[] => {
+  const rows = dedupeById(categories ?? []);
+  const nodes = new Map<string, CategoryTreeNode<T>>();
+  for (const category of rows) {
+    nodes.set(category.id!, {
+      category,
+      depth: 0,
+      children: [],
+      descendantCount: 0,
+    });
+  }
+
+  const roots: CategoryTreeNode<T>[] = [];
+  for (const category of rows) {
+    const node = nodes.get(category.id!)!;
+    const parentId = parentIdOf(category);
+    const parent = parentId ? nodes.get(parentId) : undefined;
+    // Self-parented rows fall through to root here, before any linking.
+    if (parent && parent !== node) parent.children.push(node);
+    else roots.push(node);
+  }
+
+  // Depth and descendant counts, plus cycle detection, in one walk from the
+  // roots. `seen` spans the whole walk, so a node can only be visited once.
+  const seen = new Set<string>();
+  const visit = (node: CategoryTreeNode<T>, depth: number): number => {
+    seen.add(node.category.id!);
+    node.depth = depth;
+    // Prune back-edges from `children` itself, not just from this walk. In a
+    // cycle A -> B -> A neither node is a root, so the promotion pass below
+    // enters at A; leaving B's link back to A in place would return a cyclic
+    // structure that recurses forever in the RENDERER even if the walk here
+    // guarded itself. In an acyclic list a child is never already seen when
+    // its parent is visited, so this filter is a no-op.
+    node.children = node.children.filter((c) => !seen.has(c.category.id!));
+    let total = 0;
+    for (const child of node.children) total += 1 + visit(child, depth + 1);
+    node.descendantCount = total;
+    return total;
+  };
+  for (const root of roots) visit(root, 0);
+
+  // Anything the walk never reached is in a cycle. Promote it so it renders.
+  for (const category of rows) {
+    if (seen.has(category.id!)) continue;
+    const node = nodes.get(category.id!)!;
+    roots.push(node);
+    visit(node, 0);
+  }
+
+  return roots;
+};
+
+/**
+ * The subtree rooted at `categoryId`, or `null` if it isn't in the tree.
+ *
+ * Used to show one category's descendants without rebuilding a tree from a
+ * filtered list — filtering first would strip the ancestors that
+ * `buildCategoryTree` needs to link anything together, and every descendant
+ * would come back as an orphan root.
+ */
+export const findTreeNode = <T extends CategoryNode>(
+  nodes: CategoryTreeNode<T>[],
+  categoryId: string,
+): CategoryTreeNode<T> | null => {
+  for (const node of nodes) {
+    if (node.category.id === categoryId) return node;
+    const hit = findTreeNode(node.children, categoryId);
+    if (hit) return hit;
+  }
+  return null;
+};
+
+/** Every id on the path from a root down to `categoryId`, inclusive. */
+export const ancestorIds = (
+  categories: CategoryNode[],
+  categoryId: string,
+): string[] => {
+  const target = categories.find((c) => c.id === categoryId);
+  return categoryPath(categories, target).map((c) => c.id!);
+};
+
 /**
  * One entry per id, first occurrence winning.
  *
