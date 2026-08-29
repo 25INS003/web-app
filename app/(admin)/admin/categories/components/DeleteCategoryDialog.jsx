@@ -92,11 +92,11 @@ export function DeleteCategoryDialog({
 
     return (
         <Dialog open={open} onOpenChange={busy ? undefined : onOpenChange}>
-            <DialogContent className="sm:max-w-[520px] rounded-2xl border-slate-200 dark:border-slate-700">
+            <DialogContent className="sm:max-w-[520px] rounded-2xl border-border">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3">
-                        <span className="grid h-9 w-9 place-items-center rounded-xl bg-red-50 dark:bg-red-500/10">
-                            <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        <span className="grid h-9 w-9 place-items-center rounded-xl bg-destructive/10">
+                            <Trash2 className="h-4 w-4 text-destructive" />
                         </span>
                         Delete “{category?.name}”?
                     </DialogTitle>
@@ -107,9 +107,9 @@ export function DeleteCategoryDialog({
 
                 {hasChildren ? (
                     <div className="space-y-3">
-                        <div className="flex gap-3 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-3">
-                            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                            <p className="text-sm text-amber-900 dark:text-amber-200">
+                        <div className="flex gap-3 rounded-xl border border-warning/30 bg-warning/10 p-3">
+                            <AlertTriangle className="h-4 w-4 shrink-0 text-warning-foreground mt-0.5" />
+                            <p className="text-sm text-warning-foreground">
                                 It has {childCount} subcategor
                                 {childCount === 1 ? "y" : "ies"}
                                 {descendantCount > childCount
@@ -119,7 +119,7 @@ export function DeleteCategoryDialog({
                             </p>
                         </div>
 
-                        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 dark:border-slate-700 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3 hover:bg-muted">
                             <input
                                 type="radio"
                                 name="delete-children"
@@ -128,16 +128,16 @@ export function DeleteCategoryDialog({
                                 onChange={() => setChoice("flatten")}
                             />
                             <span className="text-sm">
-                                <span className="font-medium text-slate-900 dark:text-white">
+                                <span className="font-medium text-foreground">
                                     Make them top-level categories
                                 </span>
-                                <span className="block text-slate-500 dark:text-slate-400">
+                                <span className="block text-muted-foreground">
                                     They keep their own products and subcategories.
                                 </span>
                             </span>
                         </label>
 
-                        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 dark:border-slate-700 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3 hover:bg-muted">
                             <input
                                 type="radio"
                                 name="delete-children"
@@ -146,7 +146,7 @@ export function DeleteCategoryDialog({
                                 onChange={() => setChoice("move")}
                             />
                             <span className="min-w-0 flex-1 text-sm">
-                                <span className="font-medium text-slate-900 dark:text-white">
+                                <span className="font-medium text-foreground">
                                     Move them into another category
                                 </span>
                                 <select
@@ -155,7 +155,7 @@ export function DeleteCategoryDialog({
                                         setMoveTo(e.target.value);
                                         setChoice("move");
                                     }}
-                                    className="mt-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                                    className="mt-2 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
                                 >
                                     <option value="">Select a category…</option>
                                     {moveTargets.map((c) => (
@@ -170,7 +170,7 @@ export function DeleteCategoryDialog({
                 ) : null}
 
                 {error ? (
-                    <p className="rounded-xl bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                    <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
                         {error}
                     </p>
                 ) : null}

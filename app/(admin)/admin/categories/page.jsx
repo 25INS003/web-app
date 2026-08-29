@@ -77,13 +77,13 @@ const CategoryCard = ({ category, onEdit, onDelete, index }) => {
             transition={{ delay: index * 0.03, duration: 0.2 }}
             whileHover={{ y: -4, transition: { duration: 0.2 } }}
             onClick={() => router.push(`/admin/categories/${category.id}`)}
-            className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm cursor-pointer group"
+            className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm cursor-pointer group"
         >
             {/* Hover gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             
             {/* Image Header */}
-            <div className="relative h-40 w-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+            <div className="relative h-40 w-full bg-muted flex items-center justify-center overflow-hidden">
                 {imageUrl ? (
                     <ProgressiveImage
                         src={imageUrl}
@@ -95,7 +95,7 @@ const CategoryCard = ({ category, onEdit, onDelete, index }) => {
                         }}
                     />
                 ) : (
-                    <div className="flex flex-col items-center text-slate-400 dark:text-slate-600 transition-colors group-hover:text-slate-500">
+                    <div className="flex flex-col items-center text-muted-foreground transition-colors group-hover:text-muted-foreground">
                         <ImageIcon className="h-12 w-12 mb-2 opacity-50" />
                         <span className="text-xs font-medium">No Image</span>
                     </div>
@@ -103,7 +103,7 @@ const CategoryCard = ({ category, onEdit, onDelete, index }) => {
 
                 {/* Order Badge */}
                 <div className="absolute top-3 right-3">
-                    <Badge className="bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur-sm text-xs rounded-lg px-2.5 py-1">
+                    <Badge className="bg-card/90 dark:bg-popover/90 text-foreground shadow-sm backdrop-blur-sm text-xs rounded-lg px-2.5 py-1">
                         Order: {category.display_order !== undefined ? category.display_order : 0}
                     </Badge>
                 </div>
@@ -113,33 +113,33 @@ const CategoryCard = ({ category, onEdit, onDelete, index }) => {
                     <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
                             <button 
-                                className="h-8 w-8 flex items-center justify-center bg-white/90 dark:bg-slate-800/90 rounded-lg shadow-sm backdrop-blur-sm hover:bg-white dark:hover:bg-slate-700 transition-colors"
+                                className="h-8 w-8 flex items-center justify-center bg-card/90 dark:bg-popover/90 rounded-lg shadow-sm backdrop-blur-sm hover:bg-muted transition-colors"
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                <MoreVertical className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent 
                             align="start" 
-                            className="w-48 p-2 rounded-2xl bg-slate-900 border-slate-700 shadow-xl" 
+                            className="w-48 p-2 rounded-2xl bg-popover border-border shadow-xl" 
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header */}
                             <div className="px-2 py-1.5 mb-1">
                                 <p className="text-sm font-semibold text-white">Category</p>
                             </div>
-                            <div className="h-px bg-slate-700 mb-2" />
+                            <div className="h-px bg-muted mb-2" />
                             
                             <DropdownMenuItem 
                                 onClick={handleEditClick} 
-                                className="rounded-xl px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer focus:bg-slate-800 focus:text-white"
+                                className="rounded-xl px-3 py-2.5 text-muted-foreground hover:text-white hover:bg-popover cursor-pointer focus:bg-popover focus:text-white"
                             >
-                                <Settings className="mr-3 h-4 w-4 text-slate-400" />
+                                <Settings className="mr-3 h-4 w-4 text-muted-foreground" />
                                 Edit Category
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={handleDeleteClick}
-                                className="rounded-xl px-3 py-2.5 text-red-400 hover:text-red-300 hover:bg-slate-800 cursor-pointer focus:bg-slate-800 focus:text-red-300"
+                                className="rounded-xl px-3 py-2.5 text-destructive hover:text-destructive hover:bg-popover cursor-pointer focus:bg-popover focus:text-destructive"
                             >
                                 <Trash2 className="mr-3 h-4 w-4" />
                                 Delete Category
@@ -153,27 +153,27 @@ const CategoryCard = ({ category, onEdit, onDelete, index }) => {
             <div className="relative z-10 p-5">
                 <div className="flex justify-between items-start gap-2">
                     <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg text-slate-900 dark:text-white line-clamp-1">
+                        <h3 className="font-semibold text-lg text-foreground line-clamp-1">
                             {category.name}
                         </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 min-h-[40px]">
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2 min-h-[40px]">
                             {category.description || "No description provided."}
                         </p>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-500 transition-colors flex-shrink-0 mt-1" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
                 </div>
 
-                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border">
                     <Badge 
                         className={`text-[10px] rounded-lg px-2.5 py-1 ${
                             subcategoryCount > 0 
-                                ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400" 
-                                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                                ? "bg-primary/10 text-primary" 
+                                : "bg-muted text-muted-foreground"
                         }`}
                     >
                         {subcategoryCount > 0 ? `${subcategoryCount} SUBCATEGORIES` : 'NO SUBCATEGORIES'}
                     </Badge>
-                    <span className="text-xs text-blue-600 dark:text-blue-400 font-medium group-hover:underline">
+                    <span className="text-xs text-primary font-medium group-hover:underline">
                         Click to view →
                     </span>
                 </div>
@@ -236,13 +236,13 @@ const CategoriesPage = () => {
                 className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
             >
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3 text-slate-900 dark:text-white">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25">
+                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3 text-foreground">
+                        <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/25">
                             <FolderTree className="h-6 w-6 text-white" />
                         </div>
                         Categories
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-2xl">
+                    <p className="text-muted-foreground mt-2 max-w-2xl">
                         Organize your products into hierarchical categories. <span className="font-medium">Click on a category card</span> to view and create subcategories.
                     </p>
                 </div>
@@ -250,7 +250,7 @@ const CategoriesPage = () => {
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button 
                         onClick={() => setIsCreateOpen(true)} 
-                        className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/25 px-5"
+                        className="rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 px-5"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Root Category
@@ -268,17 +268,17 @@ const CategoriesPage = () => {
                         scale: searchFocused ? 1.01 : 1,
                         boxShadow: searchFocused ? "0 4px 20px rgba(59, 130, 246, 0.15)" : "0 0 0 rgba(0,0,0,0)"
                     }}
-                    className={`flex items-center rounded-2xl px-5 py-3.5 w-full sm:max-w-md transition-all duration-300 border-2 bg-white dark:bg-slate-800/60 ${
+                    className={`flex items-center rounded-2xl px-5 py-3.5 w-full sm:max-w-md transition-all duration-300 border-2 bg-card ${
                         searchFocused 
-                            ? 'border-blue-500' 
-                            : 'border-slate-200 dark:border-slate-700'
+                            ? 'border-primary' 
+                            : 'border-border'
                     }`}
                 >
-                    <Search className={`transition-colors ${searchFocused ? 'text-blue-500' : 'text-slate-400'}`} size={18} />
+                    <Search className={`transition-colors ${searchFocused ? 'text-primary' : 'text-muted-foreground'}`} size={18} />
                     <input
                         type="text"
                         placeholder="Search categories..."
-                        className="ml-3 w-full bg-transparent outline-none text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400"
+                        className="ml-3 w-full bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onFocus={() => setSearchFocused(true)}
@@ -287,10 +287,10 @@ const CategoriesPage = () => {
                 </motion.div>
 
                 <div className="flex gap-2">
-                    <Badge className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm">
+                    <Badge className="px-4 py-2 rounded-xl bg-muted text-muted-foreground text-sm">
                         Root: {filteredCategories.length}
                     </Badge>
-                    <Badge className="px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm">
+                    <Badge className="px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm">
                         Total: {categories?.length || 0}
                     </Badge>
                 </div>
@@ -302,19 +302,19 @@ const CategoriesPage = () => {
                     variants={itemVariants}
                     className="flex flex-col justify-center items-center h-64 gap-4"
                 >
-                    <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
-                    <p className="text-slate-500 dark:text-slate-400">Loading categories...</p>
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Loading categories...</p>
                 </motion.div>
             ) : filteredCategories.length === 0 ? (
                 <motion.div 
                     variants={itemVariants}
-                    className="text-center py-16 px-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    className="text-center py-16 px-4 rounded-2xl border-2 border-dashed border-border bg-card"
                 >
-                    <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 inline-block mb-4">
-                        <FolderTree className="h-12 w-12 text-slate-400" />
+                    <div className="p-4 rounded-2xl bg-muted inline-block mb-4">
+                        <FolderTree className="h-12 w-12 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">No Categories Found</h3>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6 max-w-sm mx-auto">
+                    <h3 className="text-lg font-semibold text-foreground">No Categories Found</h3>
+                    <p className="text-muted-foreground mt-2 mb-6 max-w-sm mx-auto">
                         {searchTerm ? `No results for "${searchTerm}"` : "Get started by adding your first category."}
                     </p>
                     <Button onClick={() => setIsCreateOpen(true)} className="rounded-xl">

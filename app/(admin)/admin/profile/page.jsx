@@ -149,7 +149,7 @@ export default function AdminProfilePage() {
     if (isLoading) {
         return (
             <div className="flex h-[calc(100vh-100px)] items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -164,13 +164,13 @@ export default function AdminProfilePage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                         <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                            <User className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+                         <div className="p-2 rounded-xl bg-primary/10 border border-primary/30">
+                            <User className="h-6 w-6 text-primary" />
                          </div>
                          My Profile
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2 ml-1">
+                    <p className="text-muted-foreground mt-2 ml-1">
                         Manage your personal information and account settings.
                     </p>
                 </div>
@@ -179,13 +179,13 @@ export default function AdminProfilePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column: Identity Card */}
                 <motion.div variants={itemVariants} className="lg:col-span-1">
-                    <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-lg overflow-hidden relative">
-                        <div className="h-32 bg-gradient-to-r from-purple-500 to-blue-600 opacity-90 absolute top-0 left-0 right-0" />
+                    <Card className="border-border bg-card/50 backdrop-blur-sm shadow-lg overflow-hidden relative">
+                        <div className="h-32 bg-gradient-to-r opacity-90 absolute top-0 left-0 right-0" />
                         <CardContent className="pt-20 pb-8 flex flex-col items-center relative z-10">
                             <div className="relative group">
-                                <Avatar className="h-32 w-32 border-4 border-white dark:border-slate-900 shadow-xl cursor-pointer">
+                                <Avatar className="h-32 w-32 border-4 border-white shadow-xl cursor-pointer">
                                     <AvatarImage src={profile.profile_image} className="object-cover" />
-                                    <AvatarFallback className="text-4xl bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                    <AvatarFallback className="text-4xl bg-muted text-muted-foreground">
                                         {profile.first_name?.[0]}{profile.last_name?.[0]}
                                     </AvatarFallback>
                                 </Avatar>
@@ -208,28 +208,28 @@ export default function AdminProfilePage() {
                                 />
                             </div>
 
-                            <h2 className="mt-4 text-2xl font-bold text-slate-900 dark:text-white">
+                            <h2 className="mt-4 text-2xl font-bold text-foreground">
                                 {profile.first_name} {profile.last_name}
                             </h2>
-                            <p className="text-slate-500 dark:text-slate-400">{profile.email}</p>
+                            <p className="text-muted-foreground">{profile.email}</p>
 
                             <div className="mt-4 flex gap-2">
-                                <Badge className="bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20 px-3 py-1 text-sm capitalize">
+                                <Badge className="bg-primary/10 text-primary dark:text-primary border-primary/30 px-3 py-1 text-sm capitalize">
                                     {profile.admin_role.replace('_', ' ')}
                                 </Badge>
                             </div>
 
                             <div className="w-full mt-8 space-y-4">
-                                <Separator className="bg-slate-200 dark:bg-slate-800" />
+                                <Separator className="bg-muted dark:bg-popover" />
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500">Account Created</span>
-                                    <span className="font-medium text-slate-900 dark:text-white">
+                                    <span className="text-muted-foreground">Account Created</span>
+                                    <span className="font-medium text-foreground">
                                         {new Date(profile.createdAt).toLocaleDateString()}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500">Status</span>
-                                    <span className="font-medium text-emerald-600 flex items-center gap-1">
+                                    <span className="text-muted-foreground">Status</span>
+                                    <span className="font-medium text-success flex items-center gap-1">
                                         <CheckCircle className="h-3 w-3" /> Active
                                     </span>
                                 </div>
@@ -241,10 +241,10 @@ export default function AdminProfilePage() {
                 {/* Right Column: Edit Details */}
                 <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
                     {/* Personal Information */}
-                    <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-lg">
+                    <Card className="border-border bg-card/50 backdrop-blur-sm shadow-lg">
                         <CardHeader>
                             <CardTitle className="text-xl flex items-center gap-2">
-                                <User className="h-5 w-5 text-blue-500" />
+                                <User className="h-5 w-5 text-primary" />
                                 Personal Information
                             </CardTitle>
                             <CardDescription>
@@ -260,7 +260,7 @@ export default function AdminProfilePage() {
                                         name="first_name" 
                                         value={profile.first_name} 
                                         onChange={handleChange}
-                                        className="bg-white dark:bg-slate-800"
+                                        className="bg-card"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -270,7 +270,7 @@ export default function AdminProfilePage() {
                                         name="last_name" 
                                         value={profile.last_name} 
                                         onChange={handleChange}
-                                        className="bg-white dark:bg-slate-800"
+                                        className="bg-card"
                                     />
                                 </div>
                             </div>
@@ -279,25 +279,25 @@ export default function AdminProfilePage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email Address</Label>
                                     <div className="relative">
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input 
                                             id="email" 
                                             value={profile.email} 
                                             disabled 
-                                            className="pl-10 bg-slate-100 dark:bg-slate-800/50 text-slate-500 cursor-not-allowed border-slate-200 dark:border-slate-800" 
+                                            className="pl-10 bg-muted/50 text-muted-foreground cursor-not-allowed border-border" 
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">Phone Number</Label>
                                     <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input 
                                             id="phone" 
                                             name="phone" 
                                             value={profile.phone} 
                                             onChange={handleChange}
-                                            className="pl-10 bg-white dark:bg-slate-800" 
+                                            className="pl-10 bg-card" 
                                             placeholder="+91 ..."
                                         />
                                     </div>
@@ -307,10 +307,10 @@ export default function AdminProfilePage() {
                     </Card>
 
                     {/* Permissions & Security */}
-                    <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-lg">
+                    <Card className="border-border bg-card/50 backdrop-blur-sm shadow-lg">
                         <CardHeader>
                             <CardTitle className="text-xl flex items-center gap-2">
-                                <Shield className="h-5 w-5 text-emerald-500" />
+                                <Shield className="h-5 w-5 text-success" />
                                 Role & Permissions
                             </CardTitle>
                             <CardDescription>
@@ -318,20 +318,20 @@ export default function AdminProfilePage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700/50">
-                                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                            <div className="bg-muted/50 rounded-lg p-4 border border-border dark:border-border/50">
+                                <h4 className="text-sm font-semibold text-foreground mb-3">
                                     Active Permissions
                                 </h4>
                                 {profile.permissions.length > 0 ? (
                                     <div className="flex flex-wrap gap-2">
                                         {profile.permissions.map((perm) => (
-                                            <Badge key={perm} variant="outline" className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                                            <Badge key={perm} variant="outline" className="bg-card border-border text-muted-foreground">
                                                 {perm}
                                             </Badge>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-slate-500 italic">No specific permissions assigned.</p>
+                                    <p className="text-sm text-muted-foreground italic">No specific permissions assigned.</p>
                                 )}
                             </div>
                         </CardContent>
@@ -342,7 +342,7 @@ export default function AdminProfilePage() {
                             size="lg" 
                             onClick={handleSave} 
                             disabled={isSaving}
-                            className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20 min-w-[150px]"
+                            className="text-white shadow-lg shadow-primary/20 min-w-[150px]"
                         >
                             {isSaving ? (
                                 <>

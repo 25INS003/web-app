@@ -104,11 +104,11 @@ export function CategoryDialog({ open, onOpenChange, parentId = null }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto rounded-2xl border-slate-200 dark:border-slate-700">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto rounded-2xl border-border">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-500/10">
-                            <Plus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <div className="p-2 rounded-lg bg-primary/10">
+                            <Plus className="h-5 w-5 text-primary" />
                         </div>
                         {parentId ? "Add Subcategory" : "Add New Category"}
                     </DialogTitle>
@@ -117,21 +117,21 @@ export function CategoryDialog({ open, onOpenChange, parentId = null }) {
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Category Name *</label>
+                        <label className="text-sm font-medium text-foreground">Category Name *</label>
                         <Input
                             {...register("name", { required: "Name is required" })}
                             placeholder="e.g. Electronics"
-                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                            className="rounded-xl border-border bg-muted/50"
                         />
-                        {errors.name && <span className="text-red-500 text-xs">{errors.name.message}</span>}
+                        {errors.name && <span className="text-destructive text-xs">{errors.name.message}</span>}
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Parent Category</label>
+                        <label className="text-sm font-medium text-foreground">Parent Category</label>
                         <select
                             {...register("parent_id")}
                             disabled={!!parentId} // Disable if parentId is forced via props
-                            className={`flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${parentId ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            className={`flex h-10 w-full rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${parentId ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
                             <option value="">None (Root Category)</option>
                             {flatCategories.map((cat) => (
@@ -144,34 +144,34 @@ export function CategoryDialog({ open, onOpenChange, parentId = null }) {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Order Number</label>
+                            <label className="text-sm font-medium text-foreground">Order Number</label>
                             <Input
                                 type="number"
                                 {...register("display_order")}
                                 readOnly
-                                className="rounded-xl bg-slate-100 dark:bg-slate-800 cursor-not-allowed"
+                                className="rounded-xl bg-muted cursor-not-allowed"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
                                 <ImageIcon size={14} /> Category Image
                             </label>
                             <Input
                                 type="file"
                                 accept="image/png, image/jpeg, image/jpg, image/webp"
-                                className="rounded-xl cursor-pointer file:text-blue-600 file:font-semibold file:bg-blue-50 dark:file:bg-blue-500/10 hover:file:bg-blue-100"
+                                className="rounded-xl cursor-pointer file:text-primary file:font-semibold file:bg-primary/10 dark:file:bg-primary/10 hover:file:bg-primary/20"
                                 {...register("image")}
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
+                        <label className="text-sm font-medium text-foreground">Description</label>
                         <Textarea
                             {...register("description")}
                             placeholder="Short description..."
-                            className="resize-none rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                            className="resize-none rounded-xl border-border bg-muted/50"
                             rows={3}
                         />
                     </div>
@@ -181,7 +181,7 @@ export function CategoryDialog({ open, onOpenChange, parentId = null }) {
                             Cancel
                         </Button>
                         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button type="submit" disabled={isSubmitting || isLoading} className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/25">
+                            <Button type="submit" disabled={isSubmitting || isLoading} className="rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25">
                                 {(isSubmitting || isLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Create Category
                             </Button>

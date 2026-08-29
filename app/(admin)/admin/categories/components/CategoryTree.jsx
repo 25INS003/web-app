@@ -48,7 +48,7 @@ export function CategoryTree({ categories, rootId, onEdit, onAddSub }) {
     const baseDepth = children[0].depth;
 
     return (
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800/40">
+        <div className="rounded-xl border border-border overflow-hidden bg-card/40">
             {children.map((node, i) => (
                 <TreeRow
                     key={node.category.id}
@@ -85,8 +85,8 @@ function TreeRow({
         <>
             <div
                 onClick={() => router.push(`/admin/categories/${category.id}`)}
-                className={`group flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${
-                    isFirst ? "" : "border-t border-slate-100 dark:border-slate-700/60"
+                className={`group flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors hover:bg-muted ${
+                    isFirst ? "" : "border-t border-border"
                 }`}
                 style={{ paddingLeft: 12 + level * INDENT_PX }}
             >
@@ -104,7 +104,7 @@ function TreeRow({
                     }
                     aria-expanded={hasChildren ? isOpen : undefined}
                     disabled={!hasChildren}
-                    className="h-6 w-6 shrink-0 grid place-items-center rounded-md text-slate-400 disabled:opacity-0 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    className="h-6 w-6 shrink-0 grid place-items-center rounded-md text-muted-foreground disabled:opacity-0 hover:bg-muted dark:hover:bg-muted hover:text-foreground transition-colors"
                 >
                     <ChevronRight
                         className={`h-4 w-4 transition-transform duration-200 ${
@@ -113,7 +113,7 @@ function TreeRow({
                     />
                 </button>
 
-                <div className="h-9 w-9 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-900 grid place-items-center border border-slate-200 dark:border-slate-700">
+                <div className="h-9 w-9 shrink-0 rounded-lg overflow-hidden bg-muted grid place-items-center border border-border">
                     {imageUrl ? (
                         <ProgressiveImage
                             src={imageUrl}
@@ -121,25 +121,25 @@ function TreeRow({
                             className="h-full w-full object-cover"
                         />
                     ) : hasChildren ? (
-                        <FolderTree className="h-4 w-4 text-slate-400" />
+                        <FolderTree className="h-4 w-4 text-muted-foreground" />
                     ) : (
-                        <ImageIcon className="h-4 w-4 text-slate-400" />
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
                     )}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-sm text-slate-900 dark:text-white group-hover:text-blue-500 transition-colors">
+                    <p className="truncate font-medium text-sm text-foreground group-hover:text-primary transition-colors">
                         {category.name}
                     </p>
                     {category.description ? (
-                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                        <p className="truncate text-xs text-muted-foreground">
                             {category.description}
                         </p>
                     ) : null}
                 </div>
 
                 {hasChildren ? (
-                    <Badge className="shrink-0 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] px-2 py-0.5">
+                    <Badge className="shrink-0 rounded-lg bg-primary/10 text-primary text-[10px] px-2 py-0.5">
                         {children.length}
                         {descendantCount > children.length
                             ? ` / ${descendantCount}`
@@ -148,7 +148,7 @@ function TreeRow({
                 ) : null}
 
                 {category.is_active === false ? (
-                    <Badge className="shrink-0 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 text-[10px] px-2 py-0.5">
+                    <Badge className="shrink-0 rounded-lg bg-muted dark:bg-muted text-muted-foreground text-[10px] px-2 py-0.5">
                         Inactive
                     </Badge>
                 ) : null}
@@ -161,7 +161,7 @@ function TreeRow({
                             onAddSub?.(category);
                         }}
                         aria-label={`Add subcategory to ${category.name}`}
-                        className="h-7 w-7 grid place-items-center rounded-md text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
                     >
                         <Plus className="h-4 w-4" />
                     </button>
@@ -172,7 +172,7 @@ function TreeRow({
                             onEdit?.(category);
                         }}
                         aria-label={`Edit ${category.name}`}
-                        className="h-7 w-7 grid place-items-center rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                     >
                         <Pencil className="h-4 w-4" />
                     </button>

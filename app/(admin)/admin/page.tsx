@@ -73,7 +73,7 @@ export default function AdminHome() {
             key={label}
             href={href}
             className={`rounded-2xl border bg-card p-5 shadow-xs transition-colors hover:bg-accent/40 ${
-              urgent ? "border-amber-500/40" : "border-border"
+              urgent ? "" : "border-border"
             }`}
           >
             <div className="flex items-center justify-between">
@@ -81,7 +81,7 @@ export default function AdminHome() {
               <span
                 className={`grid size-9 place-items-center rounded-xl ${
                   urgent
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    ? "bg-warning/10 text-warning-foreground"
                     : "bg-accent text-accent-foreground"
                 }`}
               >

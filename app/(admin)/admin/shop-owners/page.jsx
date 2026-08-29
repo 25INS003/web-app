@@ -106,23 +106,23 @@ export default function ShopOwnerListPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
-                    <h1 className="text-4xl font-bold text-slate-900 dark:text-white flex items-center gap-3 tracking-tight">
-                         <div className="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20">
-                            <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                    <h1 className="text-4xl font-bold text-foreground flex items-center gap-3 tracking-tight">
+                         <div className="p-3 rounded-2xl bg-primary/10 border border-primary/20">
+                            <Users className="h-8 w-8 text-primary" />
                          </div>
                          Shop Owners
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg ml-1">
+                    <p className="text-muted-foreground mt-2 text-lg ml-1">
                         Manage business verifications and approve new partners.
                     </p>
                 </div>
                 
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                     <div className="relative group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         <Input 
                             placeholder="Search by name, business, GST..." 
-                            className="pl-10 w-full sm:w-[300px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500"
+                            className="pl-10 w-full sm:w-[300px] bg-card border-border focus:ring-2 focus:ring-ring"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -138,7 +138,7 @@ export default function ShopOwnerListPage() {
                         Pending only
                         <span className={`rounded-full px-2 py-0.5 text-xs tabular-nums ${
                             pendingCount > 0
-                                ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                ? "bg-warning/10/15 text-warning-foreground"
                                 : "bg-muted text-muted-foreground"
                         }`}>
                             {pendingCount}
@@ -147,7 +147,7 @@ export default function ShopOwnerListPage() {
                     <Button
                         onClick={() => fetchAllOwners()}
                         variant="outline"
-                        className="gap-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm"
+                        className="gap-2 bg-card border-border hover:bg-muted dark:hover:bg-muted shadow-sm"
                     >
                         <RefreshCcw size={16} className={`${isLoading ? "animate-spin" : ""}`} />
                         Refresh
@@ -157,37 +157,37 @@ export default function ShopOwnerListPage() {
 
             {/* Shop Owners Table */}
             <motion.div 
-                className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+                className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden"
             >
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-                                <th className="p-6 font-semibold text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">Business Details</th>
-                                <th className="p-6 font-semibold text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">GST / Tax ID</th>
-                                <th className="p-6 font-semibold text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">Location</th>
-                                <th className="p-6 font-semibold text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">Status</th>
-                                <th className="p-6 font-semibold text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider text-center">Actions</th>
+                            <tr className="border-b border-border bg-muted/40">
+                                <th className="p-6 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Business Details</th>
+                                <th className="p-6 font-semibold text-muted-foreground text-xs uppercase tracking-wider">GST / Tax ID</th>
+                                <th className="p-6 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Location</th>
+                                <th className="p-6 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                                <th className="p-6 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        <tbody className="divide-y divide-border">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="5" className="p-12 text-center text-slate-500">
+                                    <td colSpan="5" className="p-12 text-center text-muted-foreground">
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+                                            <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin" />
                                             <span>Loading shop owners...</span>
                                         </div>
                                     </td>
                                 </tr>
                             ) : filteredOwners.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="p-16 text-center text-slate-500">
+                                    <td colSpan="5" className="p-16 text-center text-muted-foreground">
                                         <div className="flex flex-col items-center gap-4">
-                                            <div className="p-4 rounded-full bg-slate-100 dark:bg-slate-800">
-                                                <Users className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                                            <div className="p-4 rounded-full bg-muted">
+                                                <Users className="w-8 h-8 text-muted-foreground" />
                                             </div>
-                                            <p className="text-lg font-medium text-slate-900 dark:text-white">No shop owners found</p>
+                                            <p className="text-lg font-medium text-foreground">No shop owners found</p>
                                             <p className="text-sm">Try adjusting your search terms.</p>
                                         </div>
                                     </td>
@@ -201,32 +201,32 @@ export default function ShopOwnerListPage() {
                                             initial="hidden"
                                             animate="visible"
                                             transition={{ delay: index * 0.05 }}
-                                            className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors duration-200"
+                                            className="group hover:bg-muted/80 dark:hover:bg-popover/30 transition-colors duration-200"
                                         >
                                             <td className="p-6">
                                                 <div className="flex flex-col gap-1.5">
-                                                    <span className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                                        <Building2 size={18} className="text-slate-400 group-hover:text-blue-500" />
+                                                    <span className="font-bold text-foreground text-base flex items-center gap-2 group-hover:text-primary dark:group-hover:text-primary transition-colors">
+                                                        <Building2 size={18} className="text-muted-foreground group-hover:text-primary" />
                                                         {businessLabel(owner)}
                                                     </span>
-                                                    <span className="text-xs text-slate-500 ml-7 flex items-center gap-1">
+                                                    <span className="text-xs text-muted-foreground ml-7 flex items-center gap-1">
                                                         {hasBusinessDetails(owner) ? (
-                                                            <>Owner: <span className="font-medium text-slate-700 dark:text-slate-300">{ownerName(owner) || "Unknown"}</span></>
+                                                            <>Owner: <span className="font-medium text-foreground">{ownerName(owner) || "Unknown"}</span></>
                                                         ) : (
-                                                            <span className="italic text-slate-400">Business details not provided yet</span>
+                                                            <span className="italic text-muted-foreground">Business details not provided yet</span>
                                                         )}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="p-6">
-                                                <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg w-fit border border-slate-200 dark:border-slate-700">
-                                                    <Fingerprint size={12} className="text-slate-400" />
-                                                    {owner.gst_number || <span className="text-slate-400 italic">Not Provided</span>}
+                                                <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground bg-muted px-3 py-1.5 rounded-lg w-fit border border-border">
+                                                    <Fingerprint size={12} className="text-muted-foreground" />
+                                                    {owner.gst_number || <span className="text-muted-foreground italic">Not Provided</span>}
                                                 </div>
                                             </td>
                                             <td className="p-6">
-                                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                                    <div className="p-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500">
+                                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                    <div className="p-1.5 rounded-full">
                                                         <MapPin size={14} />
                                                     </div>
                                                     {owner.business_address_district}, {owner.business_address_state}
@@ -236,18 +236,18 @@ export default function ShopOwnerListPage() {
                                                 <Badge className={`
                                                     capitalize font-medium shadow-sm border px-3 py-1 rounded-full
                                                     ${owner.is_approved
-                                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                                                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                                        ? "bg-success/10 text-success border-success/20"
+                                                        : "bg-warning/10 text-warning-foreground border-warning/20"
                                                     }
                                                 `}>
                                                     {owner.is_approved ? (
                                                         <span className="flex items-center gap-1.5">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
                                                             Verified
                                                         </span>
                                                     ) : (
                                                         <span className="flex items-center gap-1.5">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-warning/10"></span>
                                                             Pending Review
                                                         </span>
                                                     )}
@@ -259,7 +259,7 @@ export default function ShopOwnerListPage() {
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
                                                                 <Link href={`/admin/shop-owners/${owner.id}`}>
-                                                                    <Button size="icon" variant="ghost" className="h-9 w-9 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl">
+                                                                    <Button size="icon" variant="ghost" className="h-9 w-9 text-primary hover:text-primary hover:bg-primary/10 rounded-xl">
                                                                         <Eye size={18} />
                                                                     </Button>
                                                                 </Link>
@@ -277,7 +277,7 @@ export default function ShopOwnerListPage() {
                                                                             size="icon" 
                                                                             variant="ghost" 
                                                                             onClick={() => approveOwner(owner.id)}
-                                                                            className="h-9 w-9 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl"
+                                                                            className="h-9 w-9 text-success hover:text-success hover:bg-success/10 rounded-xl"
                                                                         >
                                                                             <CheckCircle size={18} />
                                                                         </Button>
@@ -293,7 +293,7 @@ export default function ShopOwnerListPage() {
                                                                             size="icon" 
                                                                             variant="ghost" 
                                                                             onClick={() => rejectOwner(owner.id)}
-                                                                            className="h-9 w-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl"
+                                                                            className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-xl"
                                                                         >
                                                                             <XCircle className="h-[18px] w-[18px]" />
                                                                         </Button>
@@ -309,7 +309,7 @@ export default function ShopOwnerListPage() {
                                                             <TooltipTrigger asChild>
                                                                 <Link
                                                                     href={`/admin/shop-owners/${owner.id}`}
-                                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-purple-500 transition hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
+                                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-primary transition hover:bg-primary/10 hover:text-primary"
                                                                 >
                                                                     <ShieldCheck size={18} />
                                                                 </Link>

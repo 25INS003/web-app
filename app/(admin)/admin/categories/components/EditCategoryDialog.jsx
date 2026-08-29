@@ -102,11 +102,11 @@ export function EditCategoryDialog({ open, onOpenChange, category, onSuccess }) 
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px] rounded-2xl border-slate-200 dark:border-slate-700">
+            <DialogContent className="sm:max-w-[500px] rounded-2xl border-border">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-500/10">
-                            <Edit className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        <div className="p-2 rounded-lg bg-primary/10">
+                            <Edit className="h-5 w-5 text-primary" />
                         </div>
                         Edit Category
                     </DialogTitle>
@@ -115,51 +115,51 @@ export function EditCategoryDialog({ open, onOpenChange, category, onSuccess }) 
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Category Name *</label>
+                        <label className="text-sm font-medium text-foreground">Category Name *</label>
                         <Input
                             {...register("name", { required: "Name is required" })}
                             placeholder="e.g. Electronics"
-                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                            className="rounded-xl border-border bg-muted/50"
                         />
-                        {errors.name && <span className="text-red-500 text-xs">{errors.name.message}</span>}
+                        {errors.name && <span className="text-destructive text-xs">{errors.name.message}</span>}
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
+                        <label className="text-sm font-medium text-foreground">Description</label>
                         <Textarea
                             {...register("description")}
                             placeholder="Short description..."
-                            className="resize-none rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                            className="resize-none rounded-xl border-border bg-muted/50"
                             rows={3}
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Display Order</label>
+                            <label className="text-sm font-medium text-foreground">Display Order</label>
                             <Input
                                 type="number"
                                 {...register("display_order")}
                                 min={0}
-                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                className="rounded-xl border-border bg-muted/50"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
                                 <ImageIcon className="h-4 w-4" /> Image (Optional)
                             </label>
                             <Input
                                 type="file"
                                 accept="image/png, image/jpeg, image/jpg, image/webp"
-                                className="rounded-xl cursor-pointer file:text-blue-600 file:font-semibold file:bg-blue-50 dark:file:bg-blue-500/10 text-xs"
+                                className="rounded-xl cursor-pointer file:text-primary file:font-semibold file:bg-primary/10 dark:file:bg-primary/10 text-xs"
                                 onChange={handleImageChange}
                             />
                         </div>
                     </div>
 
                     {imagePreview && !removeImage && (
-                        <div className="relative w-full h-32 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                        <div className="relative w-full h-32 rounded-xl overflow-hidden border border-border bg-muted">
                             <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                             <Button
                                 type="button"
@@ -178,7 +178,7 @@ export function EditCategoryDialog({ open, onOpenChange, category, onSuccess }) 
                             Cancel
                         </Button>
                         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button type="submit" disabled={isSubmitting || isLoading} className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/25">
+                            <Button type="submit" disabled={isSubmitting || isLoading} className="rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25">
                                 {(isSubmitting || isLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Save Changes
                             </Button>
