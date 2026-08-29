@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { CategoryDialog } from "./components/CategoryDialog";
+import { DeleteCategoryDialog } from "./components/DeleteCategoryDialog";
+import { toast } from "sonner";
 import { EditCategoryDialog } from "./components/EditCategoryDialog";
 import { childrenOf, parentIdOf } from "@/lib/categories/tree";
 
@@ -50,7 +52,7 @@ const itemVariants = {
 // ==========================================
 // Category Card Component
 // ==========================================
-const CategoryCard = ({ category, onEdit, index }) => {
+const CategoryCard = ({ category, onEdit, onDelete, index }) => {
     const router = useRouter();
     const { categories } = useCategoryStore();
     
@@ -61,6 +63,11 @@ const CategoryCard = ({ category, onEdit, index }) => {
     const handleEditClick = (e) => {
         e.stopPropagation();
         onEdit?.(category);
+    };
+
+    const handleDeleteClick = (e) => {
+        e.stopPropagation();
+        onDelete?.(category);
     };
 
     return (
@@ -130,7 +137,8 @@ const CategoryCard = ({ category, onEdit, index }) => {
                                 <Settings className="mr-3 h-4 w-4 text-slate-400" />
                                 Edit Category
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
+                                onClick={handleDeleteClick}
                                 className="rounded-xl px-3 py-2.5 text-red-400 hover:text-red-300 hover:bg-slate-800 cursor-pointer focus:bg-slate-800 focus:text-red-300"
                             >
                                 <Trash2 className="mr-3 h-4 w-4" />
@@ -178,12 +186,13 @@ const CategoryCard = ({ category, onEdit, index }) => {
 // Main Categories Page
 // ==========================================
 const CategoriesPage = () => {
-    const { categories, fetchCategories, isLoading } = useCategoryStore();
+    const { categories, fetchCategories, deleteCategory, isLoading } = useCategoryStore();
     const [searchTerm, setSearchTerm] = useState("");
     const [searchFocused, setSearchFocused] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
+    const [deletingCategory, setDeletingCategory] = useState(null);
 
     useEffect(() => {
         fetchCategories();
@@ -201,6 +210,17 @@ const CategoriesPage = () => {
     const handleEditCategory = (category) => {
         setEditingCategory(category);
         setIsEditOpen(true);
+    };
+
+    // The dropdown's Delete item had no onClick at all, so it did nothing.
+    // Reuses the detail page's dialog, which is what collects where the
+    // subcategories go — the API refuses a bare delete that would re-root a
+    // subtree holding products.
+    const handleDeleteCategory = (category) => setDeletingCategory(category);
+
+    const confirmDelete = async (options) => {
+        await deleteCategory(deletingCategory.id, options);
+        toast.success(`Deleted "${deletingCategory.name}"`);
     };
 
     return (
@@ -305,17 +325,29 @@ const CategoriesPage = () => {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     {filteredCategories.map((category, index) => (
-                        <CategoryCard 
-                            key={category.id} 
-                            category={category} 
+                        <CategoryCard
+                            key={category.id}
+                            category={category}
                             index={index}
                             onEdit={handleEditCategory}
+                            onDelete={handleDeleteCategory}
                         />
                     ))}
                 </div>
             )}
 
             {/* Dialogs */}
+            <DeleteCategoryDialog
+                // Keyed so the dialog's own choice/error state resets between
+                // categories rather than carrying the last one's over.
+                key={deletingCategory?.id ?? "none"}
+                open={Boolean(deletingCategory)}
+                onOpenChange={(open) => !open && setDeletingCategory(null)}
+                category={deletingCategory}
+                categories={categories}
+                onConfirm={confirmDelete}
+            />
+
             <CategoryDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
             <EditCategoryDialog
                 open={isEditOpen}
