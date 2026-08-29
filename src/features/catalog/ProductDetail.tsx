@@ -1,19 +1,14 @@
 "use client";
 
-import {
-  ArrowLeft,
-  Heart,
-  Loader2,
-  Minus,
-  Plus,
-  ShoppingBag,
-  Star,
-} from "lucide-react";
+import { ArrowLeft, Heart, Loader2, ShoppingBag, Star } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { QuantityInput } from "@/components/ui/quantity-input";
 import { ProgressiveImage } from "@/components/ProgressiveImage";
+import { maxOrderableQty } from "@/features/cart/constants";
+import { StockLabel } from "./StockLabel";
 import { useAddToCart } from "@/features/cart/useCart";
 import { useAddToWishlist } from "@/features/wishlist/useWishlist";
 import {
@@ -42,8 +37,12 @@ export function ProductDetail({ productId }: { productId: string }) {
     variant ?? variants.find((v) => v.is_default) ?? variants[0] ?? null;
   const price = selected?.price ?? product.price;
   const compare = selected?.compare_at_price ?? product.compare_at_price ?? null;
-  const stock = selected?.stock_quantity ?? (product.is_in_stock ? 99 : 0);
-  const inStock = stock > 0;
+  // null means "the payload didn't tell us" — distinct from 0. The old code
+  // collapsed both into a number and used 99 as the unknown case, which is fine
+  // for capping the stepper but can't be shown to a customer as a real count.
+  const stock = selected?.stock_quantity ?? null;
+  const inStock = stock === null ? !!product.is_in_stock : stock > 0;
+  const maxQty = maxOrderableQty(stock);
   const off = compare && compare > price ? Math.round((1 - price / compare) * 100) : 0;
   const img = selected?.images?.[0]?.url || productImage(product) || null;
   const shop = shopName(product);
@@ -136,39 +135,17 @@ export function ProductDetail({ productId }: { productId: string }) {
           )}
 
           <p className="mt-5 text-sm">
-            {inStock ? (
-              stock <= 10 ? (
-                <span className="font-medium text-warning-foreground">
-                  Only {stock} left
-                </span>
-              ) : (
-                <span className="font-medium text-success">In stock</span>
-              )
-            ) : (
-              <span className="font-medium text-destructive">Out of stock</span>
-            )}
+            <StockLabel stock={stock} inStock={inStock} />
           </p>
 
           <div className="mt-5 flex items-center gap-3">
-            <div className="flex items-center rounded-xl border border-border">
-              <button
-                onClick={() => setQty((n) => Math.max(1, n - 1))}
-                className="grid size-10 place-items-center text-muted-foreground transition hover:text-foreground"
-                aria-label="Decrease quantity"
-              >
-                <Minus className="size-4" />
-              </button>
-              <span className="w-8 text-center text-sm font-medium tabular-nums">
-                {qty}
-              </span>
-              <button
-                onClick={() => setQty((n) => Math.min(stock || 1, n + 1))}
-                className="grid size-10 place-items-center text-muted-foreground transition hover:text-foreground"
-                aria-label="Increase quantity"
-              >
-                <Plus className="size-4" />
-              </button>
-            </div>
+            <QuantityInput
+              value={qty}
+              onCommit={setQty}
+              max={maxQty}
+              disabled={!inStock}
+              className="h-10 rounded-xl"
+            />
             <Button
               size="lg"
               className="flex-1 gap-2"

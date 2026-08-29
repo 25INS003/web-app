@@ -99,3 +99,18 @@ export function useRemoveCartItem() {
       ),
   });
 }
+
+export function useClearCart() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => cartApi.clear(),
+    onSuccess: () => {
+      toast.success("Cart cleared");
+      invalidateCartAndDerived(qc);
+    },
+    onError: (err) =>
+      toast.error(
+        err instanceof ApiError ? err.message : "Could not clear cart",
+      ),
+  });
+}
