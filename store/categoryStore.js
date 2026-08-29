@@ -215,20 +215,41 @@ export const useCategoryStore = create()(
       },
 
       // --- Delete Category ---
-      deleteCategory: async (id) => {
+      //
+      // The API refuses a delete that would silently reorganise things: a
+      // category holding products outright, or one whose subtree holds products
+      // that re-rooting would move to the top level. `moveChildrenTo` re-homes
+      // the children instead; `flattenChildren` is the explicit "yes, root
+      // them". Both are opt-in, so a bare call can only ever do the safe thing.
+      deleteCategory: async (id, { moveChildrenTo, flattenChildren } = {}) => {
         set({ isLoading: true, error: null });
         try {
-          await apiClient.delete(`/category/categories/${id}`);
+          const params = {};
+          if (moveChildrenTo) params.moveChildrenTo = moveChildrenTo;
+          if (flattenChildren) params.flattenChildren = "true";
+
+          await apiClient.delete(`/category/categories/${id}`, { params });
+
+          // Drop the row immediately so the UI reacts, then resync. The delete
+          // also REPARENTS the children — to the top level or onto
+          // moveChildrenTo — and there is no way to know locally which of those
+          // happened to which rows. Filtering alone would leave them pointing
+          // at an id that no longer exists.
           set((state) => ({
             categories: state.categories.filter((cat) => cat.id !== id),
-            isLoading: false,
+            childrenCache: {},
           }));
+          await get().fetchCategories();
         } catch (error) {
-          set({
-            error: error.response?.data?.message || "Failed to delete category",
-            isLoading: false
-          });
-          throw error;
+          // The server's message is the useful one — it names the counts and
+          // what to do. Re-thrown as a plain Error so callers can show it
+          // without unwrapping an AxiosError.
+          const message =
+            error.response?.data?.message || "Failed to delete category";
+          set({ error: message, isLoading: false });
+          const wrapped = new Error(message);
+          wrapped.status = error.response?.status;
+          throw wrapped;
         }
       },
     }),

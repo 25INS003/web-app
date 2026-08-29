@@ -25,6 +25,7 @@ import { CategoryDialog } from "../components/CategoryDialog";
 import { EditCategoryDialog } from "../components/EditCategoryDialog";
 import { buildCategoryTree, childrenOf, findTreeNode } from "@/lib/categories/tree";
 import { CategoryTree } from "../components/CategoryTree";
+import { DeleteCategoryDialog } from "../components/DeleteCategoryDialog";
 
 export default function CategoryDetailPage() {
     const params = useParams();
@@ -39,6 +40,7 @@ export default function CategoryDetailPage() {
     // category being viewed, which is what the empty-state button means.
     const [addSubParent, setAddSubParent] = useState(null);
     const [editingCategory, setEditingCategory] = useState(null);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
     // We try to find the category from the store first
     const category = categories.find(c => c.id === categoryId);
@@ -99,12 +101,15 @@ export default function CategoryDetailPage() {
         );
     }
 
-    const handleDelete = async () => {
-        if (confirm("Are you sure you want to delete this category? This action cannot be undone.")) {
-            await deleteCategory(categoryId);
-            toast.success("Category deleted");
-            router.push("/admin/categories");
-        }
+    // Was a native confirm(): yes/no only, so it had nothing to send once the
+    // API began requiring an explicit choice for a category with subcategories
+    // — and no catch, so the 400 surfaced as an unhandled AxiosError overlay
+    // instead of the message the server had gone to the trouble of writing.
+    // The dialog collects the choice and shows the refusal in place.
+    const handleDelete = async (options) => {
+        await deleteCategory(categoryId, options);
+        toast.success("Category deleted");
+        router.push("/admin/categories");
     };
 
     const containerVariants = {
@@ -162,7 +167,7 @@ export default function CategoryDetailPage() {
                     >
                         <Plus className="h-4 w-4" /> Add Subcategory
                     </Button>
-                    <Button variant="destructive" size="icon" className="rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 hover:bg-red-100 dark:hover:bg-red-500/20 border-0" onClick={handleDelete}>
+                    <Button variant="destructive" size="icon" className="rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 hover:bg-red-100 dark:hover:bg-red-500/20 border-0" onClick={() => setIsDeleteOpen(true)}>
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 </div>
@@ -298,6 +303,14 @@ export default function CategoryDetailPage() {
                 onSuccess={() => fetchCategories()} 
             />
             
+            <DeleteCategoryDialog
+                open={isDeleteOpen}
+                onOpenChange={setIsDeleteOpen}
+                category={category}
+                categories={categories}
+                onConfirm={handleDelete}
+            />
+
             <CategoryDialog
                 // Remounted per parent: the form seeds parent_id from this prop
                 // when it opens, so one shared instance would carry the
