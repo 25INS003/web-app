@@ -47,6 +47,12 @@ export const catalogProductSchema = z.object({
   images: z.array(productImageSchema).optional(),
   shop_id: z.union([objectId, shopRefSchema]).nullish(),
   category_id: z.union([objectId, categoryRefSchema]).nullish(),
+  // The joined shop, which catalog reads return BESIDE `shop_id` rather than
+  // in place of it — `shop_id` stays the bare id (see findByIdWithRefs, which
+  // says so explicitly). Undeclared, z.object stripped this, so `shopName`
+  // found nothing to read and the product page showed no shop at all.
+  shop: shopRefSchema.nullish(),
+  category: categoryRefSchema.nullish(),
 });
 export type CatalogProduct = z.infer<typeof catalogProductSchema>;
 
@@ -137,7 +143,17 @@ export function reviewerName(r: Review): string {
 }
 
 // --- display helpers (resolve populated-or-id refs) ---
+/**
+ * The selling shop's name, whichever shape the endpoint used.
+ *
+ * Catalog reads put the joined shop under `shop` and leave `shop_id` a bare id;
+ * the cart populates `shop_id` itself. Reading only the latter meant the
+ * product page rendered NO shop, while the cart line for the same product
+ * showed one — so the same item appeared under two different names, the
+ * product's `brand` on one screen and the shop on the other.
+ */
 export function shopName(p: CatalogProduct): string | undefined {
+  if (p.shop?.name) return p.shop.name;
   return p.shop_id && typeof p.shop_id === "object" ? p.shop_id.name : undefined;
 }
 export function productImage(p: CatalogProduct): string | undefined {
