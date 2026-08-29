@@ -8,6 +8,11 @@ export const cartItemSchema = z.object({
   is_available: z.boolean().optional(),
   product_var_id: z.object({
     id: objectId,
+    // The VARIANT's parent product, which is what /p/[productId] takes — the
+    // `id` above is the variant and 404s there. The API has always sent this
+    // (the cart join spreads the whole product_variants row); the schema just
+    // did not declare it, and z.object strips what it does not name.
+    product_id: objectId.nullish(),
     name: z.string(),
     price: z.number(),
     compare_at_price: z.number().nullish(),

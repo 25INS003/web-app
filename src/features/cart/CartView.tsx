@@ -197,6 +197,30 @@ function Row({
   );
 }
 
+/**
+ * A Link when there is somewhere to go, a plain block otherwise.
+ *
+ * Keeps the markup identical either way: an anchor with no href is still
+ * focusable and announced as a link by screen readers, which would promise a
+ * destination that does not exist.
+ */
+function MaybeLink({
+  href,
+  className,
+  children,
+}: {
+  href: string | null;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  if (!href) return <div className={className}>{children}</div>;
+  return (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  );
+}
+
 function CartRow({ item }: { item: CartItem }) {
   const update = useUpdateCartItem();
   const remove = useRemoveCartItem();
@@ -212,19 +236,34 @@ function CartRow({ item }: { item: CartItem }) {
   // total (has_unavailable_items), so say so on the row rather than leaving a
   // quantity the customer can't actually order.
   const overStock = stock !== null && item.quantity > stock;
+  // /p/ takes the PRODUCT id; `v.id` is the variant and 404s there. Nullish
+  // when an older payload omits it, in which case the row stays unlinked rather
+  // than offering a dead link.
+  const href = v.product_id ? `/p/${v.product_id}` : null;
 
   return (
     <div className="flex gap-4 rounded-2xl border border-border bg-card p-4 shadow-xs">
-      <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl bg-muted">
+      {/* The thumbnail and the name link to the product; the quantity stepper
+          and remove button below must stay outside the anchor, or clicking
+          either would navigate instead of doing its job. */}
+      <MaybeLink
+        href={href}
+        className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl bg-muted"
+      >
         {img ? (
           <ProgressiveImage src={img} alt={v.name} className="size-full object-cover" />
         ) : (
           <span className="text-2xl">🛒</span>
         )}
-      </div>
+      </MaybeLink>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <p className="truncate text-sm font-semibold">{v.name}</p>
+        <MaybeLink
+          href={href}
+          className="truncate text-sm font-semibold hover:text-primary hover:underline underline-offset-2 transition-colors"
+        >
+          {v.name}
+        </MaybeLink>
         {shop && <p className="text-xs text-muted-foreground">{shop}</p>}
         {item.is_available === false ? (
           <p className="text-xs text-destructive">Currently unavailable</p>
