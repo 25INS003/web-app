@@ -13,6 +13,10 @@ export const cartItemSchema = z.object({
     // (the cart join spreads the whole product_variants row); the schema just
     // did not declare it, and z.object strips what it does not name.
     product_id: objectId.nullish(),
+    // From the parent product, surfaced onto the variant by the cart join —
+    // the same place main_image_url comes from. Nullish because `brand` is a
+    // nullable free-text column, not a reference.
+    brand: z.string().nullish(),
     name: z.string(),
     price: z.number(),
     compare_at_price: z.number().nullish(),

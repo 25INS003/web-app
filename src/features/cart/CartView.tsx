@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, ShoppingBag, Trash2 } from "lucide-react";
+import { Loader2, ShoppingBag, Store, Tag, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -264,7 +264,32 @@ function CartRow({ item }: { item: CartItem }) {
         >
           {v.name}
         </MaybeLink>
-        {shop && <p className="text-xs text-muted-foreground">{shop}</p>}
+        {/* Shop and brand are different things — who sells it, and whose
+            product it is — and "Daily Dairy · Nature's Own" gives no clue
+            which is which. Each gets its own icon and a visually-hidden label,
+            so the distinction survives without colour: an icon alone is a
+            guess for a sighted user, and colour alone is nothing at all to a
+            screen reader or anyone who cannot separate the two hues.
+            Either may be absent — brand is nullable free text, and a payload
+            without the populated shop resolves to undefined. */}
+        {(shop || v.brand) && (
+          <p className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs">
+            {shop && (
+              <span className="inline-flex items-center gap-1 text-foreground/80">
+                <Store className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+                <span className="sr-only">Sold by </span>
+                {shop}
+              </span>
+            )}
+            {v.brand && (
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <Tag className="size-3 shrink-0" aria-hidden />
+                <span className="sr-only">Brand </span>
+                {v.brand}
+              </span>
+            )}
+          </p>
+        )}
         {item.is_available === false ? (
           <p className="text-xs text-destructive">Currently unavailable</p>
         ) : overStock ? (

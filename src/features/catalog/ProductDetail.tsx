@@ -1,6 +1,14 @@
 "use client";
 
-import { ArrowLeft, Heart, Loader2, ShoppingBag, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  Heart,
+  Loader2,
+  ShoppingBag,
+  Star,
+  Store,
+  Tag,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -71,7 +79,15 @@ export function ProductDetail({ productId }: { productId: string }) {
 
         {/* info */}
         <div>
-          {shop && <p className="text-sm font-medium text-primary">{shop}</p>}
+          {/* Same icon + hidden-label pairing the cart uses, so "who sells it"
+              and "whose product it is" read identically on both screens. */}
+          {shop && (
+            <p className="flex items-center gap-1.5 text-sm font-medium text-primary">
+              <Store className="size-3.5 shrink-0" aria-hidden />
+              <span className="sr-only">Sold by </span>
+              {shop}
+            </p>
+          )}
           <h1 className="mt-1 font-display text-3xl font-bold tracking-tight">
             {product.name}
           </h1>
@@ -83,7 +99,13 @@ export function ProductDetail({ productId }: { productId: string }) {
                 {product.total_ratings ? ` (${product.total_ratings})` : ""}
               </span>
             ) : null}
-            {product.brand && <span>· {product.brand}</span>}
+            {product.brand && (
+              <span className="flex items-center gap-1">
+                <Tag className="size-3.5 shrink-0" aria-hidden />
+                <span className="sr-only">Brand </span>
+                {product.brand}
+              </span>
+            )}
           </div>
 
           <div className="mt-5 flex items-baseline gap-2">
