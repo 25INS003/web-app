@@ -28,6 +28,7 @@ import {
 
 import { CategoryDialog } from "./components/CategoryDialog";
 import { EditCategoryDialog } from "./components/EditCategoryDialog";
+import { childrenOf, parentIdOf } from "@/lib/categories/tree";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -53,9 +54,7 @@ const CategoryCard = ({ category, onEdit, index }) => {
     const router = useRouter();
     const { categories } = useCategoryStore();
     
-    const subcategoryCount = categories.filter(
-        (cat) => cat.parent_category_id === category.id
-    ).length;
+    const subcategoryCount = childrenOf(categories, category.id).length;
 
     const imageUrl = category.image_url || category.image;
 
@@ -190,7 +189,11 @@ const CategoriesPage = () => {
         fetchCategories();
     }, [fetchCategories]);
 
-    const rootCategories = categories ? categories.filter(cat => !cat.parent_category_id) : [];
+    // The bug this page was reported for: `cat.parent_category_id` is undefined
+    // on every row the API returns (the column is `parent_id`), so this filter
+    // kept EVERYTHING and freshly-created subcategories rendered as roots
+    // alongside their own parents. parentIdOf reads whichever name arrived.
+    const rootCategories = categories ? categories.filter(cat => !parentIdOf(cat)) : [];
     const filteredCategories = rootCategories.filter(cat =>
         cat.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );

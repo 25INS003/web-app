@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { CategoryDialog } from "../components/CategoryDialog";
 import { EditCategoryDialog } from "../components/EditCategoryDialog";
+import { childrenOf } from "@/lib/categories/tree";
 
 export default function CategoryDetailPage() {
     const params = useParams();
@@ -38,8 +39,11 @@ export default function CategoryDetailPage() {
     // We try to find the category from the store first
     const category = categories.find(c => c.id === categoryId);
     
-    // Subcategories
-    const subcategories = categories.filter(c => c.parent_category_id === categoryId);
+    // Subcategories. Read through childrenOf, not `c.parent_category_id`: the
+    // API emits the column name `parent_id`, and the Mongo-era name is accepted
+    // on write but never returned — so the direct read matched nothing and this
+    // page showed every category as childless.
+    const subcategories = childrenOf(categories, categoryId);
 
     useEffect(() => {
         if (!categories.length) {
