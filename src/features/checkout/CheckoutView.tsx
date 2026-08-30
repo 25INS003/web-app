@@ -81,6 +81,12 @@ export function CheckoutView() {
                 value={total.data?.total_amount}
               />
               <SummaryRow label="Delivery" value={total.data?.delivery_fee} />
+              {(total.data?.platform_fee ?? 0) > 0 && (
+                <SummaryRow
+                  label="Platform fee"
+                  value={total.data?.platform_fee}
+                />
+              )}
               {quote && (
                 <SummaryRow
                   label={`Discount (${quote.promotion.code})`}

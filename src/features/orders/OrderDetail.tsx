@@ -183,6 +183,11 @@ export function OrderDetail({ orderId }: { orderId: string }) {
         <dl className="mt-3 space-y-1.5 border-t border-border pt-3 text-sm">
           <SummaryRow label="Subtotal" value={order.order_amount} />
           <SummaryRow label="Delivery" value={order.delivery_fee} />
+          {/* Read from the order, not recomputed: the brackets are editable,
+              so re-deriving it would restate what this customer was charged. */}
+          {(order.platform_fee ?? 0) > 0 && (
+            <SummaryRow label="Platform fee" value={order.platform_fee} />
+          )}
           {order.discount_amount > 0 && (
             <SummaryRow
               // Named, not just "Discount": months later the code is what

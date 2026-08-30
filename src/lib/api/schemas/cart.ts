@@ -38,6 +38,10 @@ export type Cart = z.infer<typeof cartSchema>;
 export const cartTotalSchema = z.object({
   total_amount: z.number(),
   delivery_fee: z.number(),
+  // The platform's own cut, separate from the shop's delivery fee. Optional so
+  // a response from a backend predating it still parses rather than blanking
+  // the whole summary.
+  platform_fee: z.number().optional(),
   final_amount: z.number(),
   items_count: z.number(),
   has_unavailable_items: z.boolean().optional(),

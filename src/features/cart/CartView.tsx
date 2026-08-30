@@ -78,6 +78,12 @@ export function CartView() {
             <dl className="mt-4 space-y-2 text-sm">
               <Row label="Subtotal" value={total.data?.total_amount} />
               <Row label="Delivery" value={total.data?.delivery_fee} />
+              {/* Only when it costs something. A line that reads ₹0 on every
+                  order trains people to skip the block, and the fee is
+                  configurable — it appears the moment an admin sets one. */}
+              {(total.data?.platform_fee ?? 0) > 0 && (
+                <Row label="Platform fee" value={total.data?.platform_fee} />
+              )}
               <div className="my-2 border-t border-border" />
               <Row label="Total" value={total.data?.final_amount} strong />
             </dl>

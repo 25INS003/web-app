@@ -77,6 +77,7 @@ export const orderSchema = z.object({
   items_count: z.number().nullish(),
   order_amount: z.number().optional(),
   delivery_fee: z.number().optional(),
+  platform_fee: z.number().optional(),
   // What a discount code took off, and which code it was. The code lives on
   // the usage row rather than the order, so the backend joins for it — and
   // sends null rather than omitting it, so "no code" and "missing" are not
