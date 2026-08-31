@@ -23,6 +23,11 @@ export type ProductQuery = {
   min_price?: number;
   max_price?: number;
   in_stock?: boolean;
+  /**
+   * Restricts the page to shops with an active `shop_delivery_areas` row for
+   * this pincode. Absent means unfiltered — the whole catalogue.
+   */
+  pincode?: string;
 };
 
 export const catalogApi = {
@@ -41,8 +46,13 @@ export const catalogApi = {
     return z.array(catalogCategorySchema).parse(data);
   },
 
-  async getProduct(id: string): Promise<ProductDetail> {
-    const data = await api.get<unknown>(`/catalog/id/${id}`);
+  async getProduct(id: string, pincode?: string): Promise<ProductDetail> {
+    // The pincode makes the reply carry `is_serviceable`. The product is
+    // returned either way — a shared link should open, not 404 — so this only
+    // adds the answer to "can it reach me".
+    const data = await api.get<unknown>(`/catalog/id/${id}`, {
+      params: pincode ? { pincode } : undefined,
+    });
     return productDetailSchema.parse(data);
   },
 

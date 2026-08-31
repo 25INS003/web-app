@@ -34,6 +34,10 @@ export const catalogProductSchema = z.object({
   price_min: z.number().nullish(),
   price_max: z.number().nullish(),
   is_in_stock: z.boolean().optional(),
+  // Whether the selling shop delivers to the pincode the request carried. Only
+  // present when one was sent — `undefined` means "not asked", which is not the
+  // same as "no", so the UI must not read a missing value as undeliverable.
+  is_serviceable: z.boolean().optional(),
   rating: z.number().optional(),
   total_ratings: z.number().optional(),
   // The API field is `main_image_url`. It was declared here as `main_image`,

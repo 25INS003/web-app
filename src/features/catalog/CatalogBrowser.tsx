@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "./ProductCard";
-import { useCategories, useProducts } from "./hooks";
+import { useCategories, useDeliveryPincode, useProducts } from "./hooks";
 
 const SORTS = [
   { key: "newest", label: "Newest", sort: "created_at", order: "desc" },
@@ -77,6 +77,8 @@ export function CatalogBrowser({
   const maxPrice = price.max === "" ? undefined : Number(price.max);
 
   const categories = useCategories();
+  // Read for the empty state only; `useProducts` applies it itself.
+  const deliveryPincode = useDeliveryPincode();
   const products = useProducts({
     search: search || undefined,
     category,
@@ -189,10 +191,26 @@ export function CatalogBrowser({
           sub="Please try again in a moment."
         />
       ) : items.length === 0 ? (
-        <EmptyState
-          title="No products found"
-          sub="Try a different search or category."
-        />
+        // "Nothing matched" and "nobody delivers here" are different facts, and
+        // only one of them is worth changing your search over. Telling someone
+        // outside the delivery area to try another category sends them round
+        // the whole catalogue to find it equally empty.
+        deliveryPincode && !search && !category ? (
+          <EmptyState
+            title={`No shops deliver to ${deliveryPincode} yet`}
+            sub="Change the delivery address in the header to browse another area."
+          />
+        ) : deliveryPincode ? (
+          <EmptyState
+            title="Nothing here for your area"
+            sub={`No shop delivering to ${deliveryPincode} stocks this. Try a different search or category.`}
+          />
+        ) : (
+          <EmptyState
+            title="No products found"
+            sub="Try a different search or category."
+          />
+        )
       ) : (
         <>
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">

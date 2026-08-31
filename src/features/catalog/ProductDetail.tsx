@@ -27,7 +27,7 @@ import {
 import { ComplementRow } from "@/features/suggestions/ComplementRow";
 import type { ProductVariant } from "@/lib/api/schemas/catalog";
 import { cn, formatPrice } from "@/lib/utils";
-import { useProduct, useProductReviews } from "./hooks";
+import { useDeliveryPincode, useProduct, useProductReviews } from "./hooks";
 
 export function ProductDetail({ productId }: { productId: string }) {
   const q = useProduct(productId);
@@ -36,6 +36,8 @@ export function ProductDetail({ productId }: { productId: string }) {
   const wishlist = useAddToWishlist();
   const [variant, setVariant] = useState<ProductVariant | null>(null);
   const [qty, setQty] = useState(1);
+
+  const deliveryPincode = useDeliveryPincode();
 
   if (q.isPending) return <DetailSkeleton />;
   if (q.isError || !q.data) return <NotFound />;
@@ -54,6 +56,11 @@ export function ProductDetail({ productId }: { productId: string }) {
   const off = compare && compare > price ? Math.round((1 - price / compare) * 100) : 0;
   const img = selected?.images?.[0]?.url || productImage(product) || null;
   const shop = shopName(product);
+
+  // `undefined` means the request carried no pincode — "not asked", which is
+  // not "no". Only an explicit false is a shop that does not deliver here, so a
+  // signed-out visitor is never told a product cannot reach them.
+  const undeliverable = product.is_serviceable === false;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
@@ -160,24 +167,43 @@ export function ProductDetail({ productId }: { productId: string }) {
             <StockLabel stock={stock} inStock={inStock} />
           </p>
 
+          {/* Said before the button rather than only on it: the reason it is
+              disabled is a fact about the shop, not about this product, and
+              "out of stock" would send someone back tomorrow to find the same
+              thing. The page still opens — a shared link should. */}
+          {undeliverable && (
+            <p
+              role="status"
+              className="mt-3 rounded-xl border border-border bg-muted px-3 py-2 text-sm text-muted-foreground"
+            >
+              <span className="font-medium text-foreground">{shop}</span> does
+              not deliver to {deliveryPincode}. Change the delivery address in
+              the header to order this.
+            </p>
+          )}
+
           <div className="mt-5 flex items-center gap-3">
             <QuantityInput
               value={qty}
               onCommit={setQty}
               max={maxQty}
-              disabled={!inStock}
+              disabled={!inStock || undeliverable}
               className="h-10 rounded-xl"
             />
             <Button
               size="lg"
               className="flex-1 gap-2"
-              disabled={!inStock || !selected || add.isPending}
+              disabled={!inStock || undeliverable || !selected || add.isPending}
               onClick={() =>
                 selected && add.mutate({ productVarId: selected.id, quantity: qty })
               }
             >
               {add.isPending ? <Loader2 className="animate-spin" /> : <ShoppingBag />}
-              {inStock ? "Add to cart" : "Out of stock"}
+              {undeliverable
+                ? "Not delivered to your area"
+                : inStock
+                  ? "Add to cart"
+                  : "Out of stock"}
             </Button>
             <Button
               size="icon"

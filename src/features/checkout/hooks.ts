@@ -2,14 +2,28 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useUserRole } from "@/features/auth/useAuth";
 import { ApiError } from "@/lib/api/types";
 import type { AddressInput } from "@/lib/api/schemas/address";
 import { checkoutApi } from "./api";
 
 const ADDR_KEY = ["addresses"] as const;
 
+/**
+ * The customer's saved addresses.
+ *
+ * `enabled` because this is now read from the header on every storefront page,
+ * not just at checkout: `/address/get` is customer-only, so for a signed-out
+ * visitor it is a guaranteed 401 and for an admin or shop owner a guaranteed
+ * 403 — fired on every page they open.
+ */
 export function useAddresses() {
-  return useQuery({ queryKey: ADDR_KEY, queryFn: checkoutApi.getAddresses });
+  const role = useUserRole();
+  return useQuery({
+    queryKey: ADDR_KEY,
+    queryFn: checkoutApi.getAddresses,
+    enabled: role === "customer",
+  });
 }
 
 export function useAddAddress() {
