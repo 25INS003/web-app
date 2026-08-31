@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Star, Store, Tag } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ProgressiveImage } from "@/components/ProgressiveImage";
@@ -46,7 +46,34 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
         <h3 className="line-clamp-2 text-sm font-semibold leading-snug">
           {product.name}
         </h3>
-        {shop && <p className="mt-0.5 text-xs text-muted-foreground">{shop}</p>}
+        {/* Shop and brand are different things — who sells it, and whose
+            product it is — and the card used to print the shop alone with no
+            label, so "Green Basket" gave no clue which of the two it was.
+            Same treatment as the cart: an icon and a visually-hidden label
+            each, so the distinction survives without relying on colour or on
+            position. An icon alone is a guess for a sighted user, and colour
+            alone is nothing at all to a screen reader.
+
+            Either may be absent — brand is nullable free text, and a payload
+            without the populated shop resolves to undefined. */}
+        {(shop || product.brand) && (
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+            {shop && (
+              <span className="inline-flex min-w-0 items-center gap-1 text-foreground/80">
+                <Store className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+                <span className="sr-only">Sold by </span>
+                <span className="truncate">{shop}</span>
+              </span>
+            )}
+            {product.brand && (
+              <span className="inline-flex min-w-0 items-center gap-1 text-muted-foreground">
+                <Tag className="size-3 shrink-0" aria-hidden />
+                <span className="sr-only">Brand </span>
+                <span className="truncate">{product.brand}</span>
+              </span>
+            )}
+          </p>
+        )}
         <div className="mt-auto flex items-end justify-between pt-3">
           <div className="flex items-baseline gap-1.5">
             <span className="font-mono text-base font-bold tabular-nums">
