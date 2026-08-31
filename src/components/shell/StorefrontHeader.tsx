@@ -7,7 +7,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { InitialsAvatar } from "@/components/ui/initials-avatar";
-import { useIsAuthed, useSession } from "@/features/auth/useAuth";
+import { DeliveryAddressBar } from "@/features/address/DeliveryAddressBar";
+import { useIsAuthed, useSession, useUserRole } from "@/features/auth/useAuth";
 import { useCartCount } from "@/features/cart/useCart";
 import { NotificationBell } from "@/features/notifications/NotificationBell";
 
@@ -18,6 +19,10 @@ export function StorefrontHeader() {
   // Skipped for signed-out visitors — /auth/me is a guaranteed 401 there.
   const session = useSession(authed);
   const cartCount = useCartCount(authed);
+  // The whole row goes, not just its contents: an empty bordered strip reads as
+  // something that failed to load.
+  const role = useUserRole();
+  const showsAddress = !authed || !role || role === "customer";
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
@@ -103,6 +108,18 @@ export function StorefrontHeader() {
           </Button>
         </div>
       </div>
+
+      {/* Where the order is going. Its own row rather than squeezed in beside
+          the search: an address is too long to truncate usefully at that width,
+          and a pincode shortened to fit is the one part that must stay
+          readable. */}
+      {showsAddress && (
+        <div className="border-t border-border/60">
+          <div className="mx-auto flex h-11 max-w-7xl items-center px-4 sm:px-6">
+            <DeliveryAddressBar />
+          </div>
+        </div>
+      )}
     </header>
   );
 }

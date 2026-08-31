@@ -28,6 +28,23 @@ export function useIsAuthed(): boolean {
   );
 }
 
+/**
+ * The signed-in role, or null when signed out. Same cookie and same SSR-safety
+ * as `useIsAuthed` — this only reads its value instead of its presence.
+ *
+ * Worth having separately because "signed in" and "may use the customer API"
+ * are different questions: addresses, the cart and orders are all behind
+ * `validateUserType(["customer"])`, so an admin browsing the storefront is
+ * authenticated and still gets a 403 from every one of them.
+ */
+export function useUserRole(): string | null {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => Cookies.get("userRole") ?? null,
+    () => null,
+  );
+}
+
 // Client-side current session (GET /auth/me). Pass `enabled` to skip the call
 // for visitors who have no auth cookie. Returns null-ish until resolved.
 export function useSession(enabled = true) {

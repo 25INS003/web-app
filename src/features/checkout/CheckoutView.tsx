@@ -7,29 +7,31 @@ import { Button } from "@/components/ui/button";
 import { useCartTotal } from "@/features/cart/useCart";
 import type { Address } from "@/lib/api/schemas/address";
 import { cn, formatPrice } from "@/lib/utils";
+import { useSelectedAddress } from "@/features/address/useSelectedAddress";
 import { AddressForm } from "./AddressForm";
-import { useAddresses, usePlaceOrder, useQuotePromotion } from "./hooks";
+import { usePlaceOrder, useQuotePromotion } from "./hooks";
 import type { PromotionQuote } from "./api";
 
 export function CheckoutView() {
-  const addresses = useAddresses();
   const total = useCartTotal();
   const place = usePlaceOrder();
-  // The user's explicit pick, if any; otherwise we fall back to the default/first
-  // address (derived below) — no effect needed to seed it.
-  const [pickedId, setPickedId] = useState<string | null>(null);
+  // The same selection the header bar drives, not a second one held here. Two
+  // independent picks would let the header say one address while the order went
+  // to another — and the header is the one being read on the way to this page.
+  const {
+    addresses: list,
+    selected: selectedAddr,
+    orderAddressId,
+    select,
+    isPending: addressesPending,
+  } = useSelectedAddress();
   const [showForm, setShowForm] = useState(false);
   const [quote, setQuote] = useState<PromotionQuote | null>(null);
 
   if (place.isSuccess) return <Confirmation orderId={place.data.orderId} />;
   if (total.data?.is_empty) return <EmptyCart />;
 
-  const list = addresses.data ?? [];
-  const defaultId = list.find((a) => a.is_default)?.id ?? list[0]?.id ?? null;
-  const selectedId = pickedId ?? defaultId;
-  const selectedAddr = list.find((a) => a.id === selectedId);
-  // place-order matches the string `address_id` mirror, not id
-  const orderAddressId = selectedAddr?.address_id ?? selectedAddr?.id ?? null;
+  const selectedId = selectedAddr?.id ?? null;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -42,7 +44,7 @@ export function CheckoutView() {
             Delivery address
           </h2>
 
-          {addresses.isPending ? (
+          {addressesPending ? (
             <div className="mt-3 h-24 animate-pulse rounded-2xl bg-muted" />
           ) : (
             <div className="mt-3 space-y-3">
@@ -51,7 +53,7 @@ export function CheckoutView() {
                   key={a.id}
                   address={a}
                   selected={selectedId === a.id}
-                  onSelect={() => setPickedId(a.id)}
+                  onSelect={() => select(a.id)}
                 />
               ))}
 
@@ -133,7 +135,7 @@ export function CheckoutView() {
               {place.isPending && <Loader2 className="animate-spin" />}
               Place order
             </Button>
-            {!selectedId && !addresses.isPending && (
+            {!selectedId && !addressesPending && (
               <p className="mt-2 text-center text-xs text-muted-foreground">
                 Select or add a delivery address
               </p>

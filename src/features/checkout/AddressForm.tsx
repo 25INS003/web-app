@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,9 +32,17 @@ function toInput(a: Address): AddressInput {
 
 export function AddressForm({
   address,
+  prefill,
   onDone,
 }: {
   address?: Address;
+  /**
+   * Fields to start from — what a device's GPS resolved to. Distinct from
+   * `address`: that means "edit this saved one" and drives the button label and
+   * the update-vs-create branch, whereas this is a blank form with some boxes
+   * already filled, still creating.
+   */
+  prefill?: Partial<AddressInput>;
   onDone: () => void;
 }) {
   const add = useAddAddress();
@@ -59,9 +68,34 @@ export function AddressForm({
           pincode: "",
           country: "India",
           tag: "home",
+          // Spread last so a resolved location wins over the blanks, and only
+          // over the fields it actually found — a geocoder that knows the city
+          // but not the pincode must not blank the pincode box.
+          ...Object.fromEntries(
+            Object.entries(prefill ?? {}).filter(
+              ([, v]) => v !== undefined && v !== "",
+            ),
+          ),
         },
   });
   const tag = watch("tag");
+
+  // The pin can move after this form is on screen, and `defaultValues` are read
+  // once at mount — so without this the map and the fields drift apart, which
+  // is worse than not having a map at all.
+  //
+  // Only the geocoded fields are written. A name and phone already typed are
+  // not something the geocoder knows or should overwrite, and `reset()` would
+  // take them with it.
+  useEffect(() => {
+    if (!prefill) return;
+    for (const key of ["address_line", "city", "state", "pincode", "country"] as const) {
+      const value = prefill[key];
+      // Left alone when the geocoder had nothing: a lookup that finds the city
+      // but not the pincode must not blank a pincode the customer typed.
+      if (typeof value === "string" && value !== "") setValue(key, value);
+    }
+  }, [prefill, setValue]);
 
   const field = (name: keyof AddressInput, label: string, props = {}) => (
     <div className="space-y-1.5">
@@ -75,14 +109,21 @@ export function AddressForm({
 
   return (
     <form
-      onSubmit={handleSubmit((v) =>
-        editing
-          ? update.mutate(
-              { id: address!.id, input: v },
-              { onSuccess: onDone },
-            )
-          : add.mutate(v, { onSuccess: onDone }),
-      )}
+      onSubmit={handleSubmit((v) => {
+        // The coordinates ride along unedited. They have no input of their own,
+        // and react-hook-form only returns what it registered — so taking `v`
+        // alone would drop the fix and save a GPS address with no position on
+        // it, which is the whole point of having taken one.
+        const input: AddressInput = {
+          ...v,
+          ...(prefill?.lat !== undefined && prefill?.lng !== undefined
+            ? { lat: prefill.lat, lng: prefill.lng }
+            : {}),
+        };
+        return editing
+          ? update.mutate({ id: address!.id, input }, { onSuccess: onDone })
+          : add.mutate(input, { onSuccess: onDone });
+      })}
       className="space-y-3"
       noValidate
     >

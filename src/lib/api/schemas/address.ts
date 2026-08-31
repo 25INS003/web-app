@@ -31,5 +31,23 @@ export const addressInputSchema = z.object({
   pincode: z.string().regex(/^[1-9][0-9]{5}$/, "Enter a valid 6-digit pincode"),
   country: z.string(),
   tag: addressTagSchema,
+  // Carried through when the address came from a device's GPS. The columns have
+  // always existed and `addAddress` has always accepted them; nothing on the
+  // client had a fix to send. Optional, because an address typed by hand has
+  // none — and a courier reading a street is the normal case, not a fallback.
+  lat: z.number().optional(),
+  lng: z.number().optional(),
 });
 export type AddressInput = z.infer<typeof addressInputSchema>;
+
+/** What the reverse-geocode endpoint gives back for prefilling the form. */
+export const resolvedLocationSchema = z.object({
+  address_line: z.string(),
+  city: z.string(),
+  state: z.string(),
+  pincode: z.string(),
+  country: z.string(),
+  lat: z.number(),
+  lng: z.number(),
+});
+export type ResolvedLocation = z.infer<typeof resolvedLocationSchema>;

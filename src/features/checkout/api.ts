@@ -17,12 +17,35 @@ export const promotionQuoteSchema = z.object({
   }),
 });
 export type PromotionQuote = z.infer<typeof promotionQuoteSchema>;
-import { addressSchema } from "@/lib/api/schemas/address";
-import type { Address, AddressInput } from "@/lib/api/schemas/address";
+import {
+  addressSchema,
+  resolvedLocationSchema,
+} from "@/lib/api/schemas/address";
+import type {
+  Address,
+  AddressInput,
+  ResolvedLocation,
+} from "@/lib/api/schemas/address";
 
 export const checkoutApi = {
   async getAddresses(): Promise<Address[]> {
     return z.array(addressSchema).parse(await api.get<unknown>("/address/get"));
+  },
+
+  /**
+   * What is at this coordinate.
+   *
+   * Through our own backend rather than straight to the geocoder: the provider
+   * wants a User-Agent identifying the application, which a page cannot set on
+   * a cross-origin request, and the answers are worth caching in one place
+   * rather than once per browser.
+   */
+  async reverseGeocode(lat: number, lng: number): Promise<ResolvedLocation> {
+    return resolvedLocationSchema.parse(
+      await api.get<unknown>("/address/reverse-geocode", {
+        params: { lat, lng },
+      }),
+    );
   },
 
   async addAddress(input: AddressInput): Promise<void> {
