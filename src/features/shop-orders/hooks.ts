@@ -26,6 +26,16 @@ export function useMyShops() {
  *
  * `enabled` guards the first render, before a shop has been chosen — without it
  * react-query fires a request to `/shops/undefined/orders`.
+ *
+ * The poll is the floor, not the mechanism: `useShopOrdersRealtime` pushes a
+ * newly-placed order onto the board within the round trip. This keeps the board
+ * honest when the socket is unavailable, and catches the changes nothing emits
+ * for — a status moved from the shop's other device, or by a courier.
+ *
+ * `refetchOnWindowFocus` is on here for the same reason as on the stats: the
+ * client-wide default is false and a background tab's poll is paused, so a
+ * board switched back to would otherwise show its pre-blur state until the
+ * timer next fired.
  */
 export function useShopOrders(
   shopId: string | undefined,
@@ -36,18 +46,35 @@ export function useShopOrders(
     queryFn: () => shopOrdersApi.list(shopId as string, params),
     enabled: Boolean(shopId),
     refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
     // Keeps the previous page on screen while the next loads, so paging and
     // status-filtering do not blank the table between renders.
     placeholderData: (previous) => previous,
   });
 }
 
+/**
+ * The shop's totals, and the per-status counts the tabs are numbered from.
+ *
+ * Polled on the same 30s beat as the list. It previously had only a staleTime,
+ * so nothing refetched it on its own: an order placed by a customer invalidates
+ * nothing on the shopkeeper's client, and the counts sat still while the table
+ * underneath them moved. A tab reading "Needs action 3" over four rows is worse
+ * than no count, because it looks authoritative.
+ *
+ * `refetchOnWindowFocus` overrides the client-wide default (false) for this
+ * screen only. The board is left open and switched away from, and a poll is
+ * paused while the tab is in the background — so coming back to it is exactly
+ * the moment the numbers are most likely to be wrong.
+ */
 export function useShopOrderStats(shopId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.orders.stats(shopId ?? "none"),
     queryFn: () => shopOrdersApi.stats(shopId as string),
     enabled: Boolean(shopId),
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
 }
 

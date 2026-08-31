@@ -21,6 +21,7 @@ import {
   useShopOrderStats,
   useShopOrders,
 } from "./hooks";
+import { useShopOrdersRealtime } from "./useShopOrdersRealtime";
 
 // The filters a shopkeeper actually works by. "Open" is the default because
 // the reason to open this screen is almost always "what needs doing" — a board
@@ -112,6 +113,11 @@ export function ShopOrdersView() {
   const stats = useShopOrderStats(activeShopId);
   const advance = useAdvanceOrders(activeShopId);
   const cancelOrder = useCancelOrder(activeShopId);
+
+  // Puts a newly-placed order on the board as it happens, rather than on the
+  // next poll. Keyed to the selected shop, so switching shops moves the
+  // subscription with the table.
+  useShopOrdersRealtime(activeShopId);
 
   // How many orders sit in each phase, for the tab badges.
   //
