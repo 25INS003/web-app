@@ -2,6 +2,7 @@
 
 import {
   IndianRupee,
+  ReceiptText,
   FolderTree,
   LayoutDashboard,
   LifeBuoy,
@@ -46,6 +47,7 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     { href: "/admin/shop-owners", label: "Shop Owners", icon: Users },
     { href: "/admin/categories", label: "Categories", icon: FolderTree },
     { href: "/admin/promotions", label: "Discount codes", icon: Tag },
+    { href: "/admin/orders", label: "Orders", icon: ReceiptText },
     { href: "/admin/platform-fees", label: "Platform fees", icon: IndianRupee },
     { href: "/admin/support", label: "Support", icon: LifeBuoy },
     { href: "/admin/reports", label: "Reports", icon: ShieldCheck },

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/features/orders/status";
+import { CancelOrderDialog } from "./CancelOrderDialog";
 import {
   ACTION_LABEL,
   STATUS_LABEL,
@@ -15,6 +16,7 @@ import type { ShopOrder, ShopOrderStatus } from "@/lib/api/schemas/shopOrder";
 import { formatPrice } from "@/lib/utils";
 import {
   useAdvanceOrders,
+  useCancelOrder,
   useMyShops,
   useShopOrderStats,
   useShopOrders,
@@ -28,17 +30,37 @@ const FILTERS = [
   { key: "pending", label: "Pending" },
   { key: "preparing", label: "Preparing" },
   { key: "ready", label: "Ready" },
+  { key: "out", label: "Out for delivery" },
   { key: "delivered", label: "Delivered" },
   { key: "cancelled", label: "Cancelled" },
 ] as const;
 
 // Statuses where the shop still owes an action. Applied client-side: the API
-// filters by a single status, and "needs action" is four of them.
+// filters by a single status, and "needs action" is several of them.
+//
+// `picked_up` and `in_transit` are here because a shop that delivers its own
+// orders still owes the final step. They used to be in neither this set nor any
+// tab, so an order past `ready` was reachable from no view at all — the reason
+// self-delivered orders were left stranded there.
 const OPEN = new Set<ShopOrderStatus>([
   "pending",
   "confirmed",
   "preparing",
   "ready",
+  "picked_up",
+  "in_transit",
+]);
+
+/** The two statuses the "Out for delivery" tab covers. */
+const OUT = new Set<ShopOrderStatus>(["picked_up", "in_transit"]);
+
+// The API refuses a cancellation past `preparing`, so the control is not
+// offered past it either — the same reason the advance button only ever shows
+// the one move the backend will accept.
+const CANCELLABLE = new Set<ShopOrderStatus>([
+  "pending",
+  "confirmed",
+  "preparing",
 ]);
 
 const STATUS_VARIANT: Record<
@@ -66,14 +88,20 @@ export function ShopOrdersView() {
   // making them pick before seeing anything would be a click for nothing.
   const activeShopId = shopId ?? shops.data?.[0]?.id;
 
-  const apiStatus = filter === "open" ? undefined : filter;
+  // "open" and "out" both span more than one status, and the API filters by a
+  // single one — so they fetch unfiltered and narrow below.
+  const apiStatus = filter === "open" || filter === "out" ? undefined : filter;
   const orders = useShopOrders(activeShopId, { page, status: apiStatus });
   const stats = useShopOrderStats(activeShopId);
   const advance = useAdvanceOrders(activeShopId);
+  const cancelOrder = useCancelOrder(activeShopId);
+  const [cancelling, setCancelling] = useState<ShopOrder | null>(null);
 
   const rows = useMemo(() => {
     const all = orders.data?.orders ?? [];
-    return filter === "open" ? all.filter((o) => OPEN.has(o.order_status)) : all;
+    if (filter === "open") return all.filter((o) => OPEN.has(o.order_status));
+    if (filter === "out") return all.filter((o) => OUT.has(o.order_status));
+    return all;
   }, [orders.data, filter]);
 
   // Only orders whose next move is the same one can be advanced together — the
@@ -242,7 +270,8 @@ export function ShopOrdersView() {
                 <OrderRow
                   key={order.id}
                   order={order}
-                  busy={advance.isPending}
+                  busy={advance.isPending || cancelOrder.isPending}
+                  onCancel={() => setCancelling(order)}
                   onAdvance={(status) =>
                     advance.mutate({
                       orderNumbers: [order.order_number],
@@ -281,6 +310,19 @@ export function ShopOrdersView() {
           </div>
         </div>
       )}
+      {cancelling ? (
+        <CancelOrderDialog
+          order={cancelling}
+          busy={cancelOrder.isPending}
+          onClose={() => setCancelling(null)}
+          onConfirm={(reason) =>
+            cancelOrder.mutate(
+              { orderNumber: cancelling.order_number, reason },
+              { onSuccess: () => setCancelling(null) }
+            )
+          }
+        />
+      ) : null}
     </div>
   );
 }
@@ -289,10 +331,12 @@ function OrderRow({
   order,
   busy,
   onAdvance,
+  onCancel,
 }: {
   order: ShopOrder;
   busy: boolean;
   onAdvance: (status: ShopOrderStatus) => void;
+  onCancel: () => void;
 }) {
   const next = nextStatus(order.order_status);
   const address = order.delivery_address_snapshot;
@@ -339,10 +383,31 @@ function OrderRow({
         </Badge>
       </td>
       <td className="px-4 py-3 text-right">
-        {/* Only the shop's own moves are offered. After `picked_up` the order
-            belongs to the courier, so there is deliberately no control here —
-            the API would reject it and the shopkeeper would learn that from an
-            error toast rather than from the screen. */}
+        {/* Only moves the API will accept are offered, so a shopkeeper never
+            learns a transition is impossible from an error toast. Cancelling
+            sits beside the forward move rather than in the same control: it is
+            not the next step in the chain, it ends the order. */}
+        <div className="flex items-center justify-end gap-2">
+          {order.cancellation_reason ? (
+            <span
+              className="max-w-[16rem] truncate text-xs text-muted-foreground"
+              title={order.cancellation_reason}
+            >
+              {order.cancellation_reason}
+            </span>
+          ) : null}
+          {CANCELLABLE.has(order.order_status) ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={busy}
+              onClick={onCancel}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              Cancel
+            </Button>
+          ) : null}
+        </div>
         {next ? (
           <Button size="sm" disabled={busy} onClick={() => onAdvance(next)}>
             {ACTION_LABEL[next] ?? "Advance"}

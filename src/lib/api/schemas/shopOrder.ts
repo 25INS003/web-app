@@ -45,6 +45,10 @@ export const shopOrderSchema = z.object({
   // status endpoints key off `order_number` instead — see api.ts.
   order_number: z.string(),
   order_status: shopOrderStatusSchema,
+  // Written when a shop cancels. z.object strips what it does not declare, so
+  // without these the board could never show why an order ended.
+  cancellation_reason: z.string().nullish(),
+  cancelled_by: z.string().nullish(),
   payment_method: z.string().nullish(),
   payment_status: z.string().nullish(),
 
@@ -133,8 +137,16 @@ export function customerName(order: ShopOrder): string {
 /**
  * The single next status the shop may set, or null when it is not the shop's
  * move. Encodes the same chain the backend enforces, so the board never offers
- * a transition the API will reject — after `picked_up` the order belongs to the
- * courier, and cancelling is a separate action with its own consequences.
+ * a transition the API will reject; cancelling stays a separate action with its
+ * own consequences.
+ *
+ * This used to stop at `picked_up`, on the reasoning that the order then
+ * belonged to the courier. That is true when a courier is involved and wrong
+ * when the shop delivers its own orders — and nothing in the product requires
+ * one, so those orders sat at `picked_up` with no way to finish them. The chain
+ * now runs to `delivered`, exactly as far as the backend already allowed a shop
+ * owner to go; a courier working the same order simply gets there first, and
+ * whichever hand marks it, the transition is the same single forward step.
  */
 export function nextStatus(status: ShopOrderStatus): ShopOrderStatus | null {
   switch (status) {
@@ -146,6 +158,10 @@ export function nextStatus(status: ShopOrderStatus): ShopOrderStatus | null {
       return "ready";
     case "ready":
       return "picked_up";
+    case "picked_up":
+      return "in_transit";
+    case "in_transit":
+      return "delivered";
     default:
       return null;
   }
@@ -156,7 +172,9 @@ export const ACTION_LABEL: Record<string, string> = {
   confirmed: "Accept",
   preparing: "Start preparing",
   ready: "Mark ready",
-  picked_up: "Hand to courier",
+  picked_up: "Hand over / collect",
+  in_transit: "Out for delivery",
+  delivered: "Mark delivered",
 };
 
 export const STATUS_LABEL: Record<ShopOrderStatus, string> = {

@@ -122,6 +122,27 @@ export const orderSchema = z.object({
   picked_up_time: z.string().nullish(),
   in_transit_time: z.string().nullish(),
   delivered_time: z.string().nullish(),
+  // Why the order ended, and who ended it.
+  //
+  // Cancellation is per SHOP, not per order: on a multi-shop basket one
+  // merchant can cancel their half with their own reason while the other is
+  // still cooking. So the note lives on `shop_orders` and the parent carries
+  // only its own — declared here as well because a customer cancelling their
+  // own order writes it there.
+  cancellation_reason: z.string().nullish(),
+  cancelled_by: z.string().nullish(),
+  shop_orders: z
+    .array(
+      z.object({
+        id: objectId.optional(),
+        order_status: z.string().optional(),
+        cancellation_reason: z.string().nullish(),
+        cancelled_by: z.string().nullish(),
+        shop: z.object({ name: z.string().optional() }).nullish(),
+      }),
+    )
+    .optional()
+    .default([]),
 });
 export type Order = z.infer<typeof orderSchema>;
 

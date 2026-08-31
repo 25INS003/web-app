@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft, Check, MapPin, RotateCcw, XCircle } from "lucide-react";
+import type { Order } from "@/lib/api/schemas/order";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -93,9 +94,34 @@ export function OrderDetail({ orderId }: { orderId: string }) {
       <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-xs">
         <h2 className="font-display text-lg font-semibold">Tracking</h2>
         {cancelled ? (
-          <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-            <XCircle className="size-4 text-destructive" /> This order was{" "}
-            {STATUS_LABEL[order.order_status].toLowerCase()}.
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <XCircle className="size-4 text-destructive" /> This order was{" "}
+              {STATUS_LABEL[order.order_status].toLowerCase()}.
+            </div>
+
+            {/* Why, in the words of whoever cancelled it. Read per SHOP: on a
+                multi-shop basket each merchant cancels their own half with
+                their own reason, so one note on the order would either pick a
+                winner or lose the others. The parent's own reason is the
+                fallback, which is what a customer-initiated cancellation
+                writes. */}
+            {cancellationNotes(order).map((n, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm"
+              >
+                {n.shop ? (
+                  <p className="font-medium text-foreground">{n.shop}</p>
+                ) : null}
+                <p className="text-muted-foreground">{n.reason}</p>
+                {n.by ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Cancelled by the {n.by === "shop" ? "shop" : n.by}
+                  </p>
+                ) : null}
+              </div>
+            ))}
           </div>
         ) : (
           <ol className="mt-4">
@@ -267,4 +293,31 @@ function SummaryRow({
       </dd>
     </div>
   );
+}
+
+/**
+ * The cancellation notes to show, one per shop that cancelled.
+ *
+ * Falls back to the parent order's own note, which is where a
+ * customer-initiated cancellation records its reason — the per-shop rows only
+ * carry one when a merchant cancelled their half.
+ */
+function cancellationNotes(order: Order): Array<{
+  shop?: string;
+  reason: string;
+  by?: string;
+}> {
+  const fromShops = (order.shop_orders ?? [])
+    .filter((so) => so.cancellation_reason)
+    .map((so) => ({
+      shop: so.shop?.name ?? undefined,
+      reason: so.cancellation_reason as string,
+      by: so.cancelled_by ?? undefined,
+    }));
+
+  if (fromShops.length) return fromShops;
+
+  return order.cancellation_reason
+    ? [{ reason: order.cancellation_reason, by: order.cancelled_by ?? undefined }]
+    : [];
 }
