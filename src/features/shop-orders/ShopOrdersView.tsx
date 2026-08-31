@@ -32,7 +32,7 @@ const FILTERS = [
   { key: "ready", label: "Ready" },
   { key: "out", label: "Out for delivery" },
   { key: "delivered", label: "Delivered" },
-  { key: "cancelled", label: "Cancelled" },
+  { key: "ended", label: "Cancelled" },
 ] as const;
 
 // Statuses where the shop still owes an action. Applied client-side: the API
@@ -42,7 +42,7 @@ const FILTERS = [
 // orders still owes the final step. They used to be in neither this set nor any
 // tab, so an order past `ready` was reachable from no view at all — the reason
 // self-delivered orders were left stranded there.
-const OPEN = new Set<ShopOrderStatus>([
+export const OPEN = new Set<ShopOrderStatus>([
   "pending",
   "confirmed",
   "preparing",
@@ -52,7 +52,21 @@ const OPEN = new Set<ShopOrderStatus>([
 ]);
 
 /** The two statuses the "Out for delivery" tab covers. */
-const OUT = new Set<ShopOrderStatus>(["picked_up", "in_transit"]);
+export const OUT = new Set<ShopOrderStatus>(["picked_up", "in_transit"]);
+
+// Orders that went nowhere. `refunded` and `failed` belonged to no tab and no
+// set, so an order in either appeared in NO view at all — the same way
+// `picked_up` and `in_transit` used to vanish. Folded in with `cancelled`
+// rather than given tabs of their own: they answer the same question, and a
+// board with a tab per terminal state is mostly empty tabs.
+export const ENDED = new Set<ShopOrderStatus>([
+  "cancelled",
+  "refunded",
+  "failed",
+]);
+
+/** Reachable by their own tab rather than through a set. */
+export const TERMINAL_ONLY = new Set<ShopOrderStatus>(["delivered"]);
 
 // The API refuses a cancellation past `preparing`, so the control is not
 // offered past it either — the same reason the advance button only ever shows
@@ -90,17 +104,45 @@ export function ShopOrdersView() {
 
   // "open" and "out" both span more than one status, and the API filters by a
   // single one — so they fetch unfiltered and narrow below.
-  const apiStatus = filter === "open" || filter === "out" ? undefined : filter;
+  const apiStatus =
+    filter === "open" || filter === "out" || filter === "ended"
+      ? undefined
+      : filter;
   const orders = useShopOrders(activeShopId, { page, status: apiStatus });
   const stats = useShopOrderStats(activeShopId);
   const advance = useAdvanceOrders(activeShopId);
   const cancelOrder = useCancelOrder(activeShopId);
+
+  // How many orders sit in each phase, for the tab badges.
+  //
+  // From the stats endpoint rather than the fetched page: the page is one
+  // page of ONE status, so counting the rows on screen would report "how many
+  // are visible" while looking like "how many exist". The breakdown reports
+  // every status including the empty ones, so a phase reads 0 rather than
+  // disappearing.
+  const countByStatus = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const b of stats.data?.status_breakdown ?? []) {
+      m.set(b.status, b.count);
+    }
+    return m;
+  }, [stats.data]);
+
+  const countFor = (key: string) => {
+    const sum = (set: Set<ShopOrderStatus>) =>
+      [...set].reduce((n, s) => n + (countByStatus.get(s) ?? 0), 0);
+    if (key === "open") return sum(OPEN);
+    if (key === "out") return sum(OUT);
+    if (key === "ended") return sum(ENDED);
+    return countByStatus.get(key) ?? 0;
+  };
   const [cancelling, setCancelling] = useState<ShopOrder | null>(null);
 
   const rows = useMemo(() => {
     const all = orders.data?.orders ?? [];
     if (filter === "open") return all.filter((o) => OPEN.has(o.order_status));
     if (filter === "out") return all.filter((o) => OUT.has(o.order_status));
+    if (filter === "ended") return all.filter((o) => ENDED.has(o.order_status));
     return all;
   }, [orders.data, filter]);
 
@@ -210,6 +252,16 @@ export function ShopOrdersView() {
             }`}
           >
             {f.label}
+            {/* The count sits on the tab rather than in a separate row: the
+                question "how much is waiting on me" is asked of the tab, and
+                an answer somewhere else is a second thing to look at. */}
+            <span
+              className={`ml-1.5 tabular-nums ${
+                filter === f.key ? "text-primary" : "text-muted-foreground/70"
+              }`}
+            >
+              {countFor(f.key)}
+            </span>
           </button>
         ))}
         {bulk && (

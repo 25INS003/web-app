@@ -13,6 +13,26 @@ import { objectId } from "./common";
 // courier takes it from `picked_up`. Mirrors ORDER_TRANSITIONS in
 // backend/src/controllers/order/shop-order.controller.js — a status the client
 // does not know about must not blank the row, hence the catch.
+/**
+ * Every status the API can return, as a plain list.
+ *
+ * Exported separately because `.catch()` below wraps the enum, and a ZodCatch
+ * does not surface `.options` — so a caller wanting to enumerate the statuses
+ * (the board, to prove none is orphaned) cannot reach them through the schema.
+ */
+export const SHOP_ORDER_STATUSES = [
+  "pending",
+  "confirmed",
+  "preparing",
+  "ready",
+  "picked_up",
+  "in_transit",
+  "delivered",
+  "cancelled",
+  "refunded",
+  "failed",
+] as const;
+
 export const shopOrderStatusSchema = z
   .enum([
     "pending",
@@ -24,6 +44,10 @@ export const shopOrderStatusSchema = z
     "delivered",
     "cancelled",
     "refunded",
+    // The backend enum has this and the client did not, so `.catch` below
+    // relabelled a FAILED order as "Pending" — the most misleading possible
+    // answer, since it reads as work still to do.
+    "failed",
   ])
   .catch("pending");
 export type ShopOrderStatus = z.infer<typeof shopOrderStatusSchema>;
@@ -187,4 +211,5 @@ export const STATUS_LABEL: Record<ShopOrderStatus, string> = {
   delivered: "Delivered",
   cancelled: "Cancelled",
   refunded: "Refunded",
+  failed: "Failed",
 };
