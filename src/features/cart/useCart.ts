@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useIsAuthed } from "@/features/auth/useAuth";
 import { ApiError } from "@/lib/api/types";
-import { queryKeys } from "@/lib/query/keys";
 import { cartApi } from "./api";
 
 const CART_KEY = ["cart"] as const;
@@ -20,10 +19,26 @@ const CART_TOTAL_KEY = ["cart", "total"] as const;
  * the cart page, where items are added and removed without navigating, so
  * nothing would otherwise remount it until the stale window lapsed.
  */
+/**
+ * What a cart write makes stale.
+ *
+ * The cart itself, and nothing else. The suggestion and complement rows are
+ * DERIVED from the cart, so invalidating them here re-ranks them the instant
+ * something is added — and now that Add lives on the card, that happens under
+ * the customer's cursor: the row reshuffles, the product they just added moves
+ * or drops out, and the stepper they were about to use is gone. They add it
+ * again, or give up.
+ *
+ * It was invisible while the only way to add from a suggestion was to click
+ * through to the product page, because by then the row was off screen.
+ *
+ * The rows are not left stale for long: both carry a 60s staleTime and refetch
+ * on the next mount, so they re-rank on the next navigation instead of mid-tap.
+ * A recommendation being one interaction out of date is a much smaller cost
+ * than a list that moves while it is being used.
+ */
 const invalidateCartAndDerived = (qc: ReturnType<typeof useQueryClient>) => {
   qc.invalidateQueries({ queryKey: CART_KEY });
-  qc.invalidateQueries({ queryKey: queryKeys.complements });
-  qc.invalidateQueries({ queryKey: queryKeys.suggestions });
 };
 
 /**

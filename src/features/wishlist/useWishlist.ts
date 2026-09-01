@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useIsAuthed } from "@/features/auth/useAuth";
 import { ApiError } from "@/lib/api/types";
-import { queryKeys } from "@/lib/query/keys";
 import { wishlistApi } from "./api";
 
 const KEY = ["wishlist"] as const;
@@ -15,12 +14,17 @@ const KEY = ["wishlist"] as const;
  * also recorded as a suggestion signal server-side — so recommendations are
  * stale the moment the wishlist changes.
  */
+/**
+ * What a wishlist write makes stale — the wishlist, and nothing else.
+ *
+ * Same reasoning as the cart: the suggestion rows are derived from saved items,
+ * and re-ranking them the moment a heart is pressed moves the card out from
+ * under the customer. They refresh on their own cadence instead.
+ */
 const invalidateWishlistAndDerived = (
   qc: ReturnType<typeof useQueryClient>,
 ) => {
   qc.invalidateQueries({ queryKey: KEY });
-  qc.invalidateQueries({ queryKey: queryKeys.suggestions });
-  qc.invalidateQueries({ queryKey: queryKeys.complements });
 };
 
 /**

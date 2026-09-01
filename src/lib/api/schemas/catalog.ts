@@ -38,8 +38,10 @@ export const catalogProductSchema = z.object({
   // variant, not by product, so without this a card has nothing to add — the
   // API has always sent it and z.object was dropping it.
   default_variant_id: objectId.nullish(),
-  // The stock behind that variant, for capping the stepper. `is_in_stock` only
-  // answers yes/no.
+  // The stock of THAT variant. `total_stock_quantity` is summed across every
+  // variant, so a product reads as in stock while the one an Add would put in
+  // the basket has none — the button was offered and the server refused it.
+  default_variant_stock: z.number().nullish(),
   total_stock_quantity: z.number().nullish(),
   // Whether the selling shop delivers to the pincode the request carried. Only
   // present when one was sent — `undefined` means "not asked", which is not the

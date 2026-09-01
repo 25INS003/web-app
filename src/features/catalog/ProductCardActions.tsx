@@ -34,7 +34,19 @@ export function ProductCardActions({ product }: { product: CatalogProduct }) {
 
   const variantId = product.default_variant_id ?? null;
   const wishlist = useWishlistToggle(product.id, variantId);
-  const inStock = product.is_in_stock ?? true;
+  // The DEFAULT VARIANT's stock, not the product's. `total_stock_quantity` is
+  // summed across every variant, so a product with one empty variant and one
+  // full one reads as in stock — and the card offered an Add that the server
+  // then refused with "maximum stock reached".
+  //
+  // Falls back to the product-level answer only when the variant's stock was
+  // not sent: unknown is not zero, and treating a missing field as out of stock
+  // would empty every card the moment a payload changed.
+  const variantStock = product.default_variant_stock;
+  const inStock =
+    typeof variantStock === "number"
+      ? variantStock > 0
+      : (product.is_in_stock ?? true);
 
   // The line for this product's variant, if the cart holds one.
   const line = cart.data?.items?.find(
@@ -42,9 +54,12 @@ export function ProductCardActions({ product }: { product: CatalogProduct }) {
   );
   const qty = line?.quantity ?? 0;
 
-  // Cap at what the shop actually has, so "+" cannot ask for stock that is not
-  // there and get an error back from the server for it.
-  const max = product.total_stock_quantity ?? undefined;
+  // Cap at what the shop actually has of THIS variant, so "+" cannot ask for
+  // stock that is not there and get an error back from the server for it.
+  const max =
+    typeof variantStock === "number"
+      ? variantStock
+      : (product.total_stock_quantity ?? undefined);
   const atMax = typeof max === "number" && qty >= max;
 
   const busy =
