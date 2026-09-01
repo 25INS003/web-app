@@ -11,7 +11,6 @@ import {
   wishlistProductId,
 } from "@/lib/api/schemas/wishlist";
 import type { WishlistItem } from "@/lib/api/schemas/wishlist";
-import { formatDate } from "@/features/orders/status";
 import { formatPrice } from "@/lib/utils";
 
 /** At or below this, the row says how many are left rather than "in stock". */
@@ -241,12 +240,6 @@ function WishlistRow({ item }: { item: WishlistItem }) {
             </span>
           ) : (
             <span className="text-success">In stock</span>
-          )}
-          {item.added_at && (
-            <span className="text-muted-foreground">
-              {" · saved "}
-              {formatDate(item.added_at)}
-            </span>
           )}
         </p>
 
