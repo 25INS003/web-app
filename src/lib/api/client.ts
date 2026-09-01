@@ -73,4 +73,43 @@ export const api = {
     apiRequest<T>({ ...config, method: "PATCH", url, data: body }),
   delete: <T>(url: string, config?: AxiosRequestConfig) =>
     apiRequest<T>({ ...config, method: "DELETE", url }),
+
+  /**
+   * A file upload, which is not a request that can be given a deadline.
+   *
+   * The client-wide 20s timeout is right for an API call: past that, something
+   * is wrong. It is the wrong shape entirely for a transfer, where the duration
+   * is a function of file size and the customer's upstream bandwidth, not of
+   * whether anything is wrong. A 5 MB photo on a slow connection is a perfectly
+   * healthy 40-second upload, and it was being aborted at 20 — mid-transfer,
+   * with the bytes already partly sent.
+   *
+   * `timeout: 0` removes the deadline rather than raising it. Any fixed number
+   * is a guess about somebody else's connection, and picking a bigger one only
+   * moves where it is wrong.
+   *
+   * `onProgress` reports 0–100. Without it a long upload is indistinguishable
+   * from a hung one, which is the other half of why this felt broken.
+   */
+  upload: <T>(
+    url: string,
+    body: FormData,
+    onProgress?: (percent: number) => void,
+    config?: AxiosRequestConfig,
+  ) =>
+    apiRequest<T>({
+      ...config,
+      method: "POST",
+      url,
+      data: body,
+      timeout: 0,
+      onUploadProgress: onProgress
+        ? (e) => {
+            // `total` is absent when the size is not known up front; reporting
+            // a made-up percentage would be worse than reporting none.
+            if (!e.total) return;
+            onProgress(Math.min(100, Math.round((e.loaded / e.total) * 100)));
+          }
+        : undefined,
+    }),
 };

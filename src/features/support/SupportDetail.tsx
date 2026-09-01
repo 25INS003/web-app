@@ -205,9 +205,54 @@ function ReplyBox({ ticketId }: { ticketId: string }) {
     );
   };
 
+  const progress = send.uploadProgress;
+
+  const uploading = progress !== null;
+
   return (
     <div className="mt-6">
-      {attach.queue}
+      {/* The queue is what is WAITING to go. Once it is going, the progress row
+          below replaces it — leaving the chip up made the file look like it was
+          still sitting there unsent while it was actually in flight, and the
+          same file then appeared twice the moment the message landed. It comes
+          back on failure, because then it really is waiting again. */}
+      {!uploading && attach.queue}
+
+      {/* How far the attachment has got. A spinner alone looks identical at 5%
+          and at 95%, which on a slow upload is indistinguishable from a hang —
+          and that is what made this feel broken even before the timeout was
+          cutting transfers off. */}
+      {progress !== null && (
+        <div className="mb-2" aria-live="polite">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            {/* Named, because the chip that named it is hidden while this is
+                up. */}
+            <span className="min-w-0 truncate">
+              {progress < 100
+                ? `Uploading ${
+                    attach.files.length === 1
+                      ? (attach.files[0]?.name ?? "attachment")
+                      : `${attach.files.length} attachments`
+                  }…`
+                : "Finishing up…"}
+            </span>
+            <span className="shrink-0 tabular-nums">{progress}%</span>
+          </div>
+          <div
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted"
+          >
+            <div
+              className="h-full rounded-full bg-primary transition-[width] duration-200"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex items-end gap-2">
         <textarea
           rows={2}

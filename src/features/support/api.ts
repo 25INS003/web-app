@@ -134,6 +134,7 @@ export const supportApi = {
     ticketId: string,
     messageText: string,
     files: File[] = [],
+    onProgress?: (percent: number) => void,
   ): Promise<TicketMessage> {
     const url = `/message/tickets/${ticketId}/messages`;
 
@@ -146,7 +147,9 @@ export const supportApi = {
     fd.append("message_text", messageText);
     for (const file of files) fd.append("attachments", file);
 
-    const data = await api.post<unknown>(url, fd);
+    // `api.upload`, not `api.post`: this went out with the 20s request timeout
+    // and was aborted mid-transfer on anything large or any slow connection.
+    const data = await api.upload<unknown>(url, fd, onProgress);
     return ticketMessageSchema.parse(data);
   },
 };

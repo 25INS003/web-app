@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -90,9 +92,23 @@ export function useCreateTicket(basePath = "/support") {
 
 export function useSendMessage(ticketId: string) {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ text, files }: { text: string; files?: File[] }) =>
-      supportApi.sendMessage(ticketId, text, files ?? []),
+  // 0–100 while an attachment is going up, null when nothing is uploading.
+  // Kept beside the mutation rather than inside it because react-query has no
+  // notion of a partially-complete mutation, and a spinner that cannot say how
+  // far along it is looks the same at 5% as at 95%.
+  const [progress, setProgress] = useState<number | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: ({ text, files }: { text: string; files?: File[] }) => {
+      const hasFiles = Boolean(files?.length);
+      if (hasFiles) setProgress(0);
+      return supportApi.sendMessage(
+        ticketId,
+        text,
+        files ?? [],
+        hasFiles ? setProgress : undefined,
+      ).finally(() => setProgress(null));
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.support.ticket(ticketId) });
       qc.invalidateQueries({ queryKey: queryKeys.support.tickets() });
@@ -102,6 +118,8 @@ export function useSendMessage(ticketId: string) {
         err instanceof ApiError ? err.message : "Could not send your message",
       ),
   });
+
+  return Object.assign(mutation, { uploadProgress: progress });
 }
 
 /**
