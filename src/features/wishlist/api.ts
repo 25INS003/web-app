@@ -11,6 +11,16 @@ export const wishlistApi = {
     await api.post("/wishlist/", { product_id: productId, variant_id: variantId });
   },
 
+  /**
+   * Empty the whole wishlist.
+   *
+   * `/clear/all` rather than the bare DELETE, which removes a NAMED set of
+   * items and would clear nothing if handed no ids.
+   */
+  async clear(): Promise<void> {
+    await api.delete("/wishlist/clear/all");
+  },
+
   async remove(itemId: string): Promise<void> {
     await api.delete(`/wishlist/${itemId}`);
   },

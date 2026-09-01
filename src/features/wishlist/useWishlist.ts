@@ -65,6 +65,27 @@ export function useAddToWishlist() {
   });
 }
 
+/**
+ * Empty the wishlist in one go.
+ *
+ * Reports how many went, because the confirm above it said a number and the
+ * result should agree with what was promised.
+ */
+export function useClearWishlist() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => wishlistApi.clear(),
+    onSuccess: () => {
+      toast.success("Wishlist cleared");
+      invalidateWishlistAndDerived(qc);
+    },
+    onError: (err) =>
+      toast.error(
+        err instanceof ApiError ? err.message : "Could not clear the wishlist",
+      ),
+  });
+}
+
 export function useRemoveFromWishlist() {
   const qc = useQueryClient();
   return useMutation({
