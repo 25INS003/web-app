@@ -14,6 +14,15 @@ export const addressSchema = z.object({
   tag: z.string().nullish(),
   label: z.string().nullish(),
   is_default: z.boolean().optional(),
+  // The map pin, as saved. The API has always returned the whole row, and
+  // these were declared on the WRITE schema only — so a coordinate was stored
+  // and then discarded by z.object on the way back in. Nothing read them yet,
+  // which is the only reason it did not show: reopening a saved address would
+  // have found no pin to place, on an address that has one.
+  //
+  // Nullish because most addresses are typed by hand and have none.
+  lat: z.number().nullish(),
+  lng: z.number().nullish(),
 });
 export type Address = z.infer<typeof addressSchema>;
 
