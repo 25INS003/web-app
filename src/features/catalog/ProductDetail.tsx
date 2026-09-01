@@ -374,6 +374,29 @@ function ReviewsSection({
               {r.comment && (
                 <p className="mt-1.5 text-sm text-muted-foreground">{r.comment}</p>
               )}
+              {/* The photos the reviewer attached. A picture of the thing as it
+                  actually arrived is most of why anyone reads reviews on a
+                  grocery site, and these have been uploaded and stored since
+                  the feature was written without ever being shown. */}
+              {r.review_images && r.review_images.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {r.review_images.map((src, i) => (
+                    <a
+                      key={src}
+                      href={src}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block size-16 overflow-hidden rounded-lg border border-border transition hover:border-primary/40"
+                    >
+                      <ProgressiveImage
+                        src={src}
+                        alt={`Photo ${i + 1} from ${reviewerName(r)}'s review`}
+                        className="size-full object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

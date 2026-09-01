@@ -152,6 +152,10 @@ export const reviewSchema = z.object({
       }),
     ])
     .nullish(),
+  // The photos the reviewer attached. Uploaded and stored since the feature
+  // was written, and undeclared here — so z.object dropped them on every read
+  // and no reviewer's photo has ever been shown to anybody.
+  review_images: z.array(z.string()).nullish(),
   created_at: z.string().nullish(),
 });
 export type Review = z.infer<typeof reviewSchema>;

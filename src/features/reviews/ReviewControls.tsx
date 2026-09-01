@@ -225,6 +225,30 @@ export function OrderItemReview({
               {existing.comment}
             </p>
           )}
+          {/* What was attached. Without this the photos went up, were stored,
+              and vanished — the reviewer had no way to tell the upload had
+              worked, which is what "the attachment button does nothing" looks
+              like from the outside. */}
+          {existing.review_images && existing.review_images.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {existing.review_images.map((src, i) => (
+                <a
+                  key={src}
+                  href={src}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block size-14 overflow-hidden rounded-lg border border-border transition hover:border-primary/40"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- bucket URL, not a Next-optimised asset */}
+                  <img
+                    src={src}
+                    alt={`Photo ${i + 1} on your review`}
+                    className="size-full object-cover"
+                  />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Button
