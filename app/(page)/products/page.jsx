@@ -220,10 +220,10 @@ const ProductsListPage = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
             >
-                <Card className="p-8 w-full max-w-md bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-xl">
+                <Card className="p-8 w-full max-w-md bg-card border-border shadow-xl">
                     <div className="text-center space-y-6">
                         <motion.div 
-                            className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30"
+                            className="w-20 h-20 mx-auto rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30"
                             initial={{ rotate: -10 }}
                             animate={{ rotate: 0 }}
                             transition={{ type: "spring", stiffness: 200 }}
@@ -232,10 +232,10 @@ const ProductsListPage = () => {
                         </motion.div>
                         
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                            <h2 className="text-2xl font-bold text-foreground mb-2">
                                 Product Management
                             </h2>
-                            <p className="text-slate-500 dark:text-slate-400">
+                            <p className="text-muted-foreground">
                                 Select a shop to manage your products
                             </p>
                         </div>
@@ -260,16 +260,16 @@ const ProductsListPage = () => {
             {/* Header */}
             <motion.div variants={itemVariants} className="flex flex-col md:flex-row justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/25">
                             <Package className="h-6 w-6 text-white" />
                         </div>
                         Products
                     </h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
                         <Store className="h-4 w-4" />
-                        <span className="font-medium text-indigo-600 dark:text-indigo-400">{currentShop?.name}</span>
-                        <span className="text-slate-300 dark:text-slate-600">•</span>
+                        <span className="font-medium text-primary">{currentShop?.name}</span>
+                        <span className="text-muted-foreground dark:text-muted-foreground">•</span>
                         <span>{pagination?.totalProducts || 0} items</span>
                     </p>
                 </div>
@@ -279,7 +279,7 @@ const ProductsListPage = () => {
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                         <Link 
                             href={`/products/${shopId}/add`} 
-                            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-500/30 transition-all"
+                            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all"
                         >
                             <Plus className="h-4 w-4" /> Add Product
                         </Link>
@@ -289,15 +289,15 @@ const ProductsListPage = () => {
 
             {/* Filter Bar */}
             <motion.div variants={itemVariants}>
-                <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200 dark:border-slate-800 shadow-sm">
+                <Card className="p-4 bg-white/80 dark:bg-card/80 backdrop-blur-sm border-border shadow-sm">
                     <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                         <div className="relative md:col-span-2">
-                            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search products..."
                                 value={tempFilters.search}
                                 onChange={(e) => setTempFilters({ ...tempFilters, search: e.target.value })}
-                                className="pl-9 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500/20"
+                                className="pl-9 rounded-xl border-border focus:ring-2 focus:ring-ring/30"
                             />
                         </div>
 
@@ -337,7 +337,7 @@ const ProductsListPage = () => {
                         <div className="flex gap-2">
                             <Button 
                                 onClick={handleApplyFilters} 
-                                className="flex-1 rounded-xl bg-slate-900 dark:bg-white dark:text-slate-900 hover:bg-slate-800"
+                                className="flex-1 rounded-xl bg-card dark:text-foreground hover:bg-muted"
                             >
                                 <Filter className="h-4 w-4 mr-2" /> Apply
                             </Button>
@@ -356,11 +356,11 @@ const ProductsListPage = () => {
             {/* Table Section */}
             <motion.div 
                 variants={itemVariants}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-lg"
+                className="rounded-2xl border border-border bg-card overflow-hidden shadow-lg"
             >
                 <Table>
-                    <TableHeader className="bg-slate-50/80 dark:bg-slate-800/50">
-                        <TableRow className="border-slate-200 dark:border-slate-700">
+                    <TableHeader className="bg-muted/80 dark:bg-muted/50">
+                        <TableRow className="border-border">
                             <TableHead className="w-[80px] font-semibold">Image</TableHead>
                             <TableHead className="font-semibold">Product</TableHead>
                             <TableHead className="font-semibold">Category</TableHead>
@@ -374,8 +374,8 @@ const ProductsListPage = () => {
                             <TableRow>
                                 <TableCell colSpan={6} className="text-center py-20">
                                     <div className="flex flex-col items-center gap-3">
-                                        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-                                        <span className="text-slate-500">Loading products...</span>
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                        <span className="text-muted-foreground">Loading products...</span>
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -389,14 +389,14 @@ const ProductsListPage = () => {
                             <TableRow>
                                 <TableCell colSpan={6} className="text-center py-20">
                                     <div className="flex flex-col items-center gap-4">
-                                        <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
-                                            <AlertCircle className="h-8 w-8 text-red-500" />
+                                        <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center">
+                                            <AlertCircle className="h-8 w-8 text-destructive" />
                                         </div>
                                         <div>
-                                            <p className="text-slate-900 dark:text-white font-medium">
+                                            <p className="text-foreground font-medium">
                                                 Could not load products
                                             </p>
-                                            <p className="text-sm text-slate-500 max-w-sm">{error}</p>
+                                            <p className="text-sm text-muted-foreground max-w-sm">{error}</p>
                                         </div>
                                         <Button
                                             variant="outline"
@@ -412,16 +412,16 @@ const ProductsListPage = () => {
                             <TableRow>
                                 <TableCell colSpan={6} className="text-center py-20">
                                     <div className="flex flex-col items-center gap-4">
-                                        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                            <Package className="h-8 w-8 text-slate-400" />
+                                        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+                                            <Package className="h-8 w-8 text-muted-foreground" />
                                         </div>
                                         {isFiltered ? (
                                             <>
                                                 <div>
-                                                    <p className="text-slate-900 dark:text-white font-medium">
+                                                    <p className="text-foreground font-medium">
                                                         No products match these filters
                                                     </p>
-                                                    <p className="text-sm text-slate-500">
+                                                    <p className="text-sm text-muted-foreground">
                                                         This shop has products — none of them match what you are
                                                         filtering for.
                                                     </p>
@@ -437,17 +437,17 @@ const ProductsListPage = () => {
                                         ) : (
                                             <>
                                                 <div>
-                                                    <p className="text-slate-900 dark:text-white font-medium">
+                                                    <p className="text-foreground font-medium">
                                                         No products yet
                                                     </p>
-                                                    <p className="text-sm text-slate-500">
+                                                    <p className="text-sm text-muted-foreground">
                                                         {currentShop?.name
                                                             ? `${currentShop.name} has nothing listed. Add your first product to start selling.`
                                                             : "This shop has nothing listed. Add your first product to start selling."}
                                                     </p>
                                                 </div>
                                                 <Link href={`/products/${shopId}/add`}>
-                                                    <Button className="rounded-xl bg-indigo-600 hover:bg-indigo-500">
+                                                    <Button className="rounded-xl bg-primary hover:bg-primary/90">
                                                         <Plus className="h-4 w-4 mr-2" /> Add your first product
                                                     </Button>
                                                 </Link>
@@ -463,12 +463,12 @@ const ProductsListPage = () => {
                                     return (
                                         <TableRow
                                             key={p.id}
-                                            className={`border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors ${!isActive ? "bg-slate-50/60 dark:bg-slate-900/60 opacity-75" : ""}`}
+                                            className={`border-border hover:bg-muted/50 transition-colors ${!isActive ? "bg-muted/40 opacity-75" : ""}`}
                                         >
                                             <TableCell>
                                                 <Link href={`/products/${shopId}/view/${p.id}`} className="block">
                                                     <div 
-                                                        className="h-12 w-12 relative rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center overflow-hidden ring-2 ring-transparent hover:ring-indigo-500/50 transition-all shadow-sm"
+                                                        className="h-12 w-12 relative rounded-xl bg-muted flex items-center justify-center overflow-hidden ring-2 ring-transparent hover:ring-primary/50 transition-all shadow-sm"
                                                     >
                                                         {hasValidImage ? (
                                                             <ProgressiveImage
@@ -477,17 +477,17 @@ const ProductsListPage = () => {
                                                                 className="absolute inset-0 h-full w-full object-cover"
                                                             />
                                                         ) : (
-                                                            <ImageIcon className="h-5 w-5 text-slate-400" />
+                                                            <ImageIcon className="h-5 w-5 text-muted-foreground" />
                                                         )}
                                                     </div>
                                                 </Link>
                                             </TableCell>
                                             <TableCell>
                                                 <Link href={`/products/${shopId}/view/${p.id}`} className="block group">
-                                                    <div className="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                    <div className="font-semibold text-foreground group-hover:text-primary transition-colors">
                                                         {p.name}
                                                     </div>
-                                                    <div className="text-xs text-slate-500 mt-0.5">
+                                                    <div className="text-xs text-muted-foreground mt-0.5">
                                                         {p.brand} {p.unit ? `• ${p.unit}` : ''}
                                                     </div>
                                                 </Link>
@@ -498,7 +498,7 @@ const ProductsListPage = () => {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                <span className="font-semibold text-slate-900 dark:text-white">
+                                                <span className="font-semibold text-foreground">
                                                     ₹{p.price?.toLocaleString()}
                                                 </span>
                                             </TableCell>
@@ -506,7 +506,7 @@ const ProductsListPage = () => {
                                                 <Badge 
                                                     className={`rounded-lg font-medium ${
                                                         p.is_in_stock 
-                                                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30"
+                                                            ? "bg-success/15 text-success border-success/30"
                                                             : "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 border-rose-200 dark:border-rose-500/30"
                                                     }`}
                                                 >
@@ -516,20 +516,20 @@ const ProductsListPage = () => {
                                             <TableCell className="text-right">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+                                                        <Button variant="ghost" size="icon" className="rounded-xl hover:bg-muted">
                                                             <MoreHorizontal className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-slate-200 dark:border-slate-700">
+                                                    <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-border">
                                                         <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
                                                             <Link href={`/products/${shopId}/view/${p.id}`} className="flex items-center gap-2">
-                                                                <Eye className="h-4 w-4 text-indigo-500" />
+                                                                <Eye className="h-4 w-4 text-primary" />
                                                                 <span>View Details</span>
                                                             </Link>
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
                                                             <Link href={`/products/${shopId}/edit/${p.id}`} className="flex items-center gap-2">
-                                                                <Edit className="h-4 w-4 text-blue-500" />
+                                                                <Edit className="h-4 w-4 text-primary" />
                                                                 <span>Edit Product</span>
                                                             </Link>
                                                         </DropdownMenuItem>
@@ -540,12 +540,12 @@ const ProductsListPage = () => {
                                                         >
                                                             {isActive ? (
                                                                 <>
-                                                                    <Archive className="h-4 w-4 mr-2 text-amber-500" />
+                                                                    <Archive className="h-4 w-4 mr-2 text-warning" />
                                                                     <span>Deactivate</span>
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-500" />
+                                                                    <CheckCircle2 className="h-4 w-4 mr-2 text-success" />
                                                                     <span>Activate</span>
                                                                 </>
                                                             )}
@@ -571,10 +571,10 @@ const ProductsListPage = () => {
 
                 {/* Pagination */}
                 {!isLoading && products.length > 0 && pagination && (
-                    <div className="border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 p-4 flex items-center justify-between">
-                        <div className="text-sm text-slate-500 dark:text-slate-400">
-                            Page <span className="font-semibold text-slate-900 dark:text-white">{pagination.currentPage}</span> of{" "}
-                            <span className="font-semibold text-slate-900 dark:text-white">{pagination.totalPages}</span>
+                    <div className="border-t border-border bg-muted/50 dark:bg-card/50 p-4 flex items-center justify-between">
+                        <div className="text-sm text-muted-foreground">
+                            Page <span className="font-semibold text-foreground">{pagination.currentPage}</span> of{" "}
+                            <span className="font-semibold text-foreground">{pagination.totalPages}</span>
                         </div>
 
                         <div className="flex items-center gap-2">
