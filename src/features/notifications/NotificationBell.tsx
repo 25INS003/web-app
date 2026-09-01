@@ -7,12 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useIsAuthed, useSession } from "@/features/auth/useAuth";
 import type { Notification } from "@/lib/api/schemas/notifications";
-import {
-  useMarkAllRead,
-  useMarkRead,
-  useNotifications,
-  useUnreadCount,
-} from "./hooks";
+import { useMarkAllRead, useNotifications, useUnreadCount } from "./hooks";
 import { NotificationIcon, timeAgo } from "./ui";
 import { useNotificationsRealtime } from "./useNotificationsRealtime";
 
@@ -28,8 +23,33 @@ export function NotificationBell() {
 
   const { data: unread = 0 } = useUnreadCount(authed);
   const { data: items = [], isLoading } = useNotifications(authed && open);
-  const markRead = useMarkRead();
   const markAllRead = useMarkAllRead();
+
+  // Which items were unread at the moment the panel opened.
+  //
+  // Opening marks everything read, so without this snapshot the highlight on
+  // the new ones would vanish in the same instant the customer looked at them
+  // — they would be told "you have 3" and then shown nothing to distinguish
+  // those 3. The badge clears immediately, which is what acknowledgement
+  // means; the rows stay marked for as long as the panel is open.
+  const [wasUnread, setWasUnread] = useState<Set<string>>(new Set());
+  // Guards the effect below against re-firing when the list refetches after
+  // the mutation invalidates it.
+  const acknowledged = useRef(false);
+
+  useEffect(() => {
+    if (!open) {
+      acknowledged.current = false;
+      return;
+    }
+    if (isLoading || acknowledged.current) return;
+
+    acknowledged.current = true;
+    setWasUnread(new Set(items.filter((n) => !n.is_read).map((n) => n.id)));
+    // Clicking the bell IS reading them. Only called when there is something
+    // to clear, so opening an already-read list costs no request.
+    if (unread > 0) markAllRead.mutate();
+  }, [open, isLoading, items, unread, markAllRead]);
 
   // Close on outside click / Escape.
   useEffect(() => {
@@ -48,8 +68,8 @@ export function NotificationBell() {
 
   if (!authed) return null;
 
+  // Navigation only — opening the panel marked it read already.
   const onItem = (n: Notification) => {
-    if (!n.is_read && n.notification_id) markRead.mutate(n.notification_id);
     setOpen(false);
     if (n.action_url) router.push(n.action_url);
   };
@@ -84,17 +104,8 @@ export function NotificationBell() {
           className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border bg-card shadow-pop"
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+            {/* No "Mark all read": opening the panel already did it. */}
             <span className="text-sm font-semibold">Notifications</span>
-            {unread > 0 && (
-              <button
-                type="button"
-                className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
-                onClick={() => markAllRead.mutate()}
-                disabled={markAllRead.isPending}
-              >
-                Mark all read
-              </button>
-            )}
           </div>
 
           <div className="max-h-96 overflow-y-auto">
@@ -114,7 +125,7 @@ export function NotificationBell() {
                   role="menuitem"
                   onClick={() => onItem(n)}
                   className={`flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-muted/60 ${
-                    n.is_read ? "" : "bg-primary/5"
+                    n.is_read && !wasUnread.has(n.id) ? "" : "bg-primary/5"
                   }`}
                 >
                   <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-muted text-foreground">

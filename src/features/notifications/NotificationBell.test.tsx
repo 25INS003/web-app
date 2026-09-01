@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- mocks (declared before importing the component) ---
 const push = vi.fn();
@@ -32,15 +32,20 @@ const items = [
   },
 ];
 
-const markRead = { mutate: vi.fn(), isPending: false };
+const markAllRead = { mutate: vi.fn(), isPending: false };
+let unreadCount = 3;
 vi.mock("./hooks", () => ({
-  useUnreadCount: () => ({ data: 3 }),
+  useUnreadCount: () => ({ data: unreadCount }),
   useNotifications: () => ({ data: items, isLoading: false }),
-  useMarkRead: () => markRead,
-  useMarkAllRead: () => ({ mutate: vi.fn(), isPending: false }),
+  useMarkAllRead: () => markAllRead,
 }));
 
 import { NotificationBell } from "./NotificationBell";
+
+beforeEach(() => {
+  markAllRead.mutate.mockClear();
+  push.mockClear();
+});
 
 describe("NotificationBell", () => {
   it("shows the unread badge and count in the aria-label", () => {
@@ -56,11 +61,42 @@ describe("NotificationBell", () => {
     expect(screen.getByText("Order Ready! 📦")).toBeInTheDocument();
   });
 
-  it("marks an item read and navigates to its action_url when clicked", () => {
+  it("navigates to an item's action_url when it is clicked", () => {
     render(<NotificationBell />);
     fireEvent.click(screen.getByRole("button", { name: /unread/i }));
     fireEvent.click(screen.getByText("Order Ready! 📦"));
-    expect(markRead.mutate).toHaveBeenCalledWith("nid1");
     expect(push).toHaveBeenCalledWith("/orders/abc");
+  });
+
+  it("marks everything read as soon as the bell is opened", () => {
+    // Opening IS the acknowledgement — the customer should not have to press a
+    // second button to clear a badge they have just looked at.
+    render(<NotificationBell />);
+    expect(markAllRead.mutate).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /unread/i }));
+
+    expect(markAllRead.mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the unread rows highlighted while the panel is open", () => {
+    // The badge clears immediately, but the rows must not: marking them read
+    // and un-highlighting them in the same instant tells the customer "you have
+    // 3" and then shows them nothing to distinguish those 3.
+    render(<NotificationBell />);
+    fireEvent.click(screen.getByRole("button", { name: /unread/i }));
+
+    const row = screen.getByText("Order Ready! 📦").closest("button");
+    expect(row?.className).toContain("bg-primary/5");
+  });
+
+  it("asks for nothing when there is nothing unread to clear", () => {
+    unreadCount = 0;
+    render(<NotificationBell />);
+
+    fireEvent.click(screen.getByRole("button", { name: /notifications/i }));
+
+    expect(markAllRead.mutate).not.toHaveBeenCalled();
+    unreadCount = 3;
   });
 });
