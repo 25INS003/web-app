@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CategoryRow } from "@/features/catalog/CategoryRow";
+import { DeliverableSections } from "@/features/catalog/DeliverableSections";
 import { FreshPicks } from "@/features/catalog/FreshPicks";
 import { SuggestionRow } from "@/features/suggestions/SuggestionRow";
 
@@ -69,11 +70,15 @@ export default function StorefrontHome() {
         ))}
       </section>
 
-      {/* Real data */}
-      <CategoryRow />
-      {/* Renders nothing for signed-out visitors. */}
-      <SuggestionRow />
-      <FreshPicks />
+      {/* Real data, and only where we deliver — a pincode nobody serves gets
+          one panel saying so instead of three empty rows under three
+          headings. */}
+      <DeliverableSections>
+        <CategoryRow />
+        {/* Renders nothing for signed-out visitors. */}
+        <SuggestionRow />
+        <FreshPicks />
+      </DeliverableSections>
     </div>
   );
 }

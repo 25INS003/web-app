@@ -4,12 +4,14 @@ import {
   catalogCategorySchema,
   productDetailSchema,
   productListSchema,
+  serviceabilitySchema,
   reviewsResponseSchema,
 } from "@/lib/api/schemas/catalog";
 import type {
   CatalogCategory,
   ProductDetail,
   ProductList,
+  Serviceability,
   ReviewsResponse,
 } from "@/lib/api/schemas/catalog";
 
@@ -34,6 +36,14 @@ export const catalogApi = {
   async getProducts(query: ProductQuery = {}): Promise<ProductList> {
     const data = await api.get<unknown>("/catalog/get", { params: query });
     return productListSchema.parse(data);
+  },
+
+  /** Whether any shop delivers to a pincode at all. */
+  async getServiceability(pincode: string): Promise<Serviceability> {
+    const data = await api.get<unknown>("/catalog/serviceable", {
+      params: { pincode },
+    });
+    return serviceabilitySchema.parse(data);
   },
 
   async getCategories(): Promise<CatalogCategory[]> {

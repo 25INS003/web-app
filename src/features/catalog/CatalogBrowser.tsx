@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "./ProductCard";
-import { useCategories, useDeliveryPincode, useProducts } from "./hooks";
+import { useCategories, useProducts, useServiceability } from "./hooks";
+import { NotDeliverable } from "./NotDeliverable";
 
 const SORTS = [
   { key: "newest", label: "Newest", sort: "created_at", order: "desc" },
@@ -77,8 +78,10 @@ export function CatalogBrowser({
   const maxPrice = price.max === "" ? undefined : Number(price.max);
 
   const categories = useCategories();
-  // Read for the empty state only; `useProducts` applies it itself.
-  const deliveryPincode = useDeliveryPincode();
+  // Asked directly rather than inferred from an empty page: "nobody delivers
+  // here" and "nothing matched" are different answers and only one of them is
+  // worth changing your search over.
+  const { notDeliverable, pincode: deliveryPincode } = useServiceability();
   const products = useProducts({
     search: search || undefined,
     category,
@@ -91,6 +94,17 @@ export function CatalogBrowser({
 
   const items = products.data?.pages.flatMap((p) => p.data) ?? [];
   const total = products.data?.pages[0]?.total ?? 0;
+
+  // Nobody delivers here: the search box and the filter pills go with the
+  // products. Leaving them invites the customer to keep looking for something
+  // that cannot exist, because the constraint is not the query.
+  if (notDeliverable) {
+    return (
+      <div className="py-10">
+        <NotDeliverable pincode={deliveryPincode} />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -191,16 +205,11 @@ export function CatalogBrowser({
           sub="Please try again in a moment."
         />
       ) : items.length === 0 ? (
-        // "Nothing matched" and "nobody delivers here" are different facts, and
-        // only one of them is worth changing your search over. Telling someone
-        // outside the delivery area to try another category sends them round
-        // the whole catalogue to find it equally empty.
-        deliveryPincode && !search && !category ? (
-          <EmptyState
-            title={`No shops deliver to ${deliveryPincode} yet`}
-            sub="Change the delivery address in the header to browse another area."
-          />
-        ) : deliveryPincode ? (
+        // Only ever "nothing matched" now — the area we do not serve returned
+        // above, so this no longer has to guess which of the two it is. It
+        // still names the pincode, because a shop that delivers here may simply
+        // not stock this.
+        deliveryPincode ? (
           <EmptyState
             title="Nothing here for your area"
             sub={`No shop delivering to ${deliveryPincode} stocks this. Try a different search or category.`}

@@ -43,6 +43,44 @@ export function useDeliveryPincode(): string | undefined {
   return useSelectedAddress().selected?.pincode;
 }
 
+/**
+ * Whether anybody delivers to the selected address at all.
+ *
+ * Asked directly rather than inferred from an empty product page. Empty has two
+ * causes that need different words — nobody delivers here, and nothing matched
+ * your filters — and a customer outside the delivery area who is told to try
+ * another category will go round the whole catalogue to find it equally empty.
+ *
+ * `notDeliverable` is deliberately not "the opposite of serviceable": while the
+ * question is in flight the answer is unknown, and rendering a "we do not
+ * deliver here" panel on every page load before the reply arrives would be
+ * worse than the bug it fixes. It stays false until the API has actually said
+ * no.
+ *
+ * Cached for the session — which pincodes are covered changes when a shop signs
+ * up, not while somebody is shopping.
+ */
+export function useServiceability() {
+  const pincode = useDeliveryPincode();
+
+  const q = useQuery({
+    queryKey: [...queryKeys.products.all, "serviceable", pincode],
+    queryFn: () => catalogApi.getServiceability(pincode as string),
+    enabled: Boolean(pincode),
+    staleTime: 10 * 60_000,
+    retry: false,
+  });
+
+  return {
+    pincode,
+    isPending: Boolean(pincode) && q.isPending,
+    // A failed check must not black out the storefront: if we cannot tell,
+    // show the catalogue. The pincode filter still applies underneath.
+    notDeliverable: q.data?.serviceable === false,
+    shopCount: q.data?.shop_count,
+  };
+}
+
 export function useCategories() {
   return useQuery({
     queryKey: queryKeys.categories,

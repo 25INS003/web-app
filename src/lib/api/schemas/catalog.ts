@@ -116,6 +116,20 @@ export const productDetailSchema = z.object({
 });
 export type ProductDetail = z.infer<typeof productDetailSchema>;
 
+/**
+ * The answer to "do you deliver to my pincode?".
+ *
+ * A direct answer rather than one inferred from an empty product page: empty
+ * has two causes — nobody delivers here, and nothing matched your filters — and
+ * they need different words.
+ */
+export const serviceabilitySchema = z.object({
+  pincode: z.string(),
+  serviceable: z.boolean(),
+  shop_count: z.number().optional(),
+});
+export type Serviceability = z.infer<typeof serviceabilitySchema>;
+
 export const reviewSchema = z.object({
   id: objectId,
   rating: z.number(),
