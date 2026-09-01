@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { ArrowLeft, Check, MapPin, RotateCcw, XCircle } from "lucide-react";
 import type { Order } from "@/lib/api/schemas/order";
 import Link from "next/link";
@@ -13,19 +15,23 @@ import {
 import { OrderItemReview } from "@/features/reviews/ReviewControls";
 import { useMyReviews } from "@/features/reviews/hooks";
 import { cn, formatPrice } from "@/lib/utils";
-import { useOrder, useReorder } from "./hooks";
+import { useCancelOrder, useOrder, useReorder } from "./hooks";
 import { useOrderRealtime } from "./useOrderRealtime";
 import {
+  CUSTOMER_CANCELLABLE,
   STATUS_LABEL,
   formatDate,
   statusBadgeVariant,
   timelineSteps,
 } from "./status";
+import { CancelOrderDialog } from "./CancelOrderDialog";
 
 export function OrderDetail({ orderId }: { orderId: string }) {
   const q = useOrder(orderId);
   const reviewsQ = useMyReviews();
   const reorder = useReorder();
+  const cancel = useCancelOrder(orderId);
+  const [cancelling, setCancelling] = useState(false);
   useOrderRealtime(orderId);
 
   if (q.isPending) {
@@ -52,6 +58,20 @@ export function OrderDetail({ orderId }: { orderId: string }) {
 
   const cancelled =
     order.order_status === "cancelled" || order.order_status === "refunded";
+
+  // Offered only while the shop still holds the goods. The server owns the real
+  // boundary and refuses past it — this hides a button that would only produce
+  // an error, but the two checks are not the same: the order can move between
+  // the page loading and the button being pressed, and the server's answer is
+  // the one that counts.
+  //
+  // The shop orders are checked too, because a multi-shop basket has a status
+  // per shop and the parent carries only one of them.
+  const canCancel =
+    CUSTOMER_CANCELLABLE.has(order.order_status) &&
+    (order.shop_orders ?? []).every((so) =>
+      so.order_status ? CUSTOMER_CANCELLABLE.has(so.order_status) : true,
+    );
   const delivered = order.order_status === "delivered";
   const steps = timelineSteps(order);
   const addr = order.delivery_address;
@@ -92,7 +112,20 @@ export function OrderDetail({ orderId }: { orderId: string }) {
 
       {/* tracking */}
       <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-xs">
-        <h2 className="font-display text-lg font-semibold">Tracking</h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="font-display text-lg font-semibold">Tracking</h2>
+          {canCancel && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl text-destructive"
+              disabled={cancel.isPending}
+              onClick={() => setCancelling(true)}
+            >
+              Cancel order
+            </Button>
+          )}
+        </div>
         {cancelled ? (
           <div className="mt-3 space-y-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -263,6 +296,16 @@ export function OrderDetail({ orderId }: { orderId: string }) {
             <p className="text-xs text-muted-foreground">{addr.contact_phone}</p>
           )}
         </section>
+      )}
+      {cancelling && (
+        <CancelOrderDialog
+          orderNumber={order.order_number}
+          busy={cancel.isPending}
+          onClose={() => setCancelling(false)}
+          onConfirm={(reason) =>
+            cancel.mutate(reason, { onSuccess: () => setCancelling(false) })
+          }
+        />
       )}
     </div>
   );

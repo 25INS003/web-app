@@ -10,6 +10,21 @@ export const STATUS_FLOW: OrderStatus[] = [
   "delivered",
 ];
 
+/**
+ * How far a customer may cancel their own order — up to the moment it leaves
+ * the shop. Mirrors CUSTOMER_CANCELLABLE in the backend's
+ * customer-order.controller, which is the check that actually decides.
+ */
+// Typed as strings, not OrderStatus: the per-shop rows carry `order_status` as
+// a plain optional string in the order schema, and this set is checked against
+// both the parent and those.
+export const CUSTOMER_CANCELLABLE: ReadonlySet<string> = new Set([
+  "pending",
+  "confirmed",
+  "preparing",
+  "ready",
+]);
+
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "Placed",
   confirmed: "Confirmed",
