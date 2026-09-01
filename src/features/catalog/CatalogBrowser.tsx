@@ -5,8 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "./ProductCard";
-import { useCategories, useProducts, useServiceability } from "./hooks";
-import { NotDeliverable } from "./NotDeliverable";
+import { useCategories, useDeliveryPincode, useProducts } from "./hooks";
 
 const SORTS = [
   { key: "newest", label: "Newest", sort: "created_at", order: "desc" },
@@ -78,10 +77,11 @@ export function CatalogBrowser({
   const maxPrice = price.max === "" ? undefined : Number(price.max);
 
   const categories = useCategories();
-  // Asked directly rather than inferred from an empty page: "nobody delivers
-  // here" and "nothing matched" are different answers and only one of them is
-  // worth changing your search over.
-  const { notDeliverable, pincode: deliveryPincode } = useServiceability();
+  // Read for the empty state only. The "we do not deliver here yet" panel lives
+  // on the home page and is not repeated here: somebody who has reached the
+  // browse page has already been told, and saying it again in place of the
+  // search box takes away the controls without adding anything.
+  const deliveryPincode = useDeliveryPincode();
   const products = useProducts({
     search: search || undefined,
     category,
@@ -94,17 +94,6 @@ export function CatalogBrowser({
 
   const items = products.data?.pages.flatMap((p) => p.data) ?? [];
   const total = products.data?.pages[0]?.total ?? 0;
-
-  // Nobody delivers here: the search box and the filter pills go with the
-  // products. Leaving them invites the customer to keep looking for something
-  // that cannot exist, because the constraint is not the query.
-  if (notDeliverable) {
-    return (
-      <div className="py-10">
-        <NotDeliverable pincode={deliveryPincode} />
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -205,10 +194,8 @@ export function CatalogBrowser({
           sub="Please try again in a moment."
         />
       ) : items.length === 0 ? (
-        // Only ever "nothing matched" now — the area we do not serve returned
-        // above, so this no longer has to guess which of the two it is. It
-        // still names the pincode, because a shop that delivers here may simply
-        // not stock this.
+        // Named rather than a bare "no products": an empty page under a pincode
+        // filter has a cause, and the customer cannot see the filter.
         deliveryPincode ? (
           <EmptyState
             title="Nothing here for your area"
