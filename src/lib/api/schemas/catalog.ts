@@ -34,6 +34,13 @@ export const catalogProductSchema = z.object({
   price_min: z.number().nullish(),
   price_max: z.number().nullish(),
   is_in_stock: z.boolean().optional(),
+  // Which variant an "Add" on the card puts in the basket. The cart is keyed by
+  // variant, not by product, so without this a card has nothing to add — the
+  // API has always sent it and z.object was dropping it.
+  default_variant_id: objectId.nullish(),
+  // The stock behind that variant, for capping the stepper. `is_in_stock` only
+  // answers yes/no.
+  total_stock_quantity: z.number().nullish(),
   // Whether the selling shop delivers to the pincode the request carried. Only
   // present when one was sent — `undefined` means "not asked", which is not the
   // same as "no", so the UI must not read a missing value as undeliverable.
