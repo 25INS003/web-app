@@ -14,10 +14,18 @@ export const wishlistItemSchema = z.object({
     id: objectId.optional(),
     product_id: z.string().optional(),
     name: z.string(),
+    // Whose product it is — distinct from the shop, which is who sells it.
+    brand: z.string().nullish(),
     main_image_url: z.string().nullish(),  // API field name; see catalog.ts
     images: z.array(wishlistImageSchema).optional(),
     is_available: z.boolean().optional(),
     stock_status: z.string().optional(),
+    // All sent by the API and all previously stripped here, so the row could
+    // only ever show a name, a shop and a price.
+    category: z.string().nullish(),
+    stock_quantity: z.number().nullish(),
+    average_rating: z.number().nullish(),
+    total_reviews: z.number().nullish(),
   }),
   variant: z
     .object({
