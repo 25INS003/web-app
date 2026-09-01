@@ -6,6 +6,7 @@ import { ProductCard } from "@/features/catalog/ProductCard";
 import { useIsAuthed } from "@/features/auth/useAuth";
 import { queryKeys } from "@/lib/query/keys";
 import { cn } from "@/lib/utils";
+import { useDeliveryPincode } from "@/features/catalog/hooks";
 import { complementsApi } from "./api";
 
 /**
@@ -31,9 +32,11 @@ export function ComplementRow({
   className?: string;
 }) {
   const isAuthed = useIsAuthed();
+  const pincode = useDeliveryPincode();
+
   const q = useQuery({
-    queryKey: [...queryKeys.complements, productIds ?? "cart", limit],
-    queryFn: () => complementsApi.get(limit, productIds),
+    queryKey: [...queryKeys.complements, productIds ?? "cart", limit, pincode ?? null],
+    queryFn: () => complementsApi.get(limit, productIds, pincode),
     // Cart-seeded complements must re-fetch as the cart changes, so this shares
     // the cart's staleness rather than caching independently.
     staleTime: 30_000,

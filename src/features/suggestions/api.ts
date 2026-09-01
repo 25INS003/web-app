@@ -44,9 +44,14 @@ export type Complements = {
 
 export const complementsApi = {
   /** Omit productIds to use whatever is in the customer's cart. */
-  async get(limit = 6, productIds?: string[]): Promise<Complements> {
+  async get(
+    limit = 6,
+    productIds?: string[],
+    pincode?: string,
+  ): Promise<Complements> {
     const params = new URLSearchParams({ limit: String(limit) });
     if (productIds?.length) params.set("product_ids", productIds.join(","));
+    if (pincode) params.set("pincode", pincode);
     const data = complementsSchema.parse(
       await api.get<unknown>(`/suggestions/complements?${params.toString()}`),
     );
