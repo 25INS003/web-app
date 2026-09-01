@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useIsAuthed } from "@/features/auth/useAuth";
 import { ApiError } from "@/lib/api/types";
 import { queryKeys } from "@/lib/query/keys";
 import { cartApi } from "./api";
@@ -25,8 +26,21 @@ const invalidateCartAndDerived = (qc: ReturnType<typeof useQueryClient>) => {
   qc.invalidateQueries({ queryKey: queryKeys.suggestions });
 };
 
+/**
+ * The customer's cart.
+ *
+ * `enabled` on the auth cookie: this is read from every product card now, so
+ * for a signed-out visitor it was a guaranteed 401 on every storefront page.
+ * React Query dedupes it to one request per page rather than one per card, but
+ * one guaranteed failure is still one too many.
+ */
 export function useCart() {
-  return useQuery({ queryKey: CART_KEY, queryFn: cartApi.getCart });
+  const authed = useIsAuthed();
+  return useQuery({
+    queryKey: CART_KEY,
+    queryFn: cartApi.getCart,
+    enabled: authed,
+  });
 }
 
 export function useCartTotal() {

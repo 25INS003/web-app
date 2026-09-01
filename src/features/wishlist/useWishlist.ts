@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useIsAuthed } from "@/features/auth/useAuth";
 import { ApiError } from "@/lib/api/types";
 import { queryKeys } from "@/lib/query/keys";
 import { wishlistApi } from "./api";
@@ -22,8 +23,21 @@ const invalidateWishlistAndDerived = (
   qc.invalidateQueries({ queryKey: queryKeys.complements });
 };
 
+/**
+ * The customer's wishlist.
+ *
+ * `enabled` for the same reason as the cart: every product card asks whether
+ * this product is saved, and for a signed-out visitor the endpoint can only
+ * 401. The heart still renders — pressing it is how somebody finds out they
+ * need an account.
+ */
 export function useWishlist() {
-  return useQuery({ queryKey: KEY, queryFn: wishlistApi.getWishlist });
+  const authed = useIsAuthed();
+  return useQuery({
+    queryKey: KEY,
+    queryFn: wishlistApi.getWishlist,
+    enabled: authed,
+  });
 }
 
 export function useAddToWishlist() {
