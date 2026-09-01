@@ -35,12 +35,26 @@ const invalidateWishlistAndDerived = (
  * 401. The heart still renders — pressing it is how somebody finds out they
  * need an account.
  */
-export function useWishlist() {
+export function useWishlist({ live = false }: { live?: boolean } = {}) {
   const authed = useIsAuthed();
   return useQuery({
     queryKey: KEY,
     queryFn: wishlistApi.getWishlist,
     enabled: authed,
+    // Every row carries a stock line, and stock moves while the page is open —
+    // the whole point of a wishlist is to leave it and come back. Read once, it
+    // said "In stock" for something sold out an hour ago, and the customer only
+    // found out when Move to cart failed.
+    //
+    // Polling is opt-in because this hook is also read by every product card
+    // (for the heart), and a heart does not go stale in a way anybody notices.
+    // React Query dedupes the key, so the wishlist page polls and the cards
+    // ride along on the same request rather than adding their own.
+    refetchInterval: live ? 60_000 : false,
+    // Overrides the client-wide default of false, for every caller. Coming back
+    // to a tab that has been sitting open is exactly the moment the answer is
+    // most likely to have changed, and a background tab's interval is paused.
+    refetchOnWindowFocus: true,
   });
 }
 

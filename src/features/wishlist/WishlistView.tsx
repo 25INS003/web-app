@@ -23,7 +23,9 @@ import {
 } from "./useWishlist";
 
 export function WishlistView() {
-  const q = useWishlist();
+  // `live`: this is the page that renders the stock line, so it is the one that
+  // polls for it.
+  const q = useWishlist({ live: true });
 
   if (q.isPending) {
     return (
