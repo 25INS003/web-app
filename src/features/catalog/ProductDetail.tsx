@@ -17,7 +17,12 @@ import { QuantityInput } from "@/components/ui/quantity-input";
 import { ProgressiveImage } from "@/components/ProgressiveImage";
 import { maxOrderableQty } from "@/features/cart/constants";
 import { StockLabel } from "./StockLabel";
-import { useAddToCart } from "@/features/cart/useCart";
+import {
+  useAddToCart,
+  useCart,
+  useRemoveCartItem,
+  useUpdateCartItem,
+} from "@/features/cart/useCart";
 import { useWishlistToggle } from "@/features/wishlist/useWishlist";
 import {
   productImage,
@@ -33,6 +38,9 @@ export function ProductDetail({ productId }: { productId: string }) {
   const q = useProduct(productId);
   const reviewsQ = useProductReviews(productId);
   const add = useAddToCart();
+  const cart = useCart();
+  const updateLine = useUpdateCartItem();
+  const removeLine = useRemoveCartItem();
   const [variant, setVariant] = useState<ProductVariant | null>(null);
   const [qty, setQty] = useState(1);
 
@@ -64,6 +72,19 @@ export function ProductDetail({ productId }: { productId: string }) {
   // collapsed both into a number and used 99 as the unknown case, which is fine
   // for capping the stepper but can't be shown to a customer as a real count.
   const stock = selected?.stock_quantity ?? null;
+
+  // What the cart already holds of the variant on screen.
+  //
+  // Without this the page kept its own quantity, starting at 1 and saying "Add
+  // to cart" however many were already in the basket — so a customer who set 3
+  // on the card opened the product and saw 1, and pressing Add stacked another
+  // 3 on top. The card and the page are two views of one line and have to show
+  // the same number.
+  const cartLine = cart.data?.items?.find(
+    (i) => i.product_var_id.id === selected?.id,
+  );
+  const inCart = cartLine?.quantity ?? 0;
+  const cartBusy = updateLine.isPending || removeLine.isPending;
   const inStock = stock === null ? !!product.is_in_stock : stock > 0;
   const maxQty = maxOrderableQty(stock);
   const off = compare && compare > price ? Math.round((1 - price / compare) * 100) : 0;
@@ -197,27 +218,64 @@ export function ProductDetail({ productId }: { productId: string }) {
 
           <div className="mt-5 flex items-center gap-3">
             <QuantityInput
-              value={qty}
-              onCommit={setQty}
+              // In the cart, this edits the LINE; otherwise it chooses how many
+              // to add. One control either way, because "how many of this do I
+              // have" and "how many do I want" are the same question to the
+              // person looking at it.
+              value={inCart > 0 ? inCart : qty}
+              onCommit={(n) => {
+                if (inCart === 0) {
+                  setQty(n);
+                  return;
+                }
+                if (!cartLine) return;
+                // Down to nothing takes the line out rather than asking the
+                // server for a quantity of zero, which it refuses.
+                if (n <= 0) removeLine.mutate(cartLine.id);
+                else updateLine.mutate({ id: cartLine.id, quantity: n });
+              }}
+              // 0 is reachable only for a line that already exists, so the
+              // page can take the last one out the way the card can. Choosing
+              // how many to ADD still floors at 1 — "add zero" is not an
+              // action, it is the absence of one.
+              min={inCart > 0 ? 0 : 1}
               max={maxQty}
-              disabled={!inStock || undeliverable}
+              disabled={!inStock || undeliverable || cartBusy}
               className="h-10 rounded-xl"
             />
-            <Button
-              size="lg"
-              className="flex-1 gap-2"
-              disabled={!inStock || undeliverable || !selected || add.isPending}
-              onClick={() =>
-                selected && add.mutate({ productVarId: selected.id, quantity: qty })
-              }
-            >
-              {add.isPending ? <Loader2 className="animate-spin" /> : <ShoppingBag />}
-              {undeliverable
-                ? "Not delivered to your area"
-                : inStock
-                  ? "Add to cart"
-                  : "Out of stock"}
-            </Button>
+            {/* Already in the basket: the stepper beside this is now editing
+                that line, so a second "Add to cart" would be a button that
+                either does nothing or silently doubles the order. It becomes
+                the way to go and look at it instead. */}
+            {inCart > 0 ? (
+              <Button size="lg" variant="outline" className="flex-1 gap-2" asChild>
+                <Link href="/cart">
+                  <ShoppingBag />
+                  In cart · View cart
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                className="flex-1 gap-2"
+                disabled={!inStock || undeliverable || !selected || add.isPending}
+                onClick={() =>
+                  selected &&
+                  add.mutate({ productVarId: selected.id, quantity: qty })
+                }
+              >
+                {add.isPending ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <ShoppingBag />
+                )}
+                {undeliverable
+                  ? "Not delivered to your area"
+                  : inStock
+                    ? "Add to cart"
+                    : "Out of stock"}
+              </Button>
+            )}
             <Button
               size="icon"
               variant="outline"
