@@ -8,7 +8,7 @@ import { useCartTotal } from "@/features/cart/useCart";
 import type { Address } from "@/lib/api/schemas/address";
 import { cn, formatPrice } from "@/lib/utils";
 import { useSelectedAddress } from "@/features/address/useSelectedAddress";
-import { AddressForm } from "./AddressForm";
+import { AddressEditor } from "@/features/address/AddressEditor";
 import { usePlaceOrder, useQuotePromotion } from "./hooks";
 import type { PromotionQuote } from "./api";
 
@@ -59,7 +59,7 @@ export function CheckoutView() {
 
               {showForm ? (
                 <div className="rounded-2xl border border-border bg-card p-4">
-                  <AddressForm onDone={() => setShowForm(false)} />
+                  <AddressEditor onDone={() => setShowForm(false)} />
                 </div>
               ) : (
                 <button

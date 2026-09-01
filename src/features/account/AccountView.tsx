@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@/features/auth/SignOutButton";
-import { AddressForm } from "@/features/checkout/AddressForm";
+import { AddressEditor } from "@/features/address/AddressEditor";
 import {
   useAddresses,
   useDeleteAddress,
@@ -189,7 +189,7 @@ function AddressBook() {
 
           {showForm ? (
             <div className="rounded-2xl border border-border bg-card p-4">
-              <AddressForm onDone={() => setShowForm(false)} />
+              <AddressEditor onDone={() => setShowForm(false)} />
             </div>
           ) : (
             <button
@@ -236,7 +236,11 @@ function AddressRow({
   if (editing) {
     return (
       <div className="rounded-2xl border border-primary/40 bg-card p-4">
-        <AddressForm address={address} onDone={onDone} />
+        {/* The map comes with it. A saved pin could not be corrected
+            before — the map was reachable exactly once in an address's life,
+            at the moment it was created, which is when the customer knows
+            least about whether it is right. */}
+        <AddressEditor address={address} onDone={onDone} />
       </div>
     );
   }
