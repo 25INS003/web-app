@@ -18,7 +18,7 @@ import { ProgressiveImage } from "@/components/ProgressiveImage";
 import { maxOrderableQty } from "@/features/cart/constants";
 import { StockLabel } from "./StockLabel";
 import { useAddToCart } from "@/features/cart/useCart";
-import { useAddToWishlist } from "@/features/wishlist/useWishlist";
+import { useWishlistToggle } from "@/features/wishlist/useWishlist";
 import {
   productImage,
   reviewerName,
@@ -33,11 +33,24 @@ export function ProductDetail({ productId }: { productId: string }) {
   const q = useProduct(productId);
   const reviewsQ = useProductReviews(productId);
   const add = useAddToCart();
-  const wishlist = useAddToWishlist();
   const [variant, setVariant] = useState<ProductVariant | null>(null);
   const [qty, setQty] = useState(1);
 
   const deliveryPincode = useDeliveryPincode();
+
+  // Resolved here rather than from `selected` below, because hooks cannot be
+  // called after the early returns and `selected` is computed past them. The
+  // same precedence: an explicit pick, then the flagged default, then the first.
+  const variantsForWishlist = q.data?.variants ?? [];
+  const selectedVariantId =
+    variant?.id ??
+    variantsForWishlist.find((v) => v.is_default)?.id ??
+    variantsForWishlist[0]?.id;
+
+  // The same hook the card uses, so one product reads the same in both places.
+  // This button previously only ever ADDED: the heart never went red, and
+  // pressing it twice saved the same thing twice.
+  const wishlist = useWishlistToggle(productId, selectedVariantId);
 
   if (q.isPending) return <DetailSkeleton />;
   if (q.isError || !q.data) return <NotFound />;
@@ -208,20 +221,21 @@ export function ProductDetail({ productId }: { productId: string }) {
             <Button
               size="icon"
               variant="outline"
-              aria-label="Save to wishlist"
-              disabled={!selected || wishlist.isPending}
-              onClick={() =>
-                selected &&
-                wishlist.mutate({
-                  productId: product.id,
-                  variantId: selected.id,
-                })
+              aria-label={
+                wishlist.saved ? "Remove from wishlist" : "Save to wishlist"
               }
+              aria-pressed={wishlist.saved}
+              disabled={!selected || wishlist.isPending}
+              onClick={() => wishlist.toggle()}
+              className={cn(
+                wishlist.saved &&
+                  "border-destructive/30 bg-destructive/10 text-destructive",
+              )}
             >
               {wishlist.isPending ? (
                 <Loader2 className="animate-spin" />
               ) : (
-                <Heart />
+                <Heart className={cn(wishlist.saved && "fill-current")} />
               )}
             </Button>
           </div>

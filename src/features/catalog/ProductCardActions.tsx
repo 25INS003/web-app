@@ -2,11 +2,7 @@
 
 import { Heart, Loader2, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCart, useAddToCart, useRemoveCartItem, useUpdateCartItem } from "@/features/cart/useCart";
-import {
-  useAddToWishlist,
-  useRemoveFromWishlist,
-  useWishlist,
-} from "@/features/wishlist/useWishlist";
+import { useWishlistToggle } from "@/features/wishlist/useWishlist";
 import type { CatalogProduct } from "@/lib/api/schemas/catalog";
 import { cn } from "@/lib/utils";
 
@@ -31,15 +27,13 @@ const stop = (e: React.MouseEvent) => {
 
 export function ProductCardActions({ product }: { product: CatalogProduct }) {
   const cart = useCart();
-  const wishlist = useWishlist();
 
   const add = useAddToCart();
   const update = useUpdateCartItem();
   const remove = useRemoveCartItem();
-  const saveToWishlist = useAddToWishlist();
-  const unsaveFromWishlist = useRemoveFromWishlist();
 
   const variantId = product.default_variant_id ?? null;
+  const wishlist = useWishlistToggle(product.id, variantId);
   const inStock = product.is_in_stock ?? true;
 
   // The line for this product's variant, if the cart holds one.
@@ -47,10 +41,6 @@ export function ProductCardActions({ product }: { product: CatalogProduct }) {
     (i) => i.product_var_id.id === variantId,
   );
   const qty = line?.quantity ?? 0;
-
-  const saved = wishlist.data?.find(
-    (w) => w.product?.id === product.id || w.variant?.id === variantId,
-  );
 
   // Cap at what the shop actually has, so "+" cannot ask for stock that is not
   // there and get an error back from the server for it.
@@ -87,8 +77,7 @@ export function ProductCardActions({ product }: { product: CatalogProduct }) {
 
   const onWishlist = (e: React.MouseEvent) => {
     stop(e);
-    if (saved) unsaveFromWishlist.mutate(saved.id);
-    else saveToWishlist.mutate({ productId: product.id, variantId });
+    wishlist.toggle();
   };
 
   return (
@@ -148,17 +137,17 @@ export function ProductCardActions({ product }: { product: CatalogProduct }) {
       <button
         type="button"
         onClick={onWishlist}
-        disabled={saveToWishlist.isPending || unsaveFromWishlist.isPending}
-        aria-label={saved ? "Remove from wishlist" : "Save to wishlist"}
-        aria-pressed={Boolean(saved)}
+        disabled={wishlist.isPending}
+        aria-label={wishlist.saved ? "Remove from wishlist" : "Save to wishlist"}
+        aria-pressed={wishlist.saved}
         className={cn(
           "grid size-9 shrink-0 place-items-center rounded-xl border transition",
-          saved
+          wishlist.saved
             ? "border-destructive/30 bg-destructive/10 text-destructive"
             : "border-border text-muted-foreground hover:text-foreground",
         )}
       >
-        <Heart className={cn("size-4", saved && "fill-current")} />
+        <Heart className={cn("size-4", wishlist.saved && "fill-current")} />
       </button>
     </div>
   );
