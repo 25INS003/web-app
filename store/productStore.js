@@ -24,8 +24,17 @@ export const useProductStore = create((set, get) => ({
     search: "",
     category: "",
     inStock: undefined,
-    is_available: "true",
-    is_active: "true",
+    // "none" is skipped when the query string is built, so the owner's list
+    // starts unfiltered.
+    //
+    // This defaulted to "true", which meant the list asked the API for active
+    // products only. A product now starts inactive while it waits for admin
+    // approval, so an owner submitted one and watched it vanish — no price, no
+    // stock, no way to see it was pending or why it was rejected. An owner's
+    // own list should show everything they own; the Status column says which
+    // is which.
+    is_available: "none",
+    is_active: "none",
     sortBy: "created_at",
     sortOrder: "desc",
   },

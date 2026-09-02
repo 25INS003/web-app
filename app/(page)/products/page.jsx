@@ -122,10 +122,12 @@ const ProductsListPage = () => {
         queryParams?.is_active === "false" ||
         queryParams?.is_available === "false";
 
+    // Matches the store's defaults: unfiltered, so a product waiting on admin
+    // approval is visible to the owner who submitted it.
     const [tempFilters, setTempFilters] = useState({
         search: "",
-        is_available: "true",
-        is_active: "true",
+        is_available: "none",
+        is_active: "none",
         inStock: "all",
         sortBy: "created_at"
     });
