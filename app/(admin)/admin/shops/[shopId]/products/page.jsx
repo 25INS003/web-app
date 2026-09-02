@@ -12,6 +12,7 @@ import {
   ImageIcon,
   Package,
   PackagePlus,
+  Pencil,
   Search,
   Store,
 } from "lucide-react";
@@ -196,13 +197,14 @@ export default function AdminShopProductsPage() {
                 <th className="p-4">Price</th>
                 <th className="p-4">Stock</th>
                 <th className="p-4">Status</th>
+                <th className="p-4 w-20 text-right">Edit</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="p-10 text-center text-muted-foreground"
                   >
                     Loading products…
@@ -210,13 +212,13 @@ export default function AdminShopProductsPage() {
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={6} className="p-10 text-center text-destructive">
+                  <td colSpan={7} className="p-10 text-center text-destructive">
                     {error}
                   </td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-10 text-center">
+                  <td colSpan={7} className="p-10 text-center">
                     <p className="text-foreground font-medium">
                       {appliedSearch
                         ? "No products match that search."
@@ -297,6 +299,25 @@ export default function AdminShopProductsPage() {
                         >
                           {p.is_active ? "Active" : "Inactive"}
                         </Badge>
+                      </td>
+                      {/* Editing was previously reachable only from the
+                          approval queue, so once a product was approved — or
+                          rejected, which drops it out of that queue — an admin
+                          had no way back into it. The route already existed. */}
+                      <td className="p-4 text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Edit ${p.name}`}
+                          className="rounded-lg hover:bg-muted"
+                          onClick={() =>
+                            router.push(
+                              `/admin/shops/${shopId}/products/${p.id}/edit`
+                            )
+                          }
+                        >
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                        </Button>
                       </td>
                     </tr>
                   );

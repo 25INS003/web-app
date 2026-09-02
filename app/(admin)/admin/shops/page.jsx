@@ -19,7 +19,8 @@ import {
     Mail,
     Phone,
     Package,
-    PackagePlus
+    PackagePlus,
+    Pencil
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -260,6 +261,14 @@ export default function AdminShopsPage() {
                                                     {/* Offered for every shop, whatever its status:
                                                         seeing what a shop stocks is part of deciding
                                                         whether to approve it. */}
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer gap-2 py-2.5"
+                                                        onClick={() => router.push(`/admin/shops/${shop.id}/edit`)}
+                                                    >
+                                                        <Pencil className="h-4 w-4 text-muted-foreground" />
+                                                        Edit shop
+                                                    </DropdownMenuItem>
+
                                                     <DropdownMenuItem
                                                         className="cursor-pointer gap-2 py-2.5"
                                                         onClick={() => router.push(`/admin/shops/${shop.id}/products`)}
