@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Package,
   PackageCheck,
+  Pencil,
   ShoppingBag,
   Star,
   Tag,
@@ -32,6 +33,9 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   review_reminder: Star,
   stock_alert: AlertTriangle,
   delivery_assigned: Truck,
+  product_approved: PackageCheck,
+  product_rejected: XCircle,
+  product_updated: Pencil,
 };
 
 export function NotificationIcon({

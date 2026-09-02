@@ -16,6 +16,12 @@ export const notificationTypeValues = [
   "review_reminder",
   "stock_alert",
   "delivery_assigned",
+  // An admin's decision on a product a shop owner submitted, and an admin's
+  // edit to one. Listed rather than left to the `.catch` below, which would
+  // render all three as a generic system alert.
+  "product_approved",
+  "product_rejected",
+  "product_updated",
 ] as const;
 
 // .catch keeps an unknown backend type from hard-failing the feed.
@@ -76,4 +82,7 @@ export const NOTIFICATION_ICON: Record<NotificationType, string> = {
   review_reminder: "Star",
   stock_alert: "AlertTriangle",
   delivery_assigned: "Truck",
+  product_approved: "PackageCheck",
+  product_rejected: "XCircle",
+  product_updated: "Pencil",
 };
