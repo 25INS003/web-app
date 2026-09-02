@@ -365,6 +365,7 @@ const ProductsListPage = () => {
                             <TableHead className="font-semibold">Product</TableHead>
                             <TableHead className="font-semibold">Category</TableHead>
                             <TableHead className="font-semibold">Price</TableHead>
+                            <TableHead className="font-semibold">Stock</TableHead>
                             <TableHead className="font-semibold">Status</TableHead>
                             <TableHead className="text-right font-semibold">Actions</TableHead>
                         </TableRow>
@@ -512,6 +513,40 @@ const ProductsListPage = () => {
                                                 >
                                                     {p.is_in_stock ? "In Stock" : "Out of Stock"}
                                                 </Badge>
+                                            </TableCell>
+                                            {/* Approval, which is not the same as the owner's own
+                                                active/inactive switch: a pending product is off the
+                                                storefront no matter what the owner does, and a
+                                                rejected one carries the reason it was turned down.
+                                                Without this the product simply would not appear to
+                                                customers and nothing would say why. */}
+                                            <TableCell>
+                                                {p.approval_status === "pending" ? (
+                                                    <Badge className="rounded-lg font-medium bg-warning/15 text-warning border-warning/30">
+                                                        Awaiting approval
+                                                    </Badge>
+                                                ) : p.approval_status === "rejected" ? (
+                                                    <span className="inline-flex flex-col gap-1">
+                                                        <Badge className="rounded-lg font-medium bg-destructive/15 text-destructive border-destructive/30 w-fit">
+                                                            Rejected
+                                                        </Badge>
+                                                        {p.approval_note && (
+                                                            <span className="text-xs text-muted-foreground max-w-[220px]">
+                                                                {p.approval_note}
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                ) : (
+                                                    <Badge
+                                                        className={`rounded-lg font-medium ${
+                                                            isActive
+                                                                ? "bg-success/15 text-success border-success/30"
+                                                                : "bg-muted text-muted-foreground border-border"
+                                                        }`}
+                                                    >
+                                                        {isActive ? "Live" : "Inactive"}
+                                                    </Badge>
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <DropdownMenu>

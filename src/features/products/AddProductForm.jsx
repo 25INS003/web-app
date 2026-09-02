@@ -364,7 +364,16 @@ export const AddProductForm = ({ shopId, onCreated }) => {
         await Promise.all(uploadPromises);
       }
 
-      toast.success("Product created successfully!");
+      // Read from the created product rather than from which page called this
+      // form: an admin's product is approved on creation and an owner's is not,
+      // and the server is the one that decides. Saying "created successfully"
+      // to an owner would leave them looking for a product that is deliberately
+      // not on the storefront yet.
+      toast.success(
+        createdProduct.approval_status === "pending"
+          ? "Product submitted — an admin will review it before it goes live."
+          : "Product created successfully!"
+      );
       onCreated(productId);
 
     } catch (error) {
