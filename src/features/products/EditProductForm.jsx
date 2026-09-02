@@ -171,6 +171,12 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
   // that actually changed is re-read.
   const serverVersion = variant.updated_at;
   useEffect(() => {
+    // Seeding local form state from the server's copy, which is what the whole
+    // comment above is about — the rule wants derived-during-render or a
+    // remount key, and either would undo the stale-snapshot fix described
+    // there. Pre-existing: this file sat in the eslint-exempt legacy tree
+    // until it moved here to be shared with the admin route.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setData(fromVariant(variant));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant.id, serverVersion]);
@@ -813,6 +819,11 @@ export const EditProductForm = () => {
       });
 
       if (currentProduct.main_image && currentProduct.main_image_url) {
+        // Same pre-existing pattern as the variant row above: hydrating local
+        // state from fetched data. `existingImage` is not purely derived — the
+        // upload and delete handlers write it too — so it cannot simply be
+        // computed during render.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setExistingImage(currentProduct.main_image_url);
       }
     }
