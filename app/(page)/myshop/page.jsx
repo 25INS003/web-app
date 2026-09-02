@@ -114,7 +114,10 @@ const MyShopsPage = () => {
         );
     }) || [];
 
-    const activeShops = myShops?.filter(s => s.shop_status === 'active' || !s.shop_status).length || 0;
+    // `shop_status` defaults to 'pending', so a missing value means not-yet-
+    // approved. The old `|| !s.shop_status` counted exactly that case as
+    // active — backwards, and it would have shown a pending shop as live.
+    const activeShops = myShops?.filter(s => s.shop_status === 'active').length || 0;
     const totalProducts = myShops?.reduce((sum, s) => sum + (s.total_products || 0), 0) || 0;
     const totalOrders = myShops?.reduce((sum, s) => sum + (s.total_orders || 0), 0) || 0;
 
