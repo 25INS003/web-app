@@ -99,14 +99,26 @@ const NUMERIC_VARIANT_FIELDS = {
   price: 0,
   stock_quantity: 0,
   cost_price: 0,
-  compare_at_price: 0,
   per_unit_qty: 1,
 };
+
+// Not in the table above, because it has no sensible zero. An empty MRP means
+// "no reference price"; coercing it to 0 claims the item used to be free, and
+// the storefront renders that as a struck-through nothing beside the price.
+const compareAtOrOmit = (raw) =>
+  raw === "" || raw === null || raw === undefined ? undefined : asNumber(raw, 0);
 
 const variantPayload = (data) => {
   const out = { ...data };
   for (const [field, fallback] of Object.entries(NUMERIC_VARIANT_FIELDS)) {
     if (field in out) out[field] = asNumber(out[field], fallback);
+  }
+  // Handled apart from the table: a blank MRP is dropped from the payload
+  // entirely, so the API leaves the column alone rather than writing a 0.
+  if ("compare_at_price" in out) {
+    const compare = compareAtOrOmit(out.compare_at_price);
+    if (compare === undefined) delete out.compare_at_price;
+    else out.compare_at_price = compare;
   }
   return out;
 };
@@ -133,7 +145,10 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
     stock_quantity: v.stock_quantity || 0,
     sku: v.sku || "",
     cost_price: v.cost_price || 0,
-    compare_at_price: v.compare_at_price || 0,
+    // `?? ""`, not `|| 0`: a variant with no reference price has null here,
+    // and `|| 0` turned that into a real 0 on load — so opening a product and
+    // saving it invented an MRP of zero. Blank round-trips as absent.
+    compare_at_price: v.compare_at_price ?? "",
     unit: v.unit || "piece",
     per_unit_qty: v.per_unit_qty || 1,
     tax: normalizeTax(v.tax),
@@ -515,7 +530,7 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
     stock_quantity: 0,
     sku: "",
     cost_price: 0,
-    compare_at_price: 0,
+    compare_at_price: "",
     attributes: []
   };
 

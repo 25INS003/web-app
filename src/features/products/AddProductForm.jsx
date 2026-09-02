@@ -69,7 +69,16 @@ const itemVariants = {
 const variantSchema = z.object({
   name: z.string().optional(),
   price: z.coerce.number().min(0, "Price cannot be negative"),
-  compare_at_price: z.coerce.number().min(0).optional(),
+  // An empty MRP box means "no reference price", not zero.
+  //
+  // `z.coerce.number()` turns "" into 0, so an untouched field submitted a real
+  // 0 — and a compare-at price of 0 is a claim that the item used to be free,
+  // which the card then printed as a stray "0" beside the price. Preprocessed
+  // to undefined so the field is simply absent from the payload.
+  compare_at_price: z.preprocess(
+    (v) => (v === "" || v === null ? undefined : v),
+    z.coerce.number().min(0).optional()
+  ),
   cost_price: z.coerce.number().min(0).optional(),
   stock_quantity: z.coerce.number().min(0, "Stock cannot be negative"),
   sku: z.string().optional(),
@@ -98,7 +107,10 @@ const emptyVariant = () => ({
   name: "",
   sku: "",
   price: 0,
-  compare_at_price: 0,
+  // Blank, not 0: the MRP is optional, and seeding it with 0 both showed the
+  // owner a "0" they did not type and submitted one. "" keeps the input
+  // controlled, which is what the note above is about.
+  compare_at_price: "",
   cost_price: 0,
   stock_quantity: 0,
   unit: "piece",
