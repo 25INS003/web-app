@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAdminShopStore } from "@/store/adminShopStore";
@@ -15,7 +17,8 @@ import {
     AlertCircle,
     Building2,
     Mail,
-    Phone
+    Phone,
+    PackagePlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +44,7 @@ import { motion } from "framer-motion";
 import { ShopDetailsDialog } from "./components/ShopDetailsDialog";
 
 export default function AdminShopsPage() {
+    const router = useRouter();
     const { shops, fetchAllShops, updateShopStatus, isLoading } = useAdminShopStore();
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all"); 
@@ -251,6 +255,22 @@ export default function AdminShopsPage() {
                                                         <Eye className="h-4 w-4 text-muted-foreground" /> 
                                                         View Details
                                                     </DropdownMenuItem>
+
+                                                    {/* The API has always allowed an admin to add a
+                                                        product to any shop; there was simply no way
+                                                        to ask for it. Offered only for a live shop —
+                                                        stocking one that is pending or rejected
+                                                        would be building on a decision not yet
+                                                        made. */}
+                                                    {shop.shop_status === 'active' && (
+                                                        <DropdownMenuItem
+                                                            className="cursor-pointer gap-2 py-2.5"
+                                                            onClick={() => router.push(`/admin/shops/${shop.id}/products/add`)}
+                                                        >
+                                                            <PackagePlus className="h-4 w-4 text-muted-foreground" />
+                                                            Add product
+                                                        </DropdownMenuItem>
+                                                    )}
                                                     
                                                     {shop.shop_status === 'pending' && (
                                                         <>
