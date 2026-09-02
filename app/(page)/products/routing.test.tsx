@@ -50,6 +50,7 @@ vi.mock("@/features/products/AddProductForm", () => ({
 }));
 
 import AddProductPage from "./[shopId]/add/page";
+import AdminAddProductPage from "../../(admin)/admin/shops/[shopId]/products/add/page";
 
 describe("after creating a product", () => {
   beforeEach(() => {
@@ -73,6 +74,16 @@ describe("after creating a product", () => {
     render(<AddProductPage />);
     fireEvent.click(screen.getByText("create"));
 
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  // The admin lands on the shop's product list, where the thing they just made
+  // is visible. Returning to /admin/shops showed them nothing they had done.
+  it("sends the admin to the shop's product list", () => {
+    render(<AdminAddProductPage />);
+    fireEvent.click(screen.getByText("create"));
+
+    expect(replace).toHaveBeenCalledWith("/admin/shops/shop-1/products");
     expect(push).not.toHaveBeenCalled();
   });
 });

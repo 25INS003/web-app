@@ -15,8 +15,10 @@ import { AddProductForm } from "@/features/products/AddProductForm";
  * the shop-owner section would put them in a dashboard built around "your
  * shop", which is the wrong frame for someone acting on all of them.
  *
- * Returns to the shops list, because an admin came from managing shops rather
- * than from managing a catalogue.
+ * Lands on this shop's product list, which is where the new product is now
+ * visible. It used to return to the shops list — correct when that was the only
+ * admin screen a shop had, but it meant a successful create showed you nothing
+ * you had just done.
  */
 export default function AdminAddProductPage() {
   const { shopId } = useParams();
@@ -27,7 +29,7 @@ export default function AdminAddProductPage() {
       shopId={shopId}
       // `replace` for the same reason as the shop-owner route: a spent form
       // should not be what Back returns to.
-      onCreated={() => router.replace("/admin/shops")}
+      onCreated={() => router.replace(`/admin/shops/${shopId}/products`)}
     />
   );
 }

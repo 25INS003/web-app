@@ -18,6 +18,7 @@ import {
     Building2,
     Mail,
     Phone,
+    Package,
     PackagePlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -254,6 +255,17 @@ export default function AdminShopsPage() {
                                                     >
                                                         <Eye className="h-4 w-4 text-muted-foreground" /> 
                                                         View Details
+                                                    </DropdownMenuItem>
+
+                                                    {/* Offered for every shop, whatever its status:
+                                                        seeing what a shop stocks is part of deciding
+                                                        whether to approve it. */}
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer gap-2 py-2.5"
+                                                        onClick={() => router.push(`/admin/shops/${shop.id}/products`)}
+                                                    >
+                                                        <Package className="h-4 w-4 text-muted-foreground" />
+                                                        View products
                                                     </DropdownMenuItem>
 
                                                     {/* The API has always allowed an admin to add a
