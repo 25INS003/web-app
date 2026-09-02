@@ -90,7 +90,7 @@ export default function ShopOwnerDetailPage() {
                     <div className={`px-5 py-2 rounded-full font-bold text-sm uppercase tracking-widest border-2 ${
                             selectedOwner.verification_status === "approved" ? "bg-success/10 text-success border-success/20" :
                             selectedOwner.verification_status === "rejected" ? " text-destructive border-destructive/30/20" :
-                            "bg-warning/10 text-warning-foreground border-warning/20"
+                            "bg-warning/10 text-warning border-warning/20"
                         }`}>
                         {selectedOwner.verification_status === "approved" ? "● Fully Approved" : 
                          selectedOwner.verification_status === "rejected" ? "⊗ Application Rejected" : 
@@ -221,7 +221,7 @@ export default function ShopOwnerDetailPage() {
                                     {selectedOwner.verification_status === "approved" && (
                                         <button
                                             onClick={handleRevoke}
-                                            className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-card border-2 text-warning-foreground"
+                                            className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-card border-2 text-warning"
                                         >
                                             <X size={20} /> Revoke Approval
                                         </button>

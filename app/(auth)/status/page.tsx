@@ -7,7 +7,7 @@ export const metadata = { title: "Under review · Nedyway" };
 export default function StatusPage() {
   return (
     <div className="text-center">
-      <span className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-warning/15 text-warning-foreground">
+      <span className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-warning/15 text-warning">
         <Clock className="size-6" />
       </span>
       <h1 className="font-display text-2xl font-bold tracking-tight">

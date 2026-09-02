@@ -88,7 +88,7 @@ export function CartView() {
               <Row label="Total" value={total.data?.final_amount} strong />
             </dl>
             {total.data?.has_unavailable_items && (
-              <p className="mt-3 text-xs text-warning-foreground">
+              <p className="mt-3 text-xs text-warning">
                 Some items are unavailable and won&apos;t be charged.
               </p>
             )}

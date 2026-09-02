@@ -47,7 +47,7 @@ export default function AdminReportsPage() {
             title: "Inventory Status",
             description: "Current stock levels, low stock alerts, and product category distribution.",
             icon: ShoppingBag,
-            color: "text-warning-foreground",
+            color: "text-warning",
             bg: "bg-warning/10",
             border: "",
             shadow: ""

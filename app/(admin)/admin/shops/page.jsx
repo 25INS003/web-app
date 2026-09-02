@@ -232,7 +232,7 @@ export default function AdminShopsPage() {
                                             <Badge className={`
                                                 capitalize font-medium shadow-sm border
                                                 ${shop.shop_status === 'active' ? 'bg-success/10 text-success border-success/20' : ''}
-                                                ${shop.shop_status === 'pending' ? 'bg-warning/10 text-warning-foreground border-warning/20' : ''}
+                                                ${shop.shop_status === 'pending' ? 'bg-warning/10 text-warning border-warning/20' : ''}
                                                 ${(shop.shop_status === 'inactive' || shop.shop_status === 'suspended') ? ' text-destructive border-destructive/30/20' : ''}
                                             `}>
                                                 {shop.shop_status === 'active' ? 'Approved' : shop.shop_status}

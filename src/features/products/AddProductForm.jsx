@@ -194,7 +194,7 @@ const VariantTaxNew = ({ variantIndex }) => {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <FormLabel className="text-xs text-muted-foreground">GST / Tax</FormLabel>
-        <Button type="button" variant="ghost" size="sm" className="h-6 text-xs rounded-lg hover:bg-muted hover:text-warning-foreground" onClick={addTax}>
+        <Button type="button" variant="ghost" size="sm" className="h-6 text-xs rounded-lg hover:bg-muted hover:text-warning" onClick={addTax}>
           <Plus className="w-3 h-3 mr-1" /> Add
         </Button>
       </div>

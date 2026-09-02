@@ -108,8 +108,8 @@ export function DeleteCategoryDialog({
                 {hasChildren ? (
                     <div className="space-y-3">
                         <div className="flex gap-3 rounded-xl border border-warning/30 bg-warning/10 p-3">
-                            <AlertTriangle className="h-4 w-4 shrink-0 text-warning-foreground mt-0.5" />
-                            <p className="text-sm text-warning-foreground">
+                            <AlertTriangle className="h-4 w-4 shrink-0 text-warning mt-0.5" />
+                            <p className="text-sm text-warning">
                                 It has {childCount} subcategor
                                 {childCount === 1 ? "y" : "ies"}
                                 {descendantCount > childCount

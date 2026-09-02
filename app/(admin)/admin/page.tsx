@@ -81,7 +81,7 @@ export default function AdminHome() {
               <span
                 className={`grid size-9 place-items-center rounded-xl ${
                   urgent
-                    ? "bg-warning/10 text-warning-foreground"
+                    ? "bg-warning/10 text-warning"
                     : "bg-accent text-accent-foreground"
                 }`}
               >

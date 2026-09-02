@@ -35,7 +35,7 @@ export function StockLabel({
 
   if (stock <= lowThreshold) {
     return (
-      <span className={cn("font-medium text-warning-foreground", className)}>
+      <span className={cn("font-medium text-warning", className)}>
         Only {stock} left
       </span>
     );

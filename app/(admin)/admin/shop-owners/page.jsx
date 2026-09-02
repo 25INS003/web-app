@@ -138,7 +138,7 @@ export default function ShopOwnerListPage() {
                         Pending only
                         <span className={`rounded-full px-2 py-0.5 text-xs tabular-nums ${
                             pendingCount > 0
-                                ? "bg-warning/10/15 text-warning-foreground"
+                                ? "bg-warning/15 text-warning"
                                 : "bg-muted text-muted-foreground"
                         }`}>
                             {pendingCount}
@@ -237,7 +237,7 @@ export default function ShopOwnerListPage() {
                                                     capitalize font-medium shadow-sm border px-3 py-1 rounded-full
                                                     ${owner.is_approved
                                                         ? "bg-success/10 text-success border-success/20"
-                                                        : "bg-warning/10 text-warning-foreground border-warning/20"
+                                                        : "bg-warning/10 text-warning border-warning/20"
                                                     }
                                                 `}>
                                                     {owner.is_approved ? (

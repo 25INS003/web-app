@@ -237,7 +237,7 @@ function WishlistRow({ item }: { item: WishlistItem }) {
             <span className="font-medium text-destructive">Out of stock</span>
           ) : typeof item.product.stock_quantity === "number" &&
             item.product.stock_quantity <= LOW_STOCK ? (
-            <span className="font-medium text-warning-foreground">
+            <span className="font-medium text-warning">
               Only {item.product.stock_quantity} left
             </span>
           ) : (

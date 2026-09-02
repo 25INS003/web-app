@@ -220,7 +220,7 @@ function TierCard({
       )}
 
       {points.points_expiring_soon > 0 && (
-        <p className="mt-4 flex items-center gap-1.5 rounded-xl bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+        <p className="mt-4 flex items-center gap-1.5 rounded-xl bg-warning/10 px-3 py-2 text-xs text-warning">
           <Clock className="size-3.5 shrink-0" />
           {points.points_expiring_soon.toLocaleString("en-IN")} points expire on{" "}
           {formatDate(points.next_expiry_date)}
