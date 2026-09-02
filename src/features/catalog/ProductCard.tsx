@@ -88,7 +88,13 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
               <span className="font-mono text-base font-bold tabular-nums">
                 {formatPrice(product.price)}
               </span>
-              {product.compare_at_price &&
+              {/* `!= null`, not a bare truthiness check.
+                  `{0 && …}` evaluates to 0, and React renders 0 as text — so a
+                  product saved with compare_at_price 0, which is what the add
+                  form's blank variant sends, printed a stray "0" beside its
+                  price. Seeded rows store null, and `null && …` is null, which
+                  renders nothing — which is why only added products showed it. */}
+              {product.compare_at_price != null &&
                 product.compare_at_price > product.price && (
                   <span className="font-mono text-xs text-muted-foreground line-through">
                     {formatPrice(product.compare_at_price)}

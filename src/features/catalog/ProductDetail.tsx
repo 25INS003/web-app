@@ -153,7 +153,10 @@ export function ProductDetail({ productId }: { productId: string }) {
             <span className="font-mono text-3xl font-bold tabular-nums">
               {formatPrice(price)}
             </span>
-            {compare && compare > price && (
+            {/* See ProductCard: `{0 && …}` evaluates to 0 and React renders it
+                as text. `!= null` yields a boolean and narrows the type, where
+                a bare truthiness check does neither. */}
+            {compare != null && compare > price && (
               <span className="font-mono text-base text-muted-foreground line-through">
                 {formatPrice(compare)}
               </span>
