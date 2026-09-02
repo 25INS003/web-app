@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import apiClient from "@/api/apiClient";
@@ -10,6 +11,7 @@ import {
   CheckCircle,
   ImageIcon,
   Package,
+  Pencil,
   Store,
   XCircle,
 } from "lucide-react";
@@ -34,6 +36,7 @@ const itemVariants = { hidden: { y: 12, opacity: 0 }, visible: { y: 0, opacity: 
  * records a reason the owner can act on and leaves the product unlisted.
  */
 export default function PendingProductsPage() {
+  const router = useRouter();
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -185,6 +188,22 @@ export default function PendingProductsPage() {
               </div>
 
               <div className="flex shrink-0 gap-2">
+                {/* A submission that is nearly right is better corrected than
+                    rejected and sent back around the loop. Editing decides
+                    nothing — the update route leaves approval_status alone, so
+                    the product is still waiting when the admin comes back. */}
+                <Button
+                  variant="outline"
+                  className="rounded-xl"
+                  disabled={busyId === p.id}
+                  onClick={() =>
+                    router.push(
+                      `/admin/shops/${p.shop_id}/products/${p.id}/edit`
+                    )
+                  }
+                >
+                  <Pencil className="mr-2 h-4 w-4" /> Edit
+                </Button>
                 <Button
                   className="rounded-xl bg-success text-success-foreground hover:bg-success/90"
                   disabled={busyId === p.id}

@@ -737,7 +737,22 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
 };
 
 
-const EditProductPage = () => {
+/**
+ * Editing a product, for whoever is allowed to.
+ *
+ * Lifted out of the shop-owner route so the admin reviewing a submission can
+ * correct it before approving. The API has always permitted that — the update
+ * route guards on ["admin", "shop_owner"] and validateResourceOwnership lets an
+ * admin past the shop check — but the only edit screen sat behind
+ * requireApprovedShopOwner, which redirects an admin away.
+ *
+ * Reads its ids from `useParams` rather than props, and both routes name their
+ * segments [shopId] and [productId], so the same component serves both without
+ * either caller threading anything through. Navigation is `back()` and
+ * `refresh()` only, so it returns wherever it was opened from — the owner's
+ * catalogue, or the admin's review queue.
+ */
+export const EditProductForm = () => {
   const params = useParams();
   const router = useRouter();
   const { shopId, productId } = params;
@@ -1070,5 +1085,3 @@ const EditProductPage = () => {
     </motion.div>
   );
 };
-
-export default EditProductPage;
