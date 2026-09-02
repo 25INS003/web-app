@@ -143,7 +143,7 @@ const MyShopsPage = () => {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3 text-foreground">
                         <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/25">
-                            <Store className="h-6 w-6 text-white" />
+                            <Store className="h-6 w-6 text-primary-foreground" />
                         </div>
                         My Shops
                     </h1>
@@ -190,7 +190,7 @@ const MyShopsPage = () => {
                                 </p>
                             </div>
                             <div className={`p-3 rounded-xl ${stat.tone} shadow-lg`}>
-                                <stat.icon className="h-5 w-5 text-white" />
+                                <stat.icon className="h-5 w-5" />
                             </div>
                         </div>
                     </motion.div>
@@ -264,7 +264,7 @@ const ShopCard = ({ shop, index, onEdit, onDeactivate, onActivate, onHardDelete 
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/25">
-                        <Store className="h-6 w-6 text-white" />
+                        <Store className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <div>
                         <h3 className="text-base font-semibold text-foreground">
@@ -287,13 +287,13 @@ const ShopCard = ({ shop, index, onEdit, onDeactivate, onActivate, onHardDelete 
                     >
                         {/* Header */}
                         <div className="px-2 py-1.5 mb-1">
-                            <p className="text-sm font-semibold text-white">Shop</p>
+                            <p className="text-sm font-semibold text-foreground">Shop</p>
                         </div>
                         <div className="h-px bg-border mb-2" />
                         
                         <DropdownMenuItem 
                             onClick={() => onEdit(shop.id)} 
-                            className="rounded-xl px-3 py-2.5 text-muted-foreground hover:text-white hover:bg-muted cursor-pointer focus:bg-muted focus:text-white"
+                            className="rounded-xl px-3 py-2.5 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer focus:bg-muted focus:text-foreground"
                         >
                             <Settings className="mr-3 h-4 w-4 text-muted-foreground" />
                             Edit Shop

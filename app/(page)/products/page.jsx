@@ -507,7 +507,7 @@ const ProductsListPage = () => {
                                                     className={`rounded-lg font-medium ${
                                                         p.is_in_stock 
                                                             ? "bg-success/15 text-success border-success/30"
-                                                            : "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 border-rose-200 dark:border-rose-500/30"
+                                                            : "bg-destructive/15 text-destructive border-destructive/30"
                                                     }`}
                                                 >
                                                     {p.is_in_stock ? "In Stock" : "Out of Stock"}
@@ -553,7 +553,7 @@ const ProductsListPage = () => {
                                                         {!isActive && (
                                                             <DropdownMenuItem 
                                                                 onClick={() => handleHardDelete(p.id)} 
-                                                                className="rounded-lg cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-500/10"
+                                                                className="rounded-lg cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
                                                             >
                                                                 <Trash2 className="h-4 w-4 mr-2" />
                                                                 <span>Delete Permanently</span>
