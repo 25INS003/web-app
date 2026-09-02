@@ -228,7 +228,7 @@ const ProductsListPage = () => {
                             animate={{ rotate: 0 }}
                             transition={{ type: "spring", stiffness: 200 }}
                         >
-                            <Package className="w-10 h-10 text-white" />
+                            <Package className="w-10 h-10 text-primary-foreground" />
                         </motion.div>
                         
                         <div>
@@ -262,14 +262,14 @@ const ProductsListPage = () => {
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
                         <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/25">
-                            <Package className="h-6 w-6 text-white" />
+                            <Package className="h-6 w-6 text-primary-foreground" />
                         </div>
                         Products
                     </h1>
                     <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
                         <Store className="h-4 w-4" />
                         <span className="font-medium text-primary">{currentShop?.name}</span>
-                        <span className="text-muted-foreground dark:text-muted-foreground">•</span>
+                        <span className="text-muted-foreground">•</span>
                         <span>{pagination?.totalProducts || 0} items</span>
                     </p>
                 </div>

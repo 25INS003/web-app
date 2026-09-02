@@ -55,7 +55,7 @@ const MapPicker = ({ lat, lng, onLocationChange }) => {
   };
 
   return (
-    <div className="h-[300px] w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 z-0">
+    <div className="h-[300px] w-full rounded-xl overflow-hidden border border-border z-0">
       <MapContainer
         center={center}
         zoom={13}

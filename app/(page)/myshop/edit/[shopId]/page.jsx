@@ -174,14 +174,14 @@ const EditShopPage = ({ params }) => {
     if (storeLoading && !selectedShop) {
         return (
             <div className="container mx-auto p-4 flex flex-col items-center justify-center min-h-[50vh]">
-                <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
-                <p className="text-slate-500 dark:text-slate-400 animate-pulse">Fetching shop details...</p>
+                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                <p className="text-muted-foreground animate-pulse">Fetching shop details...</p>
             </div>
         );
     }
 
     if (!selectedShop && !storeLoading) {
-        return <div className="p-10 text-center text-slate-500">Shop not found.</div>;
+        return <div className="p-10 text-center text-muted-foreground">Shop not found.</div>;
     }
 
     return (
@@ -201,25 +201,25 @@ const EditShopPage = ({ params }) => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => router.push('/myshop')}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className="p-2 rounded-xl bg-muted hover:bg-accent transition-colors"
                     >
-                        <ArrowLeft className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                        <ArrowLeft className="h-5 w-5 text-muted-foreground" />
                     </motion.button>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3 text-slate-900 dark:text-white">
-                            <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25">
-                                <Store className="h-5 w-5 text-white" />
+                        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3 text-foreground">
+                            <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/25">
+                                <Store className="h-5 w-5 text-primary-foreground" />
                             </div>
                             Edit Shop: {selectedShop.name}
                         </h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your business profile and availability</p>
+                        <p className="text-sm text-muted-foreground mt-1">Manage your business profile and availability</p>
                     </div>
                 </div>
                 <Badge 
                     className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-                        selectedShop.status === 'active' 
-                            ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400' 
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        selectedShop.status === 'active'
+                            ? 'bg-success/15 text-success'
+                            : 'bg-muted text-muted-foreground'
                     }`}
                 >
                     {selectedShop.status?.toUpperCase() || 'ACTIVE'}
@@ -231,7 +231,7 @@ const EditShopPage = ({ params }) => {
                 <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 text-green-800 dark:text-green-400 px-4 py-3 rounded-xl flex items-center gap-2"
+                    className="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-xl flex items-center gap-2"
                 >
                     <CheckCircle className="h-5 w-5" /> {successMessage}
                 </motion.div>
@@ -240,7 +240,7 @@ const EditShopPage = ({ params }) => {
                 <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-800 dark:text-red-400 px-4 py-3 rounded-xl flex items-center gap-2"
+                    className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-xl flex items-center gap-2"
                 >
                     <AlertCircle className="h-5 w-5" /> {errorMessage}
                 </motion.div>
@@ -249,7 +249,7 @@ const EditShopPage = ({ params }) => {
             <motion.div variants={itemVariants}>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                     {/* Custom Animated Tab List */}
-                    <div className="bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl">
+                    <div className="bg-muted p-1.5 rounded-2xl">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-1 relative">
                             {[
                                 { id: "general", label: "General", icon: Store },
@@ -263,14 +263,14 @@ const EditShopPage = ({ params }) => {
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`relative z-10 flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-medium rounded-xl transition-colors duration-200 ${
                                         activeTab === tab.id
-                                            ? "text-slate-900 dark:text-white"
-                                            : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                                            ? "text-foreground"
+                                            : "text-muted-foreground hover:text-foreground"
                                     }`}
                                 >
                                     {activeTab === tab.id && (
                                         <motion.div
                                             layoutId="active-tab-pill"
-                                            className="absolute inset-0 bg-white dark:bg-slate-700 rounded-xl shadow-sm"
+                                            className="absolute inset-0 bg-background rounded-xl shadow-sm"
                                             transition={{ type: "spring", stiffness: 400, damping: 30 }}
                                         />
                                     )}
@@ -284,36 +284,36 @@ const EditShopPage = ({ params }) => {
                     </div>
 
                     <TabsContent value="general" className="space-y-6 outline-none">
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-500/10">
-                                    <Store className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                <div className="p-2 rounded-lg bg-primary/10">
+                                    <Store className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Basic Information</h2>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Update your shop's display details and branding</p>
+                                    <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
+                                    <p className="text-sm text-muted-foreground">Update your shop's display details and branding</p>
                                 </div>
                             </div>
 
                             <div className="space-y-6">
                                 <div className="space-y-4">
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Shop Brand Image</label>
+                                    <label className="text-sm font-medium text-foreground">Shop Brand Image</label>
                                     <div className="flex items-center gap-6">
                                         <div className="relative group">
                                             {imagePreview ? (
                                                 <div className="relative">
-                                                    <img src={imagePreview} alt="Shop Preview" className="h-28 w-28 rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700" />
+                                                    <img src={imagePreview} alt="Shop Preview" className="h-28 w-28 rounded-2xl object-cover border-2 border-border" />
                                                     <button
                                                         type="button"
                                                         onClick={() => { setImagePreview(""); setShopImage(null); }}
-                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-sm hover:scale-110 transition-transform"
+                                                        className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 shadow-sm hover:scale-110 transition-transform"
                                                     >
                                                         <X className="h-4 w-4" />
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <div className="h-28 w-28 rounded-2xl bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600">
-                                                    <ImageIcon className="h-8 w-8 text-slate-400" />
+                                                <div className="h-28 w-28 rounded-2xl bg-muted flex flex-col items-center justify-center border-2 border-dashed border-border">
+                                                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
                                                 </div>
                                             )}
                                         </div>
@@ -324,29 +324,29 @@ const EditShopPage = ({ params }) => {
                                                     <span className="cursor-pointer"><Upload className="h-4 w-4 mr-2" /> Change Image</span>
                                                 </Button>
                                             </label>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">JPG, PNG or WEBP. Max 2MB.</p>
+                                            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">JPG, PNG or WEBP. Max 2MB.</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="grid gap-5">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Shop Name</label>
+                                        <label className="text-sm font-medium text-foreground">Shop Name</label>
                                         <Input 
                                             {...register("name", { required: "Shop name is required" })} 
                                             placeholder="Enter shop name"
-                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            className="rounded-xl bg-muted/50"
                                         />
-                                        {errors.name && <p className="text-red-500 text-xs">{errors.name.message}</p>}
+                                        {errors.name && <p className="text-destructive text-xs">{errors.name.message}</p>}
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
+                                        <label className="text-sm font-medium text-foreground">Description</label>
                                         <Textarea 
                                             {...register("description")} 
                                             rows={4} 
                                             placeholder="Tell customers about your shop..."
-                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            className="rounded-xl bg-muted/50"
                                         />
                                     </div>
 
@@ -356,75 +356,75 @@ const EditShopPage = ({ params }) => {
                     </TabsContent>
 
                     <TabsContent value="contact" className="space-y-6 outline-none">
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 rounded-lg bg-green-50 dark:bg-green-500/10">
-                                    <MapPin className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                <div className="p-2 rounded-lg bg-primary/10">
+                                    <MapPin className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Contact & Location</h2>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">How customers can reach you and find your store</p>
+                                    <h2 className="text-lg font-semibold text-foreground">Contact & Location</h2>
+                                    <p className="text-sm text-muted-foreground">How customers can reach you and find your store</p>
                                 </div>
                             </div>
 
                             <div className="space-y-5">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                            <Mail className="h-4 w-4 text-slate-400" /> Email Address
+                                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                            <Mail className="h-4 w-4 text-muted-foreground" /> Email Address
                                         </label>
                                         <Input 
                                             type="email" 
                                             {...register("email")} 
                                             placeholder="business@example.com"
-                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            className="rounded-xl bg-muted/50"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                            <Phone className="h-4 w-4 text-slate-400" /> Phone Number
+                                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                            <Phone className="h-4 w-4 text-muted-foreground" /> Phone Number
                                         </label>
                                         <Input 
                                             {...register("phone")} 
                                             placeholder="+1 234 567 890"
-                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            className="rounded-xl bg-muted/50"
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-slate-400" /> Street Address
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 text-muted-foreground" /> Street Address
                                     </label>
                                     <Textarea 
                                         {...register("address_line")} 
                                         rows={2} 
                                         placeholder="Building, Street, Area"
-                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                        className="rounded-xl bg-muted/50"
                                     />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">City</label>
+                                        <label className="text-sm font-medium text-foreground">City</label>
                                         <Input 
                                             {...register("city")} 
                                             placeholder="City"
-                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            className="rounded-xl bg-muted/50"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">State</label>
+                                        <label className="text-sm font-medium text-foreground">State</label>
                                         <Input 
                                             {...register("state")} 
                                             placeholder="State"
-                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            className="rounded-xl bg-muted/50"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Pincode</label>
+                                        <label className="text-sm font-medium text-foreground">Pincode</label>
                                         <Input 
                                             {...register("pincode")} 
                                             placeholder="Zip Code"
-                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            className="rounded-xl bg-muted/50"
                                         />
                                     </div>
                                 </div>
@@ -433,36 +433,36 @@ const EditShopPage = ({ params }) => {
                     </TabsContent>
 
                     <TabsContent value="business" className="space-y-6 outline-none">
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-500/10">
-                                    <Building2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                <div className="p-2 rounded-lg bg-primary/10">
+                                    <Building2 className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Business Registration</h2>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Official business details and web presence</p>
+                                    <h2 className="text-lg font-semibold text-foreground">Business Registration</h2>
+                                    <p className="text-sm text-muted-foreground">Official business details and web presence</p>
                                 </div>
                             </div>
 
                             <div className="space-y-5">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                        <FileText className="h-4 w-4 text-slate-400" /> Official Business Name
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <FileText className="h-4 w-4 text-muted-foreground" /> Official Business Name
                                     </label>
                                     <Input 
                                         {...register("business_name")} 
                                         placeholder="e.g. Fresh Mart Private Ltd"
-                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                        className="rounded-xl bg-muted/50"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                        <Globe className="h-4 w-4 text-slate-400" /> Website URL
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <Globe className="h-4 w-4 text-muted-foreground" /> Website URL
                                     </label>
                                     <Input 
                                         {...register("website")} 
                                         placeholder="https://www.yourshop.com"
-                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                        className="rounded-xl bg-muted/50"
                                     />
                                 </div>
                             </div>
@@ -470,66 +470,66 @@ const EditShopPage = ({ params }) => {
                     </TabsContent>
 
                     <TabsContent value="hours" className="space-y-6 outline-none">
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-500/10">
-                                    <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                <div className="p-2 rounded-lg bg-primary/10">
+                                    <Clock className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Operating Hours</h2>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Set your shop's opening and closing times</p>
+                                    <h2 className="text-lg font-semibold text-foreground">Operating Hours</h2>
+                                    <p className="text-sm text-muted-foreground">Set your shop's opening and closing times</p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                        <Clock className="h-4 w-4 text-green-500" /> Opening Time
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <Clock className="h-4 w-4 text-muted-foreground" /> Opening Time
                                     </label>
                                     <Input 
                                         type="time" 
                                         {...register("opening_time")} 
-                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 cursor-pointer"
+                                        className="rounded-xl bg-muted/50 cursor-pointer"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                        <Clock className="h-4 w-4 text-red-500" /> Closing Time
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <Clock className="h-4 w-4 text-muted-foreground" /> Closing Time
                                     </label>
                                     <Input 
                                         type="time" 
                                         {...register("closing_time")} 
-                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 cursor-pointer"
+                                        className="rounded-xl bg-muted/50 cursor-pointer"
                                     />
                                 </div>
                             </div>
-                            <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
-                                <p className="text-xs text-slate-500 dark:text-slate-400">Times are based on your local timezone.</p>
+                            <div className="mt-6 p-4 bg-muted/50 rounded-xl border border-dashed border-border text-center">
+                                <p className="text-xs text-muted-foreground">Times are based on your local timezone.</p>
                             </div>
                         </div>
                     </TabsContent>
 
                     <TabsContent value="delivery" className="space-y-6 outline-none">
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-500/10">
-                                    <Truck className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                <div className="p-2 rounded-lg bg-primary/10">
+                                    <Truck className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Delivery Settings</h2>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage delivery areas and fees</p>
+                                    <h2 className="text-lg font-semibold text-foreground">Delivery Settings</h2>
+                                    <p className="text-sm text-muted-foreground">Manage delivery areas and fees</p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Delivery Pincodes</label>
+                                    <label className="text-sm font-medium text-foreground">Delivery Pincodes</label>
                                     <div className="flex gap-2">
                                         <Input 
                                             value={currentPincode}
                                             onChange={(e) => setCurrentPincode(e.target.value)}
                                             placeholder="Enter pincode"
-                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            className="rounded-xl bg-muted/50"
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter') {
                                                     e.preventDefault();
@@ -540,7 +540,7 @@ const EditShopPage = ({ params }) => {
                                         <Button 
                                             type="button"
                                             onClick={handleAddPincode}
-                                            className="rounded-xl bg-blue-500 hover:bg-blue-600 text-white"
+                                            className="rounded-xl"
                                         >
                                             Add
                                         </Button>
@@ -549,12 +549,12 @@ const EditShopPage = ({ params }) => {
                                     {pincodes.length > 0 ? (
                                         <div className="flex flex-wrap gap-2 mt-2">
                                             {pincodes.map((pin, index) => (
-                                                <div key={index} className="flex items-center gap-1 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm border border-blue-100 dark:border-blue-500/20">
+                                                <div key={index} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm border border-primary/20">
                                                     <span>{pin}</span>
                                                     <button 
                                                         type="button" 
                                                         onClick={() => handleRemovePincode(pin)}
-                                                        className="hover:text-red-500 ml-1"
+                                                        className="hover:text-destructive ml-1"
                                                     >
                                                         <X size={14} />
                                                     </button>
@@ -562,33 +562,33 @@ const EditShopPage = ({ params }) => {
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="text-xs text-slate-400 italic">No delivery pincodes added yet.</p>
+                                        <p className="text-xs text-muted-foreground italic">No delivery pincodes added yet.</p>
                                     )}
                                 </div>
                                 
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Delivery Fee</label>
+                                        <label className="text-sm font-medium text-foreground">Delivery Fee</label>
                                         <Input 
                                             type="number"
                                             {...register("delivery_fee")} 
-                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            className="rounded-xl bg-muted/50"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Min Order Amount</label>
+                                        <label className="text-sm font-medium text-foreground">Min Order Amount</label>
                                         <Input 
                                             type="number"
                                             {...register("min_order_amount")} 
-                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            className="rounded-xl bg-muted/50"
                                         />
                                     </div>
                                      <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Free Delivery Threshold</label>
+                                        <label className="text-sm font-medium text-foreground">Free Delivery Threshold</label>
                                         <Input 
                                             type="number"
                                             {...register("free_delivery_threshold")} 
-                                            className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                            className="rounded-xl bg-muted/50"
                                         />
                                     </div>
                                 </div>
@@ -597,7 +597,7 @@ const EditShopPage = ({ params }) => {
                     </TabsContent>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-800">
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-border">
                         <Button 
                             type="button" 
                             variant="ghost" 
@@ -611,7 +611,7 @@ const EditShopPage = ({ params }) => {
                             <Button 
                                 onClick={handleSubmit(onSubmit)} 
                                 disabled={isSaving} 
-                                className="min-w-[150px] rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/25"
+                                className="min-w-[150px] rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
                             >
                                 {isSaving ? (
                                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...</>
@@ -627,17 +627,17 @@ const EditShopPage = ({ params }) => {
             {/* Stats Summary */}
             <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                    { label: "Inventory", value: selectedShop.total_products || 0, gradient: "from-blue-500 to-blue-600", bg: "bg-blue-50 dark:bg-blue-500/10" },
-                    { label: "Total Sales", value: selectedShop.total_orders || 0, gradient: "from-green-500 to-emerald-600", bg: "bg-green-50 dark:bg-green-500/10" },
-                    { label: "Account Status", value: selectedShop.status || 'Active', gradient: "from-purple-500 to-purple-600", bg: "bg-purple-50 dark:bg-purple-500/10" }
+                    { label: "Inventory", value: selectedShop.total_products || 0, tone: "text-primary", bg: "bg-primary/10" },
+                    { label: "Total Sales", value: selectedShop.total_orders || 0, tone: "text-success", bg: "bg-success/10" },
+                    { label: "Account Status", value: selectedShop.status || 'Active', tone: "text-foreground", bg: "bg-muted" }
                 ].map((stat, i) => (
                     <motion.div 
                         key={i} 
                         whileHover={{ y: -4 }}
                         className={`${stat.bg} rounded-2xl p-5 border border-transparent`}
                     >
-                        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">{stat.label}</p>
-                        <p className={`text-2xl font-bold capitalize bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>{stat.value}</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">{stat.label}</p>
+                        <p className={`text-2xl font-bold capitalize ${stat.tone}`}>{stat.value}</p>
                     </motion.div>
                 ))}
             </motion.div>

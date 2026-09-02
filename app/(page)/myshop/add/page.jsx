@@ -29,7 +29,7 @@ import dynamic from "next/dynamic";
 
 const MapPicker = dynamic(() => import("@/components/Maps/MapPicker"), { 
     ssr: false,
-    loading: () => <div className="h-[300px] w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl flex items-center justify-center text-slate-400">Loading Map...</div>
+    loading: () => <div className="h-[300px] w-full bg-muted animate-pulse rounded-xl flex items-center justify-center text-muted-foreground">Loading Map...</div>
 });
 
 const containerVariants = {
@@ -194,18 +194,18 @@ const AddShopPage = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => router.back()}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    className="p-2 rounded-xl bg-muted hover:bg-accent transition-colors"
                 >
-                    <ArrowLeft className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                    <ArrowLeft className="h-5 w-5 text-foreground" />
                 </motion.button>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25">
-                            <Store className="h-5 w-5 text-white" />
+                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/25">
+                            <Store className="h-5 w-5 text-primary-foreground" />
                         </div>
                         Create New Shop
                     </h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                         Set up your business presence
                     </p>
                 </div>
@@ -215,69 +215,69 @@ const AddShopPage = () => {
                 {/* Shop Identity Section */}
                 <motion.div 
                     variants={itemVariants}
-                    className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+                    className="rounded-2xl border border-border bg-card p-6 shadow-sm"
                 >
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-500/10">
-                            <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <div className="p-2 rounded-lg bg-primary/10">
+                            <Building2 className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Shop Identity</h2>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Basic information about your business</p>
+                            <h2 className="text-lg font-semibold text-foreground">Shop Identity</h2>
+                            <p className="text-sm text-muted-foreground">Basic information about your business</p>
                         </div>
                     </div>
 
                     <div className="space-y-5">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Shop Display Name *</label>
+                                <label className="text-sm font-medium text-foreground">Shop Display Name *</label>
                                 <Input
                                     {...register("name", { required: "Name is required" })}
                                     placeholder="e.g. Fresh Mart"
-                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    className="rounded-xl bg-muted/50"
                                 />
-                                {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+                                {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Official Business Name</label>
+                                <label className="text-sm font-medium text-foreground">Official Business Name</label>
                                 <Input
                                     {...register("business_name")}
                                     placeholder="e.g. Fresh Mart Private Ltd"
-                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    className="rounded-xl bg-muted/50"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
+                            <label className="text-sm font-medium text-foreground">Description</label>
                             <Textarea 
                                 {...register("description")} 
                                 placeholder="Describe your shop..." 
                                 rows={3}
-                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                className="rounded-xl bg-muted/50"
                             />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                    <Phone size={14} className="text-slate-400" /> Phone *
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <Phone size={14} className="text-muted-foreground" /> Phone *
                                 </label>
                                 <Input 
                                     {...register("phone", { required: "Phone is required" })} 
                                     placeholder="10-digit number"
-                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    className="rounded-xl bg-muted/50"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                    <Mail size={14} className="text-slate-400" /> Email *
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <Mail size={14} className="text-muted-foreground" /> Email *
                                 </label>
                                 <Input 
                                     type="email" 
                                     {...register("email", { required: "Email is required" })} 
                                     placeholder="shop@example.com"
-                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    className="rounded-xl bg-muted/50"
                                 />
                             </div>
                         </div>
@@ -287,15 +287,15 @@ const AddShopPage = () => {
                 {/* Location Section */}
                 <motion.div 
                     variants={itemVariants}
-                    className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+                    className="rounded-2xl border border-border bg-card p-6 shadow-sm"
                 >
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 rounded-lg bg-green-50 dark:bg-green-500/10">
-                            <MapPin className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        <div className="p-2 rounded-lg bg-primary/10">
+                            <MapPin className="h-5 w-5 text-primary" />
                         </div>
                         <div className="flex-1">
-                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Location Details</h2>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Where customers can find you</p>
+                            <h2 className="text-lg font-semibold text-foreground">Location Details</h2>
+                            <p className="text-sm text-muted-foreground">Where customers can find you</p>
                         </div>
                         <Button
                             type="button"
@@ -303,7 +303,7 @@ const AddShopPage = () => {
                             size="sm"
                             onClick={handleDetectLocation}
                             disabled={isDetecting}
-                            className="gap-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20"
+                            className="gap-2 rounded-xl bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
                         >
                             {isDetecting ? (
                                 <Loader2 size={14} className="animate-spin" />
@@ -316,35 +316,35 @@ const AddShopPage = () => {
 
                     <div className="space-y-5">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Address Line *</label>
+                            <label className="text-sm font-medium text-foreground">Address Line *</label>
                             <Input 
                                 {...register("address_line", { required: "Address is required" })} 
                                 placeholder="Street, area, landmark"
-                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                className="rounded-xl bg-muted/50"
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <Input 
                                 {...register("city", { required: "Required" })} 
                                 placeholder="City"
-                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                className="rounded-xl bg-muted/50"
                             />
                             <Input 
                                 {...register("state", { required: "Required" })} 
                                 placeholder="State"
-                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                className="rounded-xl bg-muted/50"
                             />
                             <Input 
                                 {...register("pincode", { required: "Required" })} 
                                 placeholder="Pincode"
-                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                className="rounded-xl bg-muted/50"
                             />
                         </div>
 
                         {/* Coordinates Field (Visible and Editable) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
                                     <Navigation size={14} /> Latitude *
                                 </label>
                                 <Input 
@@ -352,12 +352,12 @@ const AddShopPage = () => {
                                     type="number" 
                                     {...register("shop_lat", { required: "Latitude is required" })} 
                                     placeholder="0.0000"
-                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    className="rounded-xl bg-muted/50"
                                 />
-                                {errors.shop_lat && <p className="text-xs text-red-500">{errors.shop_lat.message}</p>}
+                                {errors.shop_lat && <p className="text-xs text-destructive">{errors.shop_lat.message}</p>}
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
                                     <Navigation size={14} /> Longitude *
                                 </label>
                                 <Input 
@@ -365,15 +365,15 @@ const AddShopPage = () => {
                                     type="number" 
                                     {...register("shop_lng", { required: "Longitude is required" })} 
                                     placeholder="0.0000"
-                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    className="rounded-xl bg-muted/50"
                                 />
-                                {errors.shop_lng && <p className="text-xs text-red-500">{errors.shop_lng.message}</p>}
+                                {errors.shop_lng && <p className="text-xs text-destructive">{errors.shop_lng.message}</p>}
                             </div>
                         </div>
 
                         {/* Interactive Map */}
                         <div className="space-y-4">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            <label className="text-sm font-medium text-foreground">
                                 Pin your shop location on map
                             </label>
                             
@@ -390,40 +390,40 @@ const AddShopPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <motion.div 
                         variants={itemVariants}
-                        className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+                        className="rounded-2xl border border-border bg-card p-6 shadow-sm"
                     >
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-500/10">
-                                <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                            <div className="p-2 rounded-lg bg-primary/10">
+                                <Clock className="h-5 w-5 text-primary" />
                             </div>
-                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Operations</h2>
+                            <h2 className="text-lg font-semibold text-foreground">Operations</h2>
                         </div>
 
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Opening Time *</label>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Opening Time *</label>
                                     <Input 
                                         type="time" 
                                         {...register("opening_time", { required: "Required" })}
-                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                        className="rounded-xl bg-muted/50"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Closing Time *</label>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Closing Time *</label>
                                     <Input 
                                         type="time" 
                                         {...register("closing_time", { required: "Required" })}
-                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                        className="rounded-xl bg-muted/50"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Prep Time (mins)</label>
+                                <label className="text-sm font-medium text-foreground">Prep Time (mins)</label>
                                 <Input 
                                     type="number" 
                                     {...register("preparation_time")}
-                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    className="rounded-xl bg-muted/50"
                                 />
                             </div>
                         </div>
@@ -431,26 +431,26 @@ const AddShopPage = () => {
 
                     <motion.div 
                         variants={itemVariants}
-                        className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm"
+                        className="rounded-2xl border border-border bg-card p-6 shadow-sm"
                     >
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-500/10">
-                                <Truck className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                            <div className="p-2 rounded-lg bg-primary/10">
+                                <Truck className="h-5 w-5 text-primary" />
                             </div>
-                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Delivery Settings</h2>
+                            <h2 className="text-lg font-semibold text-foreground">Delivery Settings</h2>
                         </div>
 
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Delivery Pincodes *</label>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Delivery Pincodes *</label>
                                     <div className="space-y-3">
                                         <div className="flex gap-2">
                                             <Input 
                                                 value={currentPincode}
                                                 onChange={(e) => setCurrentPincode(e.target.value)}
                                                 placeholder="Enter pincode"
-                                                className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                                className="rounded-xl bg-muted/50"
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault();
@@ -461,7 +461,7 @@ const AddShopPage = () => {
                                             <Button 
                                                 type="button"
                                                 onClick={handleAddPincode}
-                                                className="rounded-xl bg-blue-500 hover:bg-blue-600 text-white"
+                                                className="rounded-xl"
                                             >
                                                 Add
                                             </Button>
@@ -470,12 +470,12 @@ const AddShopPage = () => {
                                         {pincodes.length > 0 ? (
                                             <div className="flex flex-wrap gap-2">
                                                 {pincodes.map((pin, index) => (
-                                                    <div key={index} className="flex items-center gap-1 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm border border-blue-100 dark:border-blue-500/20">
+                                                    <div key={index} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm border border-primary/20">
                                                         <span>{pin}</span>
                                                         <button 
                                                             type="button" 
                                                             onClick={() => handleRemovePincode(pin)}
-                                                            className="hover:text-red-500 ml-1"
+                                                            className="hover:text-destructive ml-1"
                                                         >
                                                             <X size={14} />
                                                         </button>
@@ -483,25 +483,25 @@ const AddShopPage = () => {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <p className="text-xs text-slate-400 italic">Add at least one pincode</p>
+                                            <p className="text-xs text-muted-foreground italic">Add at least one pincode</p>
                                         )}
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Delivery Fee</label>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Delivery Fee</label>
                                     <Input 
                                         type="number" 
                                         {...register("delivery_fee")}
-                                        className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                        className="rounded-xl bg-muted/50"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Min Order Amount</label>
+                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Min Order Amount</label>
                                 <Input 
                                     type="number" 
                                     {...register("min_order_amount")}
-                                    className="rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+                                    className="rounded-xl bg-muted/50"
                                 />
                             </div>
                         </div>
@@ -512,7 +512,7 @@ const AddShopPage = () => {
                 {storeError && (
                     <motion.div 
                         variants={itemVariants}
-                        className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm"
+                        className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-xl text-sm"
                     >
                         {storeError}
                     </motion.div>
@@ -528,7 +528,7 @@ const AddShopPage = () => {
                         variant="outline"
                         onClick={() => router.push("/myshop")}
                         disabled={isLoading}
-                        className="rounded-xl border-slate-200 dark:border-slate-700"
+                        className="rounded-xl"
                     >
                         Cancel
                     </Button>
@@ -537,7 +537,7 @@ const AddShopPage = () => {
                         <Button 
                             type="submit" 
                             disabled={isLoading} 
-                            className="min-w-[150px] rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/25"
+                            className="min-w-[150px] rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
                         >
                             {isLoading ? (
                                 <>

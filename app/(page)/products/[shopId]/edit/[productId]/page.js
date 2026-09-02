@@ -246,24 +246,24 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
   };
 
   return (
-    <Card className="rounded-2xl border-slate-200 dark:border-slate-700 dark:bg-slate-900/50 overflow-hidden shadow-sm border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
+    <Card className="rounded-2xl border-border bg-card overflow-hidden shadow-sm border-l-4 border-l-primary hover:shadow-md transition-shadow">
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-xl flex items-center justify-center overflow-hidden shadow-sm">
+          <div className="h-12 w-12 bg-muted rounded-xl flex items-center justify-center overflow-hidden shadow-sm">
             {variant.images && variant.images.length > 0 && variant.images[0]?.url && variant.images[0].url.trim() !== '' ? (
               <ProgressiveImage src={variant.images[0].url} className="h-full w-full object-cover" alt="variant" />
             ) : (
-              <Package className="h-5 w-5 text-slate-400" />
+              <Package className="h-5 w-5 text-muted-foreground" />
             )}
           </div>
           <div>
-            <h4 className="font-semibold text-slate-900 dark:text-white">{variant.name || "Unnamed Variant"}</h4>
-            <div className="text-xs text-slate-500 flex gap-2 items-center mt-0.5">
-              <span className="font-medium text-indigo-600 dark:text-indigo-400">{formatPrice(variant.price)}</span>
+            <h4 className="font-semibold text-foreground">{variant.name || "Unnamed Variant"}</h4>
+            <div className="text-xs text-muted-foreground flex gap-2 items-center mt-0.5">
+              <span className="font-medium text-primary">{formatPrice(variant.price)}</span>
               <span>•</span>
               <span>Stock: {variant.stock_quantity}</span>
               <span>•</span>
-              <span className="font-mono text-slate-400">SKU: {variant.sku}</span>
+              <span className="font-mono text-muted-foreground">SKU: {variant.sku}</span>
             </div>
           </div>
         </div>
@@ -273,45 +273,45 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
       </div>
 
       {isOpen && (
-        <div className="p-5 pt-0 space-y-5 border-t dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+        <div className="p-5 pt-0 space-y-5 border-t border-border bg-muted/50">
           <div className="grid grid-cols-1 gap-4 mt-5">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Variant Name</label>
-              <Input value={data.name} onChange={e => setData({ ...data, name: e.target.value })} className="h-10 rounded-xl dark:bg-slate-800" />
+              <label className="text-xs font-medium text-muted-foreground">Variant Name</label>
+              <Input value={data.name} onChange={e => setData({ ...data, name: e.target.value })} className="h-10 rounded-xl" />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Selling Price *</label>
-              <Input type="number" value={data.price} onChange={e => setData({ ...data, price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+              <label className="text-xs font-medium text-muted-foreground">Selling Price *</label>
+              <Input type="number" value={data.price} onChange={e => setData({ ...data, price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Stock Qty *</label>
-              <Input type="number" value={data.stock_quantity} onChange={e => setData({ ...data, stock_quantity: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+              <label className="text-xs font-medium text-muted-foreground">Stock Qty *</label>
+              <Input type="number" value={data.stock_quantity} onChange={e => setData({ ...data, stock_quantity: fromNumericInput(e.target.value) })} className="h-10 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Cost Price</label>
-              <Input type="number" value={data.cost_price} onChange={e => setData({ ...data, cost_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">MRP (Compare At)</label>
-              <Input type="number" value={data.compare_at_price} onChange={e => setData({ ...data, compare_at_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">SKU</label>
-              <Input value={data.sku} onChange={e => setData({ ...data, sku: e.target.value })} className="h-10 rounded-xl dark:bg-slate-800" />
+              <label className="text-xs font-medium text-muted-foreground">Cost Price</label>
+              <Input type="number" value={data.cost_price} onChange={e => setData({ ...data, cost_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Unit</label>
+              <label className="text-xs font-medium text-muted-foreground">MRP (Compare At)</label>
+              <Input type="number" value={data.compare_at_price} onChange={e => setData({ ...data, compare_at_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">SKU</label>
+              <Input value={data.sku} onChange={e => setData({ ...data, sku: e.target.value })} className="h-10 rounded-xl" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Unit</label>
               <Select value={data.unit} onValueChange={(val) => setData({ ...data, unit: val })}>
-                <SelectTrigger className="h-10 rounded-xl dark:bg-slate-800 text-xs">
+                <SelectTrigger className="h-10 rounded-xl text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
@@ -322,19 +322,19 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
               </Select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Per Unit Qty</label>
-              <Input type="number" value={data.per_unit_qty} onChange={e => setData({ ...data, per_unit_qty: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+              <label className="text-xs font-medium text-muted-foreground">Per Unit Qty</label>
+              <Input type="number" value={data.per_unit_qty} onChange={e => setData({ ...data, per_unit_qty: fromNumericInput(e.target.value) })} className="h-10 rounded-xl" />
             </div>
           </div>
 
           {/* Tax Section */}
-          <div className="space-y-3 border-t pt-4 dark:border-slate-700">
+          <div className="space-y-3 border-t pt-4 border-border">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-slate-500">Tax / GST</label>
+              <label className="text-xs font-medium text-muted-foreground">Tax / GST</label>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-[10px] rounded-lg hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10"
+                className="h-7 text-[10px] rounded-lg hover:bg-warning/10 hover:text-warning"
                 onClick={() => setData({ ...data, tax: [...(data.tax || []), { name: "", rate: 0 }] })}
               >
                 + Add Tax
@@ -351,7 +351,7 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
                       newTax[idx] = { ...newTax[idx], name: e.target.value.toUpperCase() };
                       setData({ ...data, tax: newTax });
                     }}
-                    className="h-9 text-xs rounded-xl dark:bg-slate-800"
+                    className="h-9 text-xs rounded-xl"
                   />
                   <div className="relative w-24">
                     <Input
@@ -363,14 +363,14 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
                         newTax[idx] = { ...newTax[idx], rate: parseFloat(e.target.value) || 0 };
                         setData({ ...data, tax: newTax });
                       }}
-                      className="h-9 text-xs rounded-xl dark:bg-slate-800 pr-6"
+                      className="h-9 text-xs rounded-xl pr-6"
                     />
-                    <span className="absolute right-2 top-2.5 text-xs text-slate-400">%</span>
+                    <span className="absolute right-2 top-2.5 text-xs text-muted-foreground">%</span>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 text-red-500 hover:text-red-600 rounded-xl"
+                    className="h-9 w-9 text-destructive hover:text-destructive/80 rounded-xl"
                     onClick={() => setData({ ...data, tax: (data.tax || []).filter((_, i) => i !== idx) })}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -378,20 +378,20 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
                 </div>
               ))}
               {(data.tax || []).length === 0 && (
-                <p className="text-[10px] text-slate-400 italic">No taxes applied.</p>
+                <p className="text-[10px] text-muted-foreground italic">No taxes applied.</p>
               )}
             </div>
           </div>
 
           {/* Attributes Manager */}
-          <div className="space-y-3 border-t pt-4 dark:border-slate-700">
+          <div className="space-y-3 border-t pt-4 border-border">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-slate-500">Attributes (Color, Size, etc.)</label>
+              <label className="text-xs font-medium text-muted-foreground">Attributes (Color, Size, etc.)</label>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 text-[10px] rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10"
+                className="h-7 text-[10px] rounded-lg hover:bg-primary/10 hover:text-primary"
                 onClick={() => setData({ ...data, attributes: [...(data.attributes || []), { name: "", value: "" }] })}
               >
                 + Add Attribute
@@ -408,7 +408,7 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
                       newAttrs[idx] = { ...newAttrs[idx], name: e.target.value };
                       setData({ ...data, attributes: newAttrs });
                     }}
-                    className="h-9 text-xs flex-1 rounded-xl dark:bg-slate-800"
+                    className="h-9 text-xs flex-1 rounded-xl"
                   />
                   <Input
                     placeholder="Value (e.g. Red)"
@@ -418,13 +418,13 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
                       newAttrs[idx] = { ...newAttrs[idx], value: e.target.value };
                       setData({ ...data, attributes: newAttrs });
                     }}
-                    className="h-9 text-xs flex-1 rounded-xl dark:bg-slate-800"
+                    className="h-9 text-xs flex-1 rounded-xl"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 text-red-500 hover:text-red-600 rounded-xl"
+                    className="h-9 w-9 text-destructive hover:text-destructive/80 rounded-xl"
                     onClick={() => setData({ ...data, attributes: data.attributes.filter((_, i) => i !== idx) })}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -432,19 +432,19 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
                 </div>
               ))}
               {(data.attributes || []).length === 0 && (
-                <p className="text-[10px] text-slate-400 italic">No attributes defined.</p>
+                <p className="text-[10px] text-muted-foreground italic">No attributes defined.</p>
               )}
             </div>
           </div>
 
           {/* Image Manager */}
-          <div className="space-y-3 border-t pt-4 dark:border-slate-700">
-            <label className="text-xs font-medium text-slate-500 block">Variant Images</label>
+          <div className="space-y-3 border-t pt-4 border-border">
+            <label className="text-xs font-medium text-muted-foreground block">Variant Images</label>
             <div className="flex flex-wrap gap-2">
               {variant.images?.filter(img => img?.url && img.url.trim() !== '').map((img, idx) => (
-                <div key={`existing-${idx}`} className="relative h-16 w-16 rounded-xl border-2 dark:border-slate-600 overflow-hidden group shadow-sm">
+                <div key={`existing-${idx}`} className="relative h-16 w-16 rounded-xl border-2 border-border overflow-hidden group shadow-sm">
                   <ProgressiveImage src={img.url} className="h-full w-full object-cover" alt={`variant-${idx}`} />
-                  <div className="absolute top-0 right-0 bg-sky-500 text-[8px] text-white px-1.5 py-0.5 rounded-bl-lg font-medium">Saved</div>
+                  <div className="absolute top-0 right-0 bg-primary text-[8px] text-primary-foreground px-1.5 py-0.5 rounded-bl-lg font-medium">Saved</div>
                   <button
                     onClick={() => handleDeleteImage(idx)}
                     type="button"
@@ -456,9 +456,9 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
               ))}
 
               {previewUrls.map((url, idx) => (
-                <div key={`pending-${idx}`} className="relative h-16 w-16 rounded-xl border-2 border-green-500 overflow-hidden group shadow-sm">
+                <div key={`pending-${idx}`} className="relative h-16 w-16 rounded-xl border-2 border-success overflow-hidden group shadow-sm">
                   <img src={url} className="h-full w-full object-cover opacity-80" />
-                  <div className="absolute top-0 right-0 bg-green-500 text-[8px] text-white px-1.5 py-0.5 rounded-bl-lg font-medium">New</div>
+                  <div className="absolute top-0 right-0 bg-success text-[8px] text-success-foreground px-1.5 py-0.5 rounded-bl-lg font-medium">New</div>
                   <button
                     onClick={() => removePendingImage(idx)}
                     type="button"
@@ -470,23 +470,23 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
               ))}
 
               {((variant.images?.length || 0) + pendingFiles.length) < 13 && (
-                <label className="h-16 w-16 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 dark:border-slate-600 transition-colors">
-                  <Upload className="h-4 w-4 text-slate-400" />
-                  <span className="text-[9px] text-slate-400 mt-1">Add</span>
+                <label className="h-16 w-16 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted border-border transition-colors">
+                  <Upload className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-[9px] text-muted-foreground mt-1">Add</span>
                   <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
                 </label>
               )}
             </div>
             {pendingFiles.length > 0 && (
-              <p className="text-[10px] text-green-600 mt-1">* {pendingFiles.length} new image(s) selected. Click Save Changes to upload.</p>
+              <p className="text-[10px] text-success mt-1">* {pendingFiles.length} new image(s) selected. Click Save Changes to upload.</p>
             )}
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t dark:border-slate-700">
+          <div className="flex justify-between items-center pt-4 border-t border-border">
             <Button variant="destructive" size="sm" onClick={handleDelete} className="h-9 rounded-xl">
               <Trash2 className="h-3 w-3 mr-2" /> Delete Variant
             </Button>
-            <Button onClick={handleSave} disabled={isSaving} size="sm" className="bg-gradient-to-r from-indigo-600 to-purple-600 h-9 rounded-xl shadow-lg shadow-indigo-500/25">
+            <Button onClick={handleSave} disabled={isSaving} size="sm" className="bg-primary hover:bg-primary/90 h-9 rounded-xl shadow-lg shadow-primary/25">
               {isSaving ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Save className="h-3 w-3 mr-2" />} Save Changes
             </Button>
           </div>
@@ -583,60 +583,60 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
   }
 
   return (
-    <Card className="border-dashed border-2 rounded-2xl dark:border-slate-700 dark:bg-slate-900/50">
+    <Card className="border-dashed border-2 rounded-2xl border-border bg-card">
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-500/20">
-            <Plus className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <div className="p-1.5 rounded-lg bg-primary/15">
+            <Plus className="h-4 w-4 text-primary" />
           </div>
           Add New Variant
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-500">Name</label>
-          <Input placeholder="e.g. Blue" value={newData.name} onChange={e => setNewData({ ...newData, name: e.target.value })} className="h-10 rounded-xl dark:bg-slate-800" />
+          <label className="text-xs font-medium text-muted-foreground">Name</label>
+          <Input placeholder="e.g. Blue" value={newData.name} onChange={e => setNewData({ ...newData, name: e.target.value })} className="h-10 rounded-xl" />
         </div>
 
         <div className="grid grid-cols-3 gap-4">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-500">Selling Price *</label>
-            <Input type="number" value={newData.price} onChange={e => setNewData({ ...newData, price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+            <label className="text-xs font-medium text-muted-foreground">Selling Price *</label>
+            <Input type="number" value={newData.price} onChange={e => setNewData({ ...newData, price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl" />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-500">Stock Qty *</label>
-            <Input type="number" value={newData.stock_quantity} onChange={e => setNewData({ ...newData, stock_quantity: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+            <label className="text-xs font-medium text-muted-foreground">Stock Qty *</label>
+            <Input type="number" value={newData.stock_quantity} onChange={e => setNewData({ ...newData, stock_quantity: fromNumericInput(e.target.value) })} className="h-10 rounded-xl" />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-500">Cost Price</label>
-            <Input type="number" value={newData.cost_price} onChange={e => setNewData({ ...newData, cost_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+            <label className="text-xs font-medium text-muted-foreground">Cost Price</label>
+            <Input type="number" value={newData.cost_price} onChange={e => setNewData({ ...newData, cost_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl" />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-500">MRP (Compare At)</label>
-            <Input type="number" value={newData.compare_at_price} onChange={e => setNewData({ ...newData, compare_at_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl dark:bg-slate-800" />
+            <label className="text-xs font-medium text-muted-foreground">MRP (Compare At)</label>
+            <Input type="number" value={newData.compare_at_price} onChange={e => setNewData({ ...newData, compare_at_price: fromNumericInput(e.target.value) })} className="h-10 rounded-xl" />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-500">SKU</label>
-            <Input placeholder="Optional" value={newData.sku} onChange={e => setNewData({ ...newData, sku: e.target.value })} className="h-10 rounded-xl dark:bg-slate-800" />
+            <label className="text-xs font-medium text-muted-foreground">SKU</label>
+            <Input placeholder="Optional" value={newData.sku} onChange={e => setNewData({ ...newData, sku: e.target.value })} className="h-10 rounded-xl" />
           </div>
         </div>
 
         {/* Attributes — what actually distinguishes this variant from the
             others. A product may hold only one variant with none, so from the
             second onwards these are required, not decorative. */}
-        <div className="space-y-3 border-t pt-4 dark:border-slate-700">
+        <div className="space-y-3 border-t pt-4 border-border">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-slate-500">
+            <label className="text-xs font-medium text-muted-foreground">
               Attributes (Color, Size, etc.)
             </label>
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="h-7 text-[10px] rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10"
+              className="h-7 text-[10px] rounded-lg hover:bg-primary/10 hover:text-primary"
               onClick={() => setNewData({ ...newData, attributes: [...(newData.attributes || []), { name: "", value: "" }] })}
             >
               + Add Attribute
@@ -653,7 +653,7 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
                     newAttrs[idx] = { ...newAttrs[idx], name: e.target.value };
                     setNewData({ ...newData, attributes: newAttrs });
                   }}
-                  className="h-9 text-xs flex-1 rounded-xl dark:bg-slate-800"
+                  className="h-9 text-xs flex-1 rounded-xl"
                 />
                 <Input
                   placeholder="Value (e.g. Red)"
@@ -663,13 +663,13 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
                     newAttrs[idx] = { ...newAttrs[idx], value: e.target.value };
                     setNewData({ ...newData, attributes: newAttrs });
                   }}
-                  className="h-9 text-xs flex-1 rounded-xl dark:bg-slate-800"
+                  className="h-9 text-xs flex-1 rounded-xl"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 text-red-500 hover:text-red-600 rounded-xl"
+                  className="h-9 w-9 text-destructive hover:text-destructive/80 rounded-xl"
                   onClick={() => setNewData({ ...newData, attributes: newData.attributes.filter((_, i) => i !== idx) })}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -677,7 +677,7 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
               </div>
             ))}
             {(newData.attributes || []).length === 0 && (
-              <p className="text-[10px] text-slate-400 italic">
+              <p className="text-[10px] text-muted-foreground italic">
                 No attributes yet — add one (e.g. Size / M) so this variant is
                 distinguishable from the others.
               </p>
@@ -687,10 +687,10 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
 
         {/* Image Upload for New Variant */}
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-500">Variant Image (Optional)</label>
+          <label className="text-xs font-medium text-muted-foreground">Variant Image (Optional)</label>
           <div className="flex items-center gap-4">
             {previewUrl ? (
-              <div className="relative h-16 w-16 rounded-xl border-2 dark:border-slate-600 overflow-hidden group">
+              <div className="relative h-16 w-16 rounded-xl border-2 border-border overflow-hidden group">
                 <img src={previewUrl} className="h-full w-full object-cover" />
                 <button
                   onClick={removeImage}
@@ -700,20 +700,20 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
                 </button>
               </div>
             ) : (
-              <label className="h-16 w-16 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 dark:border-slate-600 transition-colors">
-                <Upload className="h-4 w-4 text-slate-400" />
-                <span className="text-[9px] text-slate-400 mt-1">Select</span>
+              <label className="h-16 w-16 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted border-border transition-colors">
+                <Upload className="h-4 w-4 text-muted-foreground" />
+                <span className="text-[9px] text-muted-foreground mt-1">Select</span>
                 <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
               </label>
             )}
-            {previewUrl && <span className="text-xs text-green-600">Image selected</span>}
+            {previewUrl && <span className="text-xs text-success">Image selected</span>}
           </div>
         </div>
 
       </CardContent>
-      <CardFooter className="flex justify-end gap-2 border-t dark:border-slate-700 pt-4">
+      <CardFooter className="flex justify-end gap-2 border-t border-border pt-4">
         <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="rounded-xl">Cancel</Button>
-        <Button onClick={handleAdd} disabled={isLoading} size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl">
+        <Button onClick={handleAdd} disabled={isLoading} size="sm" className="bg-primary hover:bg-primary/90 rounded-xl">
           {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Create Variant"}
         </Button>
       </CardFooter>
@@ -853,16 +853,16 @@ const EditProductPage = () => {
     >
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-xl hover:bg-muted">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25">
-            <Edit3 className="h-6 w-6 text-white" />
+          <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/25">
+            <Edit3 className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Product</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Manage details, main image, and variants.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Product</h1>
+            <p className="text-sm text-muted-foreground">Manage details, main image, and variants.</p>
           </div>
         </div>
       </motion.div>
@@ -875,11 +875,11 @@ const EditProductPage = () => {
           {/* General Info Form */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Card className="rounded-2xl border-slate-200 dark:border-slate-700 shadow-sm dark:bg-slate-900/50 overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-800/50 dark:to-slate-800/30">
+              <Card className="rounded-2xl border-border shadow-sm bg-card overflow-hidden">
+                <CardHeader className="bg-muted/50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-indigo-100 dark:bg-indigo-500/20">
-                      <Tag className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                    <div className="p-2 rounded-xl bg-primary/15">
+                      <Tag className="h-5 w-5 text-primary" />
                     </div>
                     <CardTitle className="text-lg">General Information</CardTitle>
                   </div>
@@ -891,7 +891,7 @@ const EditProductPage = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Product Name</FormLabel>
-                        <FormControl><Input {...field} className="rounded-xl dark:bg-slate-800 h-11" /></FormControl>
+                        <FormControl><Input {...field} className="rounded-xl h-11" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -904,7 +904,7 @@ const EditProductPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Brand</FormLabel>
-                          <FormControl><Input {...field} className="rounded-xl dark:bg-slate-800 h-10" /></FormControl>
+                          <FormControl><Input {...field} className="rounded-xl h-10" /></FormControl>
                         </FormItem>
                       )}
                     />
@@ -928,7 +928,7 @@ const EditProductPage = () => {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea {...field} className="min-h-[120px] rounded-xl dark:bg-slate-800" />
+                          <Textarea {...field} className="min-h-[120px] rounded-xl" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -937,20 +937,20 @@ const EditProductPage = () => {
                     control={form.control}
                     name="is_available"
                     render={({ field }) => (
-                      <FormItem className="flex items-center space-x-3 space-y-0 border rounded-xl p-4 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                      <FormItem className="flex items-center space-x-3 space-y-0 border rounded-xl p-4 border-border bg-muted/50">
                         <FormControl>
-                          <Checkbox checked={field.value} onCheckedChange={field.onChange} className="data-[state=checked]:bg-emerald-600" />
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} className="data-[state=checked]:bg-success" />
                         </FormControl>
                         <div>
                           <FormLabel className="font-medium">Visible to Customers</FormLabel>
-                          <p className="text-xs text-slate-500">Product will appear in your store</p>
+                          <p className="text-xs text-muted-foreground">Product will appear in your store</p>
                         </div>
                       </FormItem>
                     )}
                   />
 
                   <div className="flex justify-end pt-4">
-                    <Button type="submit" disabled={isSubmitting || storeLoading} className="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg shadow-indigo-500/25">
+                    <Button type="submit" disabled={isSubmitting || storeLoading} className="rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25">
                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                       Save General Info
                     </Button>
@@ -964,10 +964,10 @@ const EditProductPage = () => {
           {/* Variants Section */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-500/20">
-                <Boxes className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 rounded-xl bg-primary/15">
+                <Boxes className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Product Variants</h2>
+              <h2 className="text-xl font-semibold text-foreground">Product Variants</h2>
             </div>
 
             <div className="space-y-4">
@@ -994,11 +994,11 @@ const EditProductPage = () => {
 
         {/* RIGHT COLUMN: Main Image */}
         <motion.div variants={itemVariants} className="lg:col-span-1">
-          <Card className="rounded-2xl border-slate-200 dark:border-slate-700 shadow-sm dark:bg-slate-900/50 overflow-hidden sticky top-6">
-            <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-800/50 dark:to-slate-800/30">
+          <Card className="rounded-2xl border-border shadow-sm bg-card overflow-hidden sticky top-6">
+            <CardHeader className="bg-muted/50">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-500/20">
-                  <ImagePlus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 rounded-xl bg-primary/15">
+                  <ImagePlus className="h-5 w-5 text-primary" />
                 </div>
                 <CardTitle className="text-lg">Main Product Image</CardTitle>
               </div>
@@ -1006,7 +1006,7 @@ const EditProductPage = () => {
             <CardContent className="p-6">
               <div className="flex flex-col items-center gap-4">
                 {activeImage ? (
-                  <div className="relative w-full aspect-square rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 group">
+                  <div className="relative w-full aspect-square rounded-2xl overflow-hidden border-2 border-border bg-muted group">
                     <img
                       src={activeImage}
                       alt="Product"
@@ -1028,15 +1028,15 @@ const EditProductPage = () => {
                     </div>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <label className="flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed border-border rounded-2xl cursor-pointer hover:bg-muted transition-colors">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 mb-3">
-                        <Upload className="w-8 h-8 text-slate-400" />
+                      <div className="p-3 rounded-xl bg-muted mb-3">
+                        <Upload className="w-8 h-8 text-muted-foreground" />
                       </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        <span className="font-semibold text-indigo-600 dark:text-indigo-400">Click to upload</span>
+                      <p className="text-sm text-muted-foreground">
+                        <span className="font-semibold text-primary">Click to upload</span>
                       </p>
-                      <p className="text-xs text-slate-400 mt-1">PNG, JPG up to 10MB</p>
+                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 10MB</p>
                     </div>
                     <input
                       type="file"

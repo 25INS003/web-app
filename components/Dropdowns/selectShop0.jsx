@@ -55,9 +55,9 @@ export default function GlobalSelectShop({ onShopSelect, ShowLabel = true }) {
     if (isLoading && myShops.length === 0) {
         return (
             <div className="relative w-full max-w-xs">
-                <div className="flex items-center justify-center h-10 border rounded-md dark:border-slate-700">
-                    <Loader2 className="h-4 w-4 animate-spin mr-2 dark:text-slate-400" />
-                    <span className="text-sm text-gray-500 dark:text-slate-400">
+                <div className="flex items-center justify-center h-10 rounded-md border border-border">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
                         Loading shops...
                     </span>
                 </div>
@@ -70,7 +70,7 @@ export default function GlobalSelectShop({ onShopSelect, ShowLabel = true }) {
     return (
         <div className="relative w-full max-w-xs">
             {ShowLabel && (
-                <label className="absolute top-0 left-0 -translate-y-full text-sm font-medium mb-1 dark:text-slate-400">
+                <label className="absolute top-0 left-0 -translate-y-full text-sm font-medium mb-1 text-muted-foreground">
                     Select a Shop
                 </label>
             )}
@@ -82,8 +82,7 @@ export default function GlobalSelectShop({ onShopSelect, ShowLabel = true }) {
                         disabled={isDisabled}
                         className={cn(
                             "w-full justify-between",
-                            "dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-100",
-                            !selectedShop && "text-muted-foreground dark:text-slate-400"
+                            !selectedShop && "text-muted-foreground"
                         )}
                     >
                         <div className="flex items-center gap-2">
@@ -101,12 +100,9 @@ export default function GlobalSelectShop({ onShopSelect, ShowLabel = true }) {
                     </Button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent
-                    align="start"
-                    className="w-full max-w-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
-                >
+                <DropdownMenuContent align="start" className="w-full max-w-xs">
                     <DropdownMenuLabel>My Shops</DropdownMenuLabel>
-                    <DropdownMenuSeparator className="dark:bg-slate-700" />
+                    <DropdownMenuSeparator />
 
                     {myShops.length === 0 ? (
                         <DropdownMenuItem disabled className="text-muted-foreground">
@@ -119,9 +115,8 @@ export default function GlobalSelectShop({ onShopSelect, ShowLabel = true }) {
                                 onClick={() => handleSelect(shop)}
                                 className={cn(
                                     "cursor-pointer",
-                                    "dark:hover:bg-slate-700 dark:focus:bg-slate-700",
                                     shop?.id === currentShop?.id &&
-                                    "bg-accent dark:bg-slate-700"
+                                    "bg-accent text-accent-foreground"
                                 )}
                             >
                                 <Store className="h-4 w-4 mr-2" />

@@ -202,7 +202,7 @@ export default function CascadingCategorySelect({
     }
     if (error) {
       return (
-        <span className="text-red-500 flex items-center">
+        <span className="text-destructive flex items-center">
           <XCircle className="mr-2 h-4 w-4" />
           Error loading
         </span>
@@ -232,8 +232,8 @@ export default function CascadingCategorySelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between dark:bg-slate-900", {
-            "border-red-500": isInvalid || error,
+          className={cn("w-full justify-between", {
+            "border-destructive": isInvalid || error,
             "text-muted-foreground": !selectedCategory && !isLoading && !error,
           })}
           disabled={isLoading || !!error}
@@ -245,20 +245,17 @@ export default function CascadingCategorySelect({
         </Button>
       </PopoverTrigger>
       
-      <PopoverContent className="w-[350px] p-0 dark:bg-slate-900" align="start">
-        <Command className="dark:bg-slate-900">
-          <CommandInput
-            placeholder="Search category..."
-            className="dark:bg-slate-900 dark:text-slate-200"
-          />
+      <PopoverContent className="w-[350px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search category..." />
           
           {/* Breadcrumb Navigation */}
           {selectedPath.length > 0 && (
-            <div className="flex items-center gap-1 px-2 py-2 border-b dark:border-slate-700 flex-wrap">
+            <div className="flex items-center gap-1 px-2 py-2 border-b border-border flex-wrap">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-2 text-xs text-blue-600 dark:text-blue-400"
+                className="h-6 px-2 text-xs text-primary"
                 onClick={() => handleBreadcrumbClick(-1)}
               >
                 Root
@@ -273,7 +270,7 @@ export default function CascadingCategorySelect({
                       "h-6 px-2 text-xs",
                       idx === selectedPath.length - 1 
                         ? "font-semibold text-foreground" 
-                        : "text-blue-600 dark:text-blue-400"
+                        : "text-primary"
                     )}
                     onClick={() => handleBreadcrumbClick(idx)}
                   >
@@ -284,9 +281,9 @@ export default function CascadingCategorySelect({
             </div>
           )}
 
-          <CommandList className="dark:bg-slate-900 max-h-[300px]">
+          <CommandList className="max-h-[300px]">
             <CommandEmpty>No categories found.</CommandEmpty>
-            <CommandGroup className="dark:text-slate-200">
+            <CommandGroup>
               {currentLevel.map((category) => {
                 const hasChild = hasChildren(category.id);
                 const isSelected = value === category.id;
@@ -296,7 +293,7 @@ export default function CascadingCategorySelect({
                     key={category.id}
                     value={category.name}
                     onSelect={() => handleCategoryClick(category)}
-                    className="hover:dark:bg-slate-800 focus:dark:bg-slate-800 cursor-pointer"
+                    className="hover:bg-muted focus:bg-muted cursor-pointer"
                   >
                     <Check
                       className={cn(
@@ -321,7 +318,7 @@ export default function CascadingCategorySelect({
 
           {/* Selection Actions */}
           {selectedPath.length > 0 && (
-            <div className="border-t dark:border-slate-700 p-2 flex justify-between items-center">
+            <div className="border-t border-border p-2 flex justify-between items-center">
               <span className="text-xs text-muted-foreground">
                 {hasChildren(selectedPath[selectedPath.length - 1].id) 
                   ? "Select or drill down" 
