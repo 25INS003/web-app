@@ -40,12 +40,23 @@ export const addressInputSchema = z.object({
   pincode: z.string().regex(/^[1-9][0-9]{5}$/, "Enter a valid 6-digit pincode"),
   country: z.string(),
   tag: addressTagSchema,
-  // Carried through when the address came from a device's GPS. The columns have
-  // always existed and `addAddress` has always accepted them; nothing on the
-  // client had a fix to send. Optional, because an address typed by hand has
-  // none — and a courier reading a street is the normal case, not a fallback.
-  lat: z.number().optional(),
-  lng: z.number().optional(),
+  // Required: an address is not saveable until it has been pinned.
+  //
+  // These were optional, and the result was that none of them were ever set —
+  // a form that never asks is a form nobody fills. A pincode is not a
+  // destination, and the shop's delivery screen has nothing to route from
+  // without these.
+  //
+  // The message names the map rather than the field, because the field is not
+  // where the customer fixes this.
+  lat: z
+    .number({ message: "Set a pin on the map above" })
+    .min(-90, "Latitude must be between -90 and 90")
+    .max(90, "Latitude must be between -90 and 90"),
+  lng: z
+    .number({ message: "Set a pin on the map above" })
+    .min(-180, "Longitude must be between -180 and 180")
+    .max(180, "Longitude must be between -180 and 180"),
 });
 export type AddressInput = z.infer<typeof addressInputSchema>;
 

@@ -149,7 +149,17 @@ export function AddressEditor({
       )}
 
       <div className="mt-3">
-        <AddressForm address={address} prefill={prefill} onDone={onDone} />
+        <AddressForm
+          address={address}
+          prefill={prefill}
+          onDone={onDone}
+          // Typing a coordinate moves the pin. `prefill` is what the map reads,
+          // so writing it here closes the loop without a second source of
+          // truth for where the pin is.
+          onCoordsTyped={(lat, lng) =>
+            setPrefill((p) => ({ ...p, lat, lng }))
+          }
+        />
       </div>
     </div>
   );

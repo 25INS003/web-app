@@ -17,7 +17,20 @@ import { useAddAddress, useUpdateAddress } from "./hooks";
 // to "" and lets the resolver ask for it rather than submitting a null. `tag`
 // is parsed rather than cast: an out-of-enum value would otherwise leave no
 // pill selected and silently submit something the backend rejects.
-function toInput(a: Address): AddressInput {
+/**
+ * Form defaults, which are looser than the input the resolver demands.
+ *
+ * `lat`/`lng` are required to submit but absent on an address saved before that
+ * was true, so the defaults type has to allow them missing — that is precisely
+ * the state the resolver then complains about, which is how an older address
+ * acquires a pin.
+ */
+type AddressDefaults = Omit<AddressInput, "lat" | "lng"> & {
+  lat?: number;
+  lng?: number;
+};
+
+function toInput(a: Address): AddressDefaults {
   return {
     contact_name: a.contact_name ?? "",
     contact_phone: a.contact_phone ?? "",
@@ -27,6 +40,9 @@ function toInput(a: Address): AddressInput {
     pincode: a.pincode,
     country: a.country ?? "India",
     tag: addressTagSchema.safeParse(a.tag).data ?? "home",
+    // Carried through so editing an address does not silently drop its pin.
+    lat: a.lat ?? undefined,
+    lng: a.lng ?? undefined,
   };
 }
 
@@ -34,6 +50,7 @@ export function AddressForm({
   address,
   prefill,
   onDone,
+  onCoordsTyped,
 }: {
   address?: Address;
   /**
@@ -44,6 +61,12 @@ export function AddressForm({
    */
   prefill?: Partial<AddressInput>;
   onDone: () => void;
+  /**
+   * Called when the customer types a coordinate directly, so the map can move
+   * its pin to match. Without it the two would disagree, and the map — being
+   * the thing that looks authoritative — would quietly be wrong.
+   */
+  onCoordsTyped?: (lat: number, lng: number) => void;
 }) {
   const add = useAddAddress();
   const update = useUpdateAddress();
@@ -95,7 +118,35 @@ export function AddressForm({
       // but not the pincode must not blank a pincode the customer typed.
       if (typeof value === "string" && value !== "") setValue(key, value);
     }
+    // The coordinates are registered fields now, so moving the pin writes them
+    // into the form rather than being spliced in at submit. That is what makes
+    // them visible, and what lets the customer correct them by typing.
+    if (typeof prefill.lat === "number") {
+      setValue("lat", prefill.lat, { shouldValidate: true });
+    }
+    if (typeof prefill.lng === "number") {
+      setValue("lng", prefill.lng, { shouldValidate: true });
+    }
   }, [prefill, setValue]);
+
+  // Typing a coordinate moves the pin, but only once both are real numbers:
+  // recentring on a half-typed "12." would fling the map to the equator between
+  // keystrokes.
+  const onCoordChange =
+    (which: "lat" | "lng") => (e: React.ChangeEvent<HTMLInputElement>) => {
+      const next = e.target.value === "" ? undefined : Number(e.target.value);
+      setValue(which, next as number, { shouldValidate: true });
+      const lat = which === "lat" ? next : watch("lat");
+      const lng = which === "lng" ? next : watch("lng");
+      if (
+        typeof lat === "number" &&
+        typeof lng === "number" &&
+        Number.isFinite(lat) &&
+        Number.isFinite(lng)
+      ) {
+        onCoordsTyped?.(lat, lng);
+      }
+    };
 
   const field = (name: keyof AddressInput, label: string, props = {}) => (
     <div className="space-y-1.5">
@@ -110,16 +161,11 @@ export function AddressForm({
   return (
     <form
       onSubmit={handleSubmit((v) => {
-        // The coordinates ride along unedited. They have no input of their own,
-        // and react-hook-form only returns what it registered — so taking `v`
-        // alone would drop the fix and save a GPS address with no position on
-        // it, which is the whole point of having taken one.
-        const input: AddressInput = {
-          ...v,
-          ...(prefill?.lat !== undefined && prefill?.lng !== undefined
-            ? { lat: prefill.lat, lng: prefill.lng }
-            : {}),
-        };
+        // No splice: `lat` and `lng` are registered fields, so they come back
+        // in `v` like everything else. They used to be lifted from `prefill`
+        // here because they had no input of their own — which also meant the
+        // customer could not see or correct them.
+        const input: AddressInput = v;
         return editing
           ? update.mutate({ id: address!.id, input }, { onSuccess: onDone })
           : add.mutate(input, { onSuccess: onDone });
@@ -136,6 +182,37 @@ export function AddressForm({
         {field("city", "City")}
         {field("state", "State")}
         {field("pincode", "Pincode")}
+      </div>
+
+      {/* The pin, in numbers.
+          Shown rather than hidden because they are the only part of an address
+          a courier can navigate to directly, and because a customer who can see
+          them can tell a right pin from a wrong one. Editable, and typing moves
+          the map — the same two-way behaviour the shop address form has.
+
+          Required: an address with no pin cannot be delivered to from the
+          shop's order screen, so it is not saveable. The message names the map,
+          because that is where this gets fixed. */}
+      {(errors.lat || errors.lng) && (
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          Set a pin on the map above so the delivery rider can find you.
+        </p>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        {field("lat", "Latitude", {
+          type: "number",
+          step: "any",
+          inputMode: "decimal",
+          placeholder: "Tap the map above",
+          onChange: onCoordChange("lat"),
+        })}
+        {field("lng", "Longitude", {
+          type: "number",
+          step: "any",
+          inputMode: "decimal",
+          placeholder: "Tap the map above",
+          onChange: onCoordChange("lng"),
+        })}
       </div>
       <div className="flex gap-2">
         {(["home", "work", "other"] as const).map((t) => (
