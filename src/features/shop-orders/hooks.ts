@@ -54,6 +54,26 @@ export function useShopOrders(
 }
 
 /**
+ * One order, in full — the screen someone packs and delivers from.
+ *
+ * Polled on the same beat as the board: an order's status can move under the
+ * shopkeeper while they have it open, either from another device or from the
+ * courier picking it up.
+ */
+export function useShopOrder(
+  shopId: string | undefined,
+  orderId: string | undefined,
+) {
+  return useQuery({
+    queryKey: queryKeys.orders.detail(shopId ?? "none", orderId ?? "none"),
+    queryFn: () => shopOrdersApi.detail(shopId as string, orderId as string),
+    enabled: Boolean(shopId && orderId),
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+/**
  * The shop's totals, and the per-status counts the tabs are numbered from.
  *
  * Polled on the same 30s beat as the list. It previously had only a staleTime,

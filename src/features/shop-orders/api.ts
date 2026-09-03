@@ -1,9 +1,11 @@
 import { api } from "@/lib/api/client";
 import {
+  shopOrderDetailSchema,
   shopOrderPageSchema,
   shopOrderStatsSchema,
 } from "@/lib/api/schemas/shopOrder";
 import type {
+  ShopOrderDetail,
   ShopOrderPage,
   ShopOrderStats,
   ShopOrderStatus,
@@ -58,6 +60,18 @@ export const shopOrdersApi = {
     if (status) params.set("status", status);
     return shopOrderPageSchema.parse(
       await api.get<unknown>(`/shops/${shopId}/orders?${params}`),
+    );
+  },
+
+  /**
+   * One order, in full.
+   *
+   * Keyed by the uuid, unlike the status writes below which take
+   * `order_number` — this is a read of the row itself, not a bulk action.
+   */
+  async detail(shopId: string, orderId: string): Promise<ShopOrderDetail> {
+    return shopOrderDetailSchema.parse(
+      await api.get<unknown>(`/shops/${shopId}/orders/${orderId}`),
     );
   },
 

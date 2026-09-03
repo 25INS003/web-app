@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, PackageOpen, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -328,6 +329,7 @@ export function ShopOrdersView() {
                 <OrderRow
                   key={order.id}
                   order={order}
+                  shopId={activeShopId as string}
                   busy={advance.isPending || cancelOrder.isPending}
                   onCancel={() => setCancelling(order)}
                   onAdvance={(status) =>
@@ -387,11 +389,13 @@ export function ShopOrdersView() {
 
 function OrderRow({
   order,
+  shopId,
   busy,
   onAdvance,
   onCancel,
 }: {
   order: ShopOrder;
+  shopId: string;
   busy: boolean;
   onAdvance: (status: ShopOrderStatus) => void;
   onCancel: () => void;
@@ -401,7 +405,21 @@ function OrderRow({
 
   return (
     <tr className="align-middle">
-      <td className="px-4 py-3 font-mono text-xs">{order.order_number}</td>
+      {/* A link on the number, not a click handler on the row: the row carries
+          its own Accept/Cancel buttons, and a <tr> handler would fire whenever
+          one of those was pressed. `?shop=` because the board holds its shop in
+          component state, which does not survive the navigation.
+
+          The whole row is still reachable — the number is the first cell, so it
+          is also the first tab stop. */}
+      <td className="px-4 py-3 font-mono text-xs">
+        <Link
+          href={`/dashboard/orders/${order.id}?shop=${shopId}`}
+          className="rounded font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+        >
+          {order.order_number}
+        </Link>
+      </td>
       <td className="px-4 py-3">
         <p className="font-medium">{customerName(order)}</p>
         {address?.city && (

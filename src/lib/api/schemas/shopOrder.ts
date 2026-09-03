@@ -52,16 +52,46 @@ export const shopOrderStatusSchema = z
   .catch("pending");
 export type ShopOrderStatus = z.infer<typeof shopOrderStatusSchema>;
 
+/**
+ * The address as it was when the order was placed.
+ *
+ * The names come from the snapshot the checkout writes, which is `full_name` /
+ * `phone_number` — not the `contact_name` / `contact_phone` the addresses table
+ * uses. Declaring the table's names meant `z.object` stripped the snapshot's,
+ * so the board showed a delivery address with nobody to hand it to. Both are
+ * accepted: the columns are what an older snapshot may carry.
+ *
+ * `lat` and `lng` are the whole point of the detail screen — somebody has to
+ * drive to this. The checkout has always written them; they were dropped here.
+ */
 const addressSnapshotSchema = z
   .object({
     address_line: z.string().nullish(),
+    landmark: z.string().nullish(),
     city: z.string().nullish(),
     state: z.string().nullish(),
     pincode: z.string().nullish(),
+    full_name: z.string().nullish(),
+    phone_number: z.string().nullish(),
     contact_name: z.string().nullish(),
     contact_phone: z.string().nullish(),
+    // Numbers in the snapshot, but a numeric column can arrive as a string over
+    // JSON — coerced so a decimal string does not become NaN on a map link.
+    lat: z.coerce.number().nullish(),
+    lng: z.coerce.number().nullish(),
   })
   .nullish();
+
+/** The recipient's name and phone, whichever shape the snapshot used. */
+export const recipientOf = (a: {
+  full_name?: string | null;
+  contact_name?: string | null;
+  phone_number?: string | null;
+  contact_phone?: string | null;
+} | null | undefined) => ({
+  name: a?.full_name ?? a?.contact_name ?? null,
+  phone: a?.phone_number ?? a?.contact_phone ?? null,
+});
 
 export const shopOrderSchema = z.object({
   id: objectId,
@@ -92,7 +122,12 @@ export const shopOrderSchema = z.object({
   items: z
     .array(
       z.object({
+        product_id: objectId.nullish(),
+        variant_id: objectId.nullish(),
         product_name: z.string().nullish(),
+        // Stored on the line at checkout, so it still shows what was bought
+        // even if the product has since changed or been removed.
+        image_url: z.string().nullish(),
         quantity: z.number().catch(1),
         // Rupees. The lines were served in paise beside a rupee order total
         // until the board asked for them.
@@ -213,3 +248,25 @@ export const STATUS_LABEL: Record<ShopOrderStatus, string> = {
   refunded: "Refunded",
   failed: "Failed",
 };
+
+/**
+ * GET /shops/:shopId/orders/:orderId — the single order, with its lines and
+ * status history.
+ */
+export const shopOrderDetailSchema = z
+  .object({
+    order: shopOrderSchema.extend({
+      special_instructions: z.string().nullish(),
+      status_logs: z
+        .array(
+          z.object({
+            status: z.string().nullish(),
+            note: z.string().nullish(),
+            created_at: z.string().nullish(),
+          }),
+        )
+        .catch([]),
+    }),
+  })
+  .transform((d) => d.order);
+export type ShopOrderDetail = z.infer<typeof shopOrderDetailSchema>;
