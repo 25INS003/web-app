@@ -13,6 +13,28 @@ if (!globalThis.ResizeObserver) {
   };
 }
 
+// jsdom has no IntersectionObserver either, and the catalogue's infinite scroll
+// constructs one. The stub records its callback on the instance so a test can
+// drive an intersection by hand — there is no scrolling in jsdom to trigger it.
+if (!globalThis.IntersectionObserver) {
+  globalThis.IntersectionObserver = class {
+    static instances: Array<{ cb: (e: unknown[]) => void }> = [];
+    cb: (e: unknown[]) => void;
+    constructor(cb: (e: unknown[]) => void) {
+      this.cb = cb;
+      (globalThis.IntersectionObserver as unknown as typeof this.constructor & {
+        instances: unknown[];
+      }).instances.push(this);
+    }
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+  } as unknown as typeof IntersectionObserver;
+}
+
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => {};
 }

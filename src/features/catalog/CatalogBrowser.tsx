@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "./ProductCard";
+import { useInfiniteScroll } from "./useInfiniteScroll";
 import { useCategories, useDeliveryPincode, useProducts } from "./hooks";
 
 const SORTS = [
@@ -93,6 +94,12 @@ export function CatalogBrowser({
   });
 
   const items = products.data?.pages.flatMap((p) => p.data) ?? [];
+
+  const sentinel = useInfiniteScroll({
+    hasNextPage: products.hasNextPage,
+    isFetching: products.isFetchingNextPage,
+    fetchNextPage: products.fetchNextPage,
+  });
   const total = products.data?.pages[0]?.total ?? 0;
 
   return (
@@ -215,19 +222,28 @@ export function CatalogBrowser({
             ))}
           </div>
           {products.hasNextPage && (
-            <div className="mt-8 flex justify-center">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => products.fetchNextPage()}
-                disabled={products.isFetchingNextPage}
-              >
-                {products.isFetchingNextPage && (
-                  <Loader2 className="animate-spin" />
-                )}
-                Load more
-              </Button>
-            </div>
+            <>
+              {/* Watched by the observer, and placed after the grid so the
+                  fetch starts while the last row is still on screen. */}
+              <div ref={sentinel} aria-hidden className="h-px" />
+              <div className="mt-8 flex justify-center">
+                {/* Kept, not replaced by the sentinel. Infinite scroll is
+                    unreachable by keyboard and never fires where
+                    IntersectionObserver is missing; this stays as the way out
+                    of both, and doubles as the loading indicator. */}
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => products.fetchNextPage()}
+                  disabled={products.isFetchingNextPage}
+                >
+                  {products.isFetchingNextPage && (
+                    <Loader2 className="animate-spin" />
+                  )}
+                  {products.isFetchingNextPage ? "Loading…" : "Load more"}
+                </Button>
+              </div>
+            </>
           )}
         </>
       )}
