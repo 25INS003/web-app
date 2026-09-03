@@ -22,6 +22,7 @@ import { useState } from "react";
 import type { ComponentType } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { NotificationBell } from "@/features/notifications/NotificationBell";
 import { useLogout } from "@/features/auth/useAuth";
 import type { User } from "@/lib/api/schemas/auth";
 import { cn } from "@/lib/utils";
@@ -152,6 +153,12 @@ export function DashboardShell({
             {open ? <X /> : <Menu />}
           </Button>
           <div className="ml-auto flex items-center gap-1">
+            {/* The bell lived only in StorefrontHeader, so everything the
+                backend sent a shop owner — a product approved, rejected with
+                its reason, or edited by an admin — was written and emitted with
+                nowhere on their side to see it. The admin section shares this
+                shell and gets it for the same reason. */}
+            <NotificationBell />
             <ThemeToggle />
           </div>
         </header>
