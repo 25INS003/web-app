@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Building2,
   IndianRupee,
   ReceiptText,
   FolderTree,
@@ -53,6 +54,7 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     { href: "/admin/platform-fees", label: "Platform fees", icon: IndianRupee },
     { href: "/admin/support", label: "Support", icon: LifeBuoy },
     { href: "/admin/reports", label: "Reports", icon: ShieldCheck },
+    { href: "/admin/settings", label: "Business details", icon: Building2 },
   ],
 };
 
