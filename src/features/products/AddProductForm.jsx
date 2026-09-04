@@ -82,6 +82,10 @@ const variantSchema = z.object({
   cost_price: z.coerce.number().min(0).optional(),
   stock_quantity: z.coerce.number().min(0, "Stock cannot be negative"),
   sku: z.string().optional(),
+  // Where this variant's stock sits. On the variant, not the product: the
+  // variant is what holds stock, and a 500g pouch on a shelf and a 5kg sack in
+  // the back are not in the same place.
+  warehouse_location: z.string().optional(),
   unit: z.enum(["piece", "kg", "gram", "liter", "pair", "set", "loaf", "dozen", "meter", "yard", "bottle", "pack"]).default("piece"),
   per_unit_qty: z.coerce.number().min(0.1, "Qty must be at least 0.1").default(1),
   attributes: z.array(z.object({
@@ -113,6 +117,7 @@ const emptyVariant = () => ({
   compare_at_price: "",
   cost_price: 0,
   stock_quantity: 0,
+  warehouse_location: "",
   unit: "piece",
   per_unit_qty: 1,
   attributes: [],
@@ -719,6 +724,21 @@ export const AddProductForm = ({ shopId, onCreated }) => {
                               <FormLabel className="text-xs">SKU</FormLabel>
                               <FormControl>
                                 <Input placeholder="Automatic if empty" {...field} className="rounded-xl dark:bg-muted h-10" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        {/* Beside the stock count, because it answers the
+                            other half of the same question: how many, and
+                            where. */}
+                        <FormField
+                          control={form.control}
+                          name={`variants.${index}.warehouse_location`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Warehouse Location</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g. Aisle 3, Rack B" {...field} className="rounded-xl dark:bg-muted h-10" />
                               </FormControl>
                             </FormItem>
                           )}

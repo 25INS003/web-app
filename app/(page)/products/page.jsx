@@ -28,6 +28,7 @@ import {
     ChevronRight,
     ChevronsLeft,
     ChevronsRight,
+    MapPin,
     Package,
     Store,
     Sparkles,
@@ -383,6 +384,7 @@ const ProductsListPage = () => {
                             <TableHead className="w-[80px] font-semibold">Image</TableHead>
                             <TableHead className="font-semibold">Product</TableHead>
                             <TableHead className="font-semibold">Category</TableHead>
+                            <TableHead className="font-semibold">Location</TableHead>
                             <TableHead className="font-semibold">Price</TableHead>
                             <TableHead className="font-semibold">Stock</TableHead>
                             <TableHead className="font-semibold">Status</TableHead>
@@ -392,7 +394,7 @@ const ProductsListPage = () => {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-20">
+                                <TableCell colSpan={8} className="text-center py-20">
                                     <div className="flex flex-col items-center gap-3">
                                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                         <span className="text-muted-foreground">Loading products...</span>
@@ -407,7 +409,7 @@ const ProductsListPage = () => {
                                tells people to add their first product, which
                                would be wrong advice and hide a real fault. */
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-20">
+                                <TableCell colSpan={8} className="text-center py-20">
                                     <div className="flex flex-col items-center gap-4">
                                         <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center">
                                             <AlertCircle className="h-8 w-8 text-destructive" />
@@ -430,7 +432,7 @@ const ProductsListPage = () => {
                             </TableRow>
                         ) : products.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-20">
+                                <TableCell colSpan={8} className="text-center py-20">
                                     <div className="flex flex-col items-center gap-4">
                                         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
                                             <Package className="h-8 w-8 text-muted-foreground" />
@@ -516,6 +518,32 @@ const ProductsListPage = () => {
                                                 <Badge variant="outline" className="rounded-lg font-medium">
                                                     {p.category?.name || "N/A"}
                                                 </Badge>
+                                            </TableCell>
+                                            {/* Where its stock is kept. The
+                                                location is on the VARIANT, so a
+                                                product sits in as many places as
+                                                its variants disagree about —
+                                                naming only the first would
+                                                quietly claim one bay for all of
+                                                them. A dash, not a blank cell:
+                                                "nobody recorded it" and "the
+                                                column failed to load" look
+                                                identical when the cell is
+                                                empty. */}
+                                            <TableCell>
+                                                {p.warehouse_locations?.length ? (
+                                                    <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
+                                                        <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
+                                                        {p.warehouse_locations[0]}
+                                                        {p.warehouse_locations.length > 1 && (
+                                                            <span className="text-muted-foreground">
+                                                                +{p.warehouse_locations.length - 1} more
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-sm text-muted-foreground">—</span>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <span className="font-semibold text-foreground">

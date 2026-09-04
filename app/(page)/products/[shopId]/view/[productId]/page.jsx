@@ -22,7 +22,8 @@ import {
     ImageOff,
     Eye,
     Sparkles,
-    Layers
+    Layers,
+    MapPin
 } from "lucide-react";
 
 // --- Shadcn UI ---
@@ -538,6 +539,25 @@ const ViewProductPage = () => {
                                             <AlertTriangle className="w-3 h-3" /> Low stock alert
                                         </div>
                                     )}
+
+                                    {/* Beside the count, because it answers the
+                                        other half of the same question: how
+                                        many, and where. It follows the selected
+                                        variant — two sizes of one product need
+                                        not sit in the same place, which is why
+                                        the column is on the variant. */}
+                                    <div className="flex items-start gap-1.5 pt-1 text-sm border-t border-border mt-1">
+                                        <MapPin className="w-4 h-4 shrink-0 mt-0.5 text-primary" />
+                                        {selectedVariant?.warehouse_location ? (
+                                            <span className="font-medium text-foreground">
+                                                {selectedVariant.warehouse_location}
+                                            </span>
+                                        ) : (
+                                            <span className="text-muted-foreground">
+                                                No location recorded
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Attributes */}

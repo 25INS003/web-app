@@ -22,6 +22,7 @@ import {
   Plus,
   Upload,
   X,
+  MapPin,
   Package,
   Tag,
   Boxes,
@@ -144,6 +145,10 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
     price: v.price || 0,
     stock_quantity: v.stock_quantity || 0,
     sku: v.sku || "",
+    // `?? ""` so a variant nobody has located loads as a blank box rather than
+    // the string "null", and so clearing it stays distinguishable from leaving
+    // it — the API reads "" as "clear this".
+    warehouse_location: v.warehouse_location ?? "",
     cost_price: v.cost_price || 0,
     // `?? ""`, not `|| 0`: a variant with no reference price has null here,
     // and `|| 0` turned that into a real 0 on load — so opening a product and
@@ -285,6 +290,15 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
               <span>Stock: {variant.stock_quantity}</span>
               <span>•</span>
               <span className="font-mono text-muted-foreground">SKU: {variant.sku}</span>
+              {variant.warehouse_location && (
+                <>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1 text-foreground">
+                    <MapPin className="h-3 w-3 shrink-0 text-primary" />
+                    {variant.warehouse_location}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -326,6 +340,15 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
               <label className="text-xs font-medium text-muted-foreground">SKU</label>
               <Input value={data.sku} onChange={e => setData({ ...data, sku: e.target.value })} className="h-10 rounded-xl" />
             </div>
+          </div>
+
+          {/* Where this variant's stock sits. Empty the box to say the location
+              is no longer known — the API stores that as cleared rather than
+              keeping a stale aisle number that sends a picker to the wrong
+              shelf. */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Warehouse Location</label>
+            <Input placeholder="e.g. Aisle 3, Rack B" value={data.warehouse_location} onChange={e => setData({ ...data, warehouse_location: e.target.value })} className="h-10 rounded-xl" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -535,6 +558,7 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
     price: 0,
     stock_quantity: 0,
     sku: "",
+    warehouse_location: "",
     cost_price: 0,
     compare_at_price: "",
     attributes: []
@@ -648,6 +672,11 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
             <label className="text-xs font-medium text-muted-foreground">SKU</label>
             <Input placeholder="Optional" value={newData.sku} onChange={e => setNewData({ ...newData, sku: e.target.value })} className="h-10 rounded-xl" />
           </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">Warehouse Location</label>
+          <Input placeholder="e.g. Aisle 3, Rack B" value={newData.warehouse_location} onChange={e => setNewData({ ...newData, warehouse_location: e.target.value })} className="h-10 rounded-xl" />
         </div>
 
         {/* Attributes — what actually distinguishes this variant from the

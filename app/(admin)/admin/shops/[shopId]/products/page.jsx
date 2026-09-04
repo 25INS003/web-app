@@ -10,6 +10,7 @@ import { ProgressiveImage } from "@/components/ProgressiveImage";
 import {
   ArrowLeft,
   ImageIcon,
+  MapPin,
   Package,
   PackagePlus,
   Pencil,
@@ -194,6 +195,7 @@ export default function AdminShopProductsPage() {
                 <th className="p-4 w-16">Image</th>
                 <th className="p-4">Product</th>
                 <th className="p-4">Category</th>
+                <th className="p-4">Location</th>
                 <th className="p-4">Price</th>
                 <th className="p-4">Stock</th>
                 <th className="p-4">Status</th>
@@ -204,7 +206,7 @@ export default function AdminShopProductsPage() {
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="p-10 text-center text-muted-foreground"
                   >
                     Loading products…
@@ -212,13 +214,13 @@ export default function AdminShopProductsPage() {
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={7} className="p-10 text-center text-destructive">
+                  <td colSpan={8} className="p-10 text-center text-destructive">
                     {error}
                   </td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-10 text-center">
+                  <td colSpan={8} className="p-10 text-center">
                     <p className="text-foreground font-medium">
                       {appliedSearch
                         ? "No products match that search."
@@ -270,6 +272,25 @@ export default function AdminShopProductsPage() {
                         <Badge variant="outline" className="rounded-lg">
                           {p.category?.name || "Uncategorised"}
                         </Badge>
+                      </td>
+                      {/* The location is on the VARIANT, so a product sits in
+                          as many places as its variants disagree about. A dash,
+                          not a blank cell: "nobody recorded it" and "the column
+                          failed to load" look the same empty. */}
+                      <td className="p-4">
+                        {p.warehouse_locations?.length ? (
+                          <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
+                            <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
+                            {p.warehouse_locations[0]}
+                            {p.warehouse_locations.length > 1 && (
+                              <span className="text-muted-foreground">
+                                +{p.warehouse_locations.length - 1} more
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
+                        )}
                       </td>
                       <td className="p-4 font-semibold text-foreground">
                         ₹{p.price?.toLocaleString("en-IN")}
