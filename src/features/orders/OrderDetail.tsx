@@ -2,12 +2,23 @@
 
 import { useState } from "react";
 
-import { ArrowLeft, Check, MapPin, RotateCcw, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Download,
+  Loader2,
+  MapPin,
+  RotateCcw,
+  XCircle,
+} from "lucide-react";
 import type { Order } from "@/lib/api/schemas/order";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { orderShopName } from "@/lib/api/schemas/order";
+import { ordersApi } from "./api";
+import { saveBlob } from "./saveBlob";
+import { toast } from "sonner";
 import {
   reviewKey,
   reviewProductId,
@@ -32,6 +43,9 @@ export function OrderDetail({ orderId }: { orderId: string }) {
   const reorder = useReorder();
   const cancel = useCancelOrder(orderId);
   const [cancelling, setCancelling] = useState(false);
+  // Above the early returns: hooks must run in the same order on every render,
+  // and there are two `if` guards below this that return.
+  const [downloading, setDownloading] = useState(false);
   useOrderRealtime(orderId);
 
   if (q.isPending) {
@@ -73,6 +87,22 @@ export function OrderDetail({ orderId }: { orderId: string }) {
       so.order_status ? CUSTOMER_CANCELLABLE.has(so.order_status) : true,
     );
   const delivered = order.order_status === "delivered";
+
+  const handleReceipt = async () => {
+    setDownloading(true);
+    try {
+      const blob = await ordersApi.downloadReceipt(order.id);
+      saveBlob(blob, `receipt-${order.order_number}.pdf`);
+    } catch {
+      // The blob response type means an error body arrives as a blob too, so
+      // there is no server message to read here without unpacking it. The
+      // failure modes are "not delivered yet" — which this button is hidden
+      // for — and the network.
+      toast.error("Could not download the receipt. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
   const steps = timelineSteps(order);
   const addr = order.delivery_address;
 
@@ -105,9 +135,30 @@ export function OrderDetail({ orderId }: { orderId: string }) {
             {formatDate(order.order_time ?? order.created_at)}
           </p>
         </div>
-        <Badge variant={statusBadgeVariant(order.order_status)}>
-          {STATUS_LABEL[order.order_status]}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {/* Only once delivered. The server refuses earlier anyway — a receipt
+              for an order still being packed says someone bought something they
+              have not received — so showing the button before then would offer
+              an action that cannot succeed. */}
+          {delivered && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={downloading}
+              onClick={handleReceipt}
+            >
+              {downloading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
+              {downloading ? "Preparing…" : "Download receipt"}
+            </Button>
+          )}
+          <Badge variant={statusBadgeVariant(order.order_status)}>
+            {STATUS_LABEL[order.order_status]}
+          </Badge>
+        </div>
       </div>
 
       {/* tracking */}

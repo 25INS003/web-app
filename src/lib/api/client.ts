@@ -112,4 +112,23 @@ export const api = {
           }
         : undefined,
     }),
+
+  /**
+   * A file the server generated, fetched as a blob.
+   *
+   * `apiRequest` unwraps `data.data` — the envelope every JSON endpoint uses —
+   * and a PDF has no envelope, so this goes through the raw instance. It still
+   * rides the same interceptors, which is the point of not reaching for `fetch`
+   * or a plain anchor: cookies are attached wherever the API lives, and a 401
+   * refreshes and retries rather than downloading an error page.
+   */
+  download: async (url: string, config?: AxiosRequestConfig): Promise<Blob> => {
+    const res = await http.request<Blob>({
+      ...config,
+      method: "GET",
+      url,
+      responseType: "blob",
+    });
+    return res.data;
+  },
 };
