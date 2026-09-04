@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import apiClient from "@/api/apiClient";
@@ -27,6 +28,14 @@ const containerVariants = {
 };
 
 const itemVariants = { hidden: { y: 12, opacity: 0 }, visible: { y: 0, opacity: 1 } };
+
+/**
+ * The read-only screen for a queued product.
+ *
+ * Under (admin), not the owner's own /products/:shopId/view/:productId — the
+ * (page) group is behind requireApprovedShopOwner and redirects an admin away.
+ */
+const viewHref = (p) => `/admin/shops/${p.shop_id}/products/${p.id}/view`;
 
 /**
  * Products a shop owner has submitted, waiting on a decision.
@@ -308,7 +317,16 @@ export default function PendingProductsPage() {
             className="rounded-2xl border border-border bg-card p-5 shadow-sm"
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-start">
-              <div className="h-24 w-24 shrink-0 relative rounded-xl bg-muted flex items-center justify-center overflow-hidden">
+              {/* The thumbnail and the name open the full product.
+                  A card carrying Approve and Reject cannot itself be a link —
+                  nesting buttons inside an anchor is invalid, and every
+                  decision click would also navigate. So the two parts that are
+                  only ever "look at this" carry the link, and the controls stay
+                  controls. */}
+              <Link
+                href={viewHref(p)}
+                className="h-24 w-24 shrink-0 relative rounded-xl bg-muted flex items-center justify-center overflow-hidden transition hover:ring-2 hover:ring-primary/40"
+              >
                 {p.main_image_url ? (
                   <ProgressiveImage
                     src={p.main_image_url}
@@ -318,11 +336,16 @@ export default function PendingProductsPage() {
                 ) : (
                   <ImageIcon className="h-6 w-6 text-muted-foreground" />
                 )}
-              </div>
+              </Link>
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="font-semibold text-foreground">{p.name}</h2>
+                  <Link
+                    href={viewHref(p)}
+                    className="font-semibold text-foreground underline-offset-4 transition hover:text-primary hover:underline"
+                  >
+                    {p.name}
+                  </Link>
                   {/* The handle for following this product across the tabs. It
                       is the id, shown readably — see productRef. */}
                   <button
