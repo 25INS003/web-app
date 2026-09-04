@@ -233,7 +233,10 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
     } else if (!updateSuccess) {
       // Error handled by store
     } else {
-      toast.error("Details saved, but image upload failed");
+      toast.error(
+        `${useVariantStore.getState().error} The other details were saved.`,
+        { duration: 8000 }
+      );
       onRefresh();
     }
     setIsSaving(false);
@@ -612,11 +615,14 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
       const imageOk = imageFile
         ? Boolean(await uploadVariantImages(newVariant.id, [imageFile]))
         : true;
-      toast[imageOk ? "success" : "error"](
-        imageOk
-          ? "New variant added!"
-          : "Variant added, but its image did not upload"
-      );
+      if (imageOk) {
+        toast.success("New variant added!");
+      } else {
+        toast.error(
+          `${useVariantStore.getState().error} The variant itself was added.`,
+          { duration: 8000 }
+        );
+      }
       setNewData(EMPTY_VARIANT);
       removeImage();
       setIsOpen(false);
@@ -906,7 +912,10 @@ export const EditProductForm = () => {
         if (imageOk) {
           toast.success("Product updated successfully");
         } else {
-          toast.error("Details saved, but the image did not upload");
+          toast.error(
+            `${useProductStore.getState().error} The other details were saved.`,
+            { duration: 8000 }
+          );
         }
         router.refresh();
       }

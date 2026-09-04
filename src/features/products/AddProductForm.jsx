@@ -366,17 +366,21 @@ export const AddProductForm = ({ shopId, onCreated }) => {
       const productId = createdProduct.id;
 
       // The upload actions report failure by RETURNING FALSE — they catch the
-      // error, put it in the store and resolve. Awaiting them without reading
-      // the answer meant a product created with no image still reported
+      // error, put the reason in the store and resolve. Awaiting them without
+      // reading the answer meant a product created with no image still reported
       // "Product created successfully!", so a broken upload looked like a
       // working one and nobody had a reason to look at it.
-      let imagesFailed = false;
+      //
+      // The reason is read back off the store, because that is where the action
+      // left it. Without it the message can only say what to do next, not what
+      // went wrong — and a file that will never upload gets retried forever.
+      let imageError = null;
 
       if (mainImageFile) {
         const formData = new FormData();
         formData.append("file", mainImageFile);
         if (!(await uploadProductImages(shopId, productId, formData))) {
-          imagesFailed = true;
+          imageError = useProductStore.getState().error;
         }
       }
 
@@ -389,7 +393,7 @@ export const AddProductForm = ({ shopId, onCreated }) => {
           return true;
         });
         if ((await Promise.all(uploadPromises)).some((ok) => !ok)) {
-          imagesFailed = true;
+          imageError = imageError || useVariantStore.getState().error;
         }
       }
 
@@ -404,10 +408,14 @@ export const AddProductForm = ({ shopId, onCreated }) => {
           : "Product created successfully!"
       );
       // Said separately, and after, because both halves are true: the product
-      // exists and the pictures did not attach. It is fixable from the edit
-      // page, which is the useful thing to know.
-      if (imagesFailed) {
-        toast.error("The product was saved, but its images did not upload. Add them from the edit page.");
+      // exists and the pictures did not attach. The reason comes first — it is
+      // what decides whether trying again is worth anything — then where to try
+      // again from.
+      if (imageError) {
+        toast.error(
+          `${imageError} The product was saved; add its images from the edit page.`,
+          { duration: 8000 }
+        );
       }
       onCreated(productId);
 

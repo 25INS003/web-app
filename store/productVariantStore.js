@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import apiClient from "@/api/apiClient";
 import { useProductStore } from "./productStore";
+import { uploadErrorMessage } from "@/lib/uploadError";
 
 export const useVariantStore = create((set, get) => ({
     // ================= STATE =================
@@ -191,10 +192,7 @@ export const useVariantStore = create((set, get) => ({
 
             return true;
         } catch (err) {
-            set({
-                error: err.response?.data?.message || "Failed to upload images",
-                isLoading: false,
-            });
+            set({ error: uploadErrorMessage(err), isLoading: false });
             return false;
         }
     },

@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import apiClient from "@/api/apiClient";
+import { uploadErrorMessage } from "@/lib/uploadError";
 
 export const useProductStore = create((set, get) => ({
   // ================= STATE =================
@@ -170,10 +171,11 @@ export const useProductStore = create((set, get) => ({
       return true;
     } catch (err) {
       console.error("Upload error:", err);
-      set({
-        error: err.response?.data?.message || "Failed to upload images",
-        isLoading: false,
-      });
+      // The reason, not a stand-in for it. A 413 from the proxy carries an HTML
+      // body with no `message`, so reading `data.message` alone left the caller
+      // with "Failed to upload images" for the one failure a person can
+      // actually do something about.
+      set({ error: uploadErrorMessage(err), isLoading: false });
       return false;
     }
   },
