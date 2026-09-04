@@ -360,20 +360,32 @@ export const AddProductForm = ({ shopId, onCreated }) => {
 
       const productId = createdProduct.id;
 
+      // The upload actions report failure by RETURNING FALSE — they catch the
+      // error, put it in the store and resolve. Awaiting them without reading
+      // the answer meant a product created with no image still reported
+      // "Product created successfully!", so a broken upload looked like a
+      // working one and nobody had a reason to look at it.
+      let imagesFailed = false;
+
       if (mainImageFile) {
         const formData = new FormData();
         formData.append("file", mainImageFile);
-        await uploadProductImages(shopId, productId, formData);
+        if (!(await uploadProductImages(shopId, productId, formData))) {
+          imagesFailed = true;
+        }
       }
 
       if (createdProduct.variants && Object.keys(variantImages).length > 0) {
         const uploadPromises = Object.entries(variantImages).map(async ([vIndex, files]) => {
           const variantId = createdProduct.variants[vIndex]?.id;
           if (variantId && files && files.length > 0) {
-            await uploadVariantImages(variantId, files);
+            return uploadVariantImages(variantId, files);
           }
+          return true;
         });
-        await Promise.all(uploadPromises);
+        if ((await Promise.all(uploadPromises)).some((ok) => !ok)) {
+          imagesFailed = true;
+        }
       }
 
       // Read from the created product rather than from which page called this
@@ -386,6 +398,12 @@ export const AddProductForm = ({ shopId, onCreated }) => {
           ? "Product submitted — an admin will review it before it goes live."
           : "Product created successfully!"
       );
+      // Said separately, and after, because both halves are true: the product
+      // exists and the pictures did not attach. It is fixable from the edit
+      // page, which is the useful thing to know.
+      if (imagesFailed) {
+        toast.error("The product was saved, but its images did not upload. Add them from the edit page.");
+      }
       onCreated(productId);
 
     } catch (error) {

@@ -584,10 +584,15 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
       variantPayload({ ...newData, attributes })
     );
     if (newVariant) {
-      if (imageFile) {
-        await uploadVariantImages(newVariant.id, [imageFile]);
-      }
-      toast.success("New variant added!");
+      // Same as above: false, not a throw, so the answer has to be read.
+      const imageOk = imageFile
+        ? Boolean(await uploadVariantImages(newVariant.id, [imageFile]))
+        : true;
+      toast[imageOk ? "success" : "error"](
+        imageOk
+          ? "New variant added!"
+          : "Variant added, but its image did not upload"
+      );
       setNewData(EMPTY_VARIANT);
       removeImage();
       setIsOpen(false);
@@ -858,12 +863,22 @@ export const EditProductForm = () => {
       const success = await updateProduct(shopId, productId, payload);
 
       if (success) {
+        // The upload action reports failure by returning false rather than
+        // throwing, so the result has to be read. Ignoring it reported a
+        // successful update for a picture that never attached.
+        let imageOk = true;
         if (newImageFile) {
           const formData = new FormData();
           formData.append("file", newImageFile);
-          await uploadProductImages(shopId, productId, formData);
+          imageOk = Boolean(
+            await uploadProductImages(shopId, productId, formData)
+          );
         }
-        toast.success("Product updated successfully");
+        if (imageOk) {
+          toast.success("Product updated successfully");
+        } else {
+          toast.error("Details saved, but the image did not upload");
+        }
         router.refresh();
       }
     } catch (error) {
