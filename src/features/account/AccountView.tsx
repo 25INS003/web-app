@@ -10,7 +10,6 @@ import {
   Sparkles,
   Star,
   Trash2,
-  Trophy,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -25,7 +24,6 @@ import {
 import { InitialsAvatar } from "@/components/ui/initials-avatar";
 import type { User } from "@/lib/api/schemas/auth";
 import type { Address } from "@/lib/api/schemas/address";
-import { useLoyalty } from "./useLoyalty";
 
 export function AccountView({ user }: { user: User }) {
   const fullName = `${user.first_name} ${user.last_name}`.trim();
@@ -47,9 +45,7 @@ export function AccountView({ user }: { user: User }) {
         <SignOutButton />
       </div>
 
-      <LoyaltyCard />
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
         <Link
           href="/orders"
           className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition hover:border-primary/40"
@@ -90,64 +86,6 @@ export function AccountView({ user }: { user: User }) {
 
       <AddressBook />
     </div>
-  );
-}
-
-function LoyaltyCard() {
-  const q = useLoyalty();
-  if (q.isPending) {
-    return <div className="mt-6 h-28 animate-pulse rounded-2xl bg-muted" />;
-  }
-  if (q.isError || !q.data) return null;
-  const {
-    available_points,
-    tier_label,
-    points_to_next_tier,
-    next_tier_label,
-    tier_progress,
-  } = q.data;
-  return (
-    <Link
-      href="/account/rewards"
-      className="mt-6 block overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 to-success/10 p-5 transition hover:border-primary/40"
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Trophy className="size-4 text-warning" /> Loyalty
-        </div>
-        <span className="rounded-full bg-card px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">
-          {tier_label}
-        </span>
-      </div>
-      <p className="mt-2 font-mono text-3xl font-bold tabular-nums">
-        {available_points.toLocaleString("en-IN")}
-        <span className="ml-1.5 text-base font-medium text-muted-foreground">
-          points
-        </span>
-      </p>
-
-      {/* The card used to promise redemption "at checkout", which nothing
-          implemented. Rewards are redeemed on the rewards page, so it now says
-          so and links there. */}
-      {next_tier_label ? (
-        <>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-card">
-            <div
-              className="h-full rounded-full bg-primary"
-              style={{ width: `${Math.round(tier_progress)}%` }}
-            />
-          </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            {points_to_next_tier.toLocaleString("en-IN")} points to{" "}
-            {next_tier_label} · view rewards
-          </p>
-        </>
-      ) : (
-        <p className="mt-1 text-xs text-muted-foreground">
-          Top tier reached · view rewards
-        </p>
-      )}
-    </Link>
   );
 }
 
