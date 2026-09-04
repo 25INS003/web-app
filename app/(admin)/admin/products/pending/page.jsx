@@ -18,6 +18,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { productRef } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 
 const containerVariants = {
@@ -37,6 +38,9 @@ const itemVariants = { hidden: { y: 12, opacity: 0 }, visible: { y: 0, opacity: 
  */
 export default function PendingProductsPage() {
   const router = useRouter();
+  // Which shelf is on screen. `pending` is the queue an admin works; `rejected`
+  // is the archive — kept rather than deleted, so a decision can be revisited.
+  const [tab, setTab] = useState("pending");
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,20 +50,36 @@ export default function PendingProductsPage() {
   // The product currently being decided, so its buttons can be disabled
   // without freezing the whole queue.
   const [busyId, setBusyId] = useState(null);
+  const [copiedRef, setCopiedRef] = useState(null);
+
+  // The full id, not the short reference — the short one is for reading, the
+  // full one is what a query or a URL needs.
+  const copyRef = async (id) => {
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopiedRef(id);
+      setTimeout(() => setCopiedRef(null), 1500);
+    } catch {
+      // Clipboard is permission-gated and absent over plain http. The
+      // reference is on screen either way.
+    }
+  };
 
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await apiClient.get("/admin/products/pending-approval");
+      const res = await apiClient.get(
+        `/admin/products/pending-approval?status=${tab}`
+      );
       setProducts(res.data.data.products ?? []);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to load pending products");
+      setError(err.response?.data?.message || "Failed to load products");
       setProducts([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [tab]);
 
   useEffect(() => {
     load();
@@ -108,11 +128,44 @@ export default function PendingProductsPage() {
           <p className="text-sm text-muted-foreground">
             {isLoading
               ? "Loading…"
-              : products.length === 0
-                ? "Nothing waiting"
-                : `${products.length} waiting for review`}
+              : tab === "pending"
+                ? products.length === 0
+                  ? "Nothing waiting"
+                  : `${products.length} waiting for review`
+                : tab === "rejected"
+                  ? products.length === 0
+                    ? "Nothing has been turned down"
+                    : `${products.length} kept after rejection`
+                  : products.length === 0
+                    ? "Nothing approved yet"
+                    : `${products.length} approved and listed`}
           </p>
         </div>
+      </motion.div>
+
+      <motion.div variants={itemVariants} className="flex gap-1 rounded-xl bg-muted p-1 w-fit">
+        {[
+          { key: "pending", label: "Waiting" },
+          { key: "rejected", label: "Not approved" },
+          // Where an approved product goes. Without it the tabs show only the
+          // two unresolved states, so following one to its conclusion means
+          // watching it disappear.
+          { key: "approved", label: "Approved" },
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            aria-pressed={tab === key}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
+              tab === key
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </motion.div>
 
       {error && (
@@ -131,10 +184,14 @@ export default function PendingProductsPage() {
         >
           <CheckCircle className="mx-auto h-10 w-10 text-success" />
           <p className="mt-3 font-medium text-foreground">
-            Every submitted product has been reviewed.
+            {tab === "pending"
+              ? "Every submitted product has been reviewed."
+              : "Nothing has been turned down."}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            New products from shop owners will appear here.
+            {tab === "pending"
+              ? "New products from shop owners will appear here."
+              : "A rejected product is kept here with its reason, so the decision can be revisited."}
           </p>
         </motion.div>
       )}
@@ -160,7 +217,19 @@ export default function PendingProductsPage() {
               </div>
 
               <div className="min-w-0 flex-1">
-                <h2 className="font-semibold text-foreground">{p.name}</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-semibold text-foreground">{p.name}</h2>
+                  {/* The handle for following this product across the tabs. It
+                      is the id, shown readably — see productRef. */}
+                  <button
+                    type="button"
+                    title="Copy the full product id"
+                    onClick={() => copyRef(p.id)}
+                    className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                  >
+                    {copiedRef === p.id ? "Copied" : productRef(p.id)}
+                  </button>
+                </div>
                 <p className="mt-0.5 text-sm text-muted-foreground flex flex-wrap items-center gap-2">
                   <Store className="h-4 w-4 shrink-0" />
                   <span className="font-medium text-primary">
@@ -175,6 +244,16 @@ export default function PendingProductsPage() {
                   <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
                     {p.description}
                   </p>
+                )}
+                {tab === "rejected" && (
+                  <div className="mt-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-destructive">
+                      Reason given
+                    </p>
+                    <p className="mt-1 text-sm text-foreground">
+                      {p.approval_note || "No reason was recorded."}
+                    </p>
+                  </div>
                 )}
                 <p className="mt-2 text-sm">
                   <span className="font-semibold text-foreground">
@@ -204,24 +283,34 @@ export default function PendingProductsPage() {
                 >
                   <Pencil className="mr-2 h-4 w-4" /> Edit
                 </Button>
+                {tab !== "approved" && (
                 <Button
                   className="rounded-xl bg-success text-success-foreground hover:bg-success/90"
                   disabled={busyId === p.id}
                   onClick={() => decide(p, "approved")}
                 >
-                  <CheckCircle className="mr-2 h-4 w-4" /> Approve
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  {tab === "pending" ? "Approve" : "Approve anyway"}
                 </Button>
-                <Button
-                  variant="outline"
-                  className="rounded-xl text-destructive hover:text-destructive"
-                  disabled={busyId === p.id}
-                  onClick={() => {
-                    setRejecting(rejecting === p.id ? null : p.id);
-                    setNote("");
-                  }}
-                >
-                  <XCircle className="mr-2 h-4 w-4" /> Reject
-                </Button>
+                )}
+                {/* Each shelf offers only the moves that mean something from
+                    it. Pending can go either way; a rejected product can be
+                    approved after a fix but not rejected again; an approved one
+                    can be taken down, which delists it. */}
+                {tab !== "rejected" && (
+                  <Button
+                    variant="outline"
+                    className="rounded-xl text-destructive hover:text-destructive"
+                    disabled={busyId === p.id}
+                    onClick={() => {
+                      setRejecting(rejecting === p.id ? null : p.id);
+                      setNote("");
+                    }}
+                  >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    {tab === "approved" ? "Take down" : "Reject"}
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -231,7 +320,9 @@ export default function PendingProductsPage() {
                   htmlFor={`note-${p.id}`}
                   className="text-sm font-medium text-foreground"
                 >
-                  Why is this being rejected?
+                  {tab === "approved"
+                    ? "Why is this being taken down?"
+                    : "Why is this being rejected?"}
                 </label>
                 {/* The owner sees this text, and it is the only thing telling
                     them what to change — so the reject button stays disabled
@@ -260,7 +351,7 @@ export default function PendingProductsPage() {
                     disabled={!note.trim() || busyId === p.id}
                     onClick={() => decide(p, "rejected", note.trim())}
                   >
-                    Confirm rejection
+                    {tab === "approved" ? "Take it down" : "Confirm rejection"}
                   </Button>
                 </div>
               </div>

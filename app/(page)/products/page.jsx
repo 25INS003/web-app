@@ -30,7 +30,8 @@ import {
     ChevronsRight,
     Package,
     Store,
-    Sparkles
+    Sparkles,
+    XCircle
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -155,8 +156,12 @@ const ProductsListPage = () => {
             
             const initialFilters = {
                 search: isNewShop ? "" : (queryParams.search || ""),
-                is_available: isNewShop ? "true" : (queryParams.is_available || "true"),
-                is_active: isNewShop ? "true" : (queryParams.is_active || "true"),
+                // "none", not "true". Switching shops used to snap these back
+                // to active-only, which hid that shop's pending and rejected
+                // products — the exact thing the store's defaults were changed
+                // to stop doing.
+                is_available: isNewShop ? "none" : (queryParams.is_available || "none"),
+                is_active: isNewShop ? "none" : (queryParams.is_active || "none"),
                 inStock: isNewShop ? "all" : (queryParams.inStock === undefined ? "all" : queryParams.inStock),
                 sortBy: isNewShop ? "created_at" : (queryParams.sortBy || "created_at"),
                 page: isNewShop ? 1 : (queryParams.page || 1)
@@ -177,10 +182,12 @@ const ProductsListPage = () => {
     };
 
     const handleResetFilters = () => {
+        // Reset means unfiltered, which is every status — otherwise "reset"
+        // quietly applies a filter of its own.
         const reset = {
             search: "",
-            is_available: "true",
-            is_active: "true",
+            is_available: "none",
+            is_active: "none",
             inStock: "all",
             sortBy: "created_at"
         };
@@ -278,6 +285,16 @@ const ProductsListPage = () => {
                 
                 <div className="flex gap-3 items-center">
                     <GlobalSelectShop />
+                    {/* Deliberately without a count. The list on this page is one
+                        page of products, so any number derived from it would be
+                        wrong — and a wrong count looks authoritative. The shelf
+                        says how many when you open it. */}
+                    <Link
+                        href="/products/rejected"
+                        className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                        <XCircle className="h-4 w-4" /> Not approved
+                    </Link>
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                         <Link 
                             href={`/products/${shopId}/add`} 
@@ -291,7 +308,7 @@ const ProductsListPage = () => {
 
             {/* Filter Bar */}
             <motion.div variants={itemVariants}>
-                <Card className="p-4 bg-white/80 dark:bg-card/80 backdrop-blur-sm border-border shadow-sm">
+                <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-sm">
                     <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                         <div className="relative md:col-span-2">
                             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
