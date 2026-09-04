@@ -51,6 +51,11 @@ export default function PendingProductsPage() {
   // without freezing the whole queue.
   const [busyId, setBusyId] = useState(null);
   const [copiedRef, setCopiedRef] = useState(null);
+  // "Approve all" asks before it acts. It is one click that puts every product
+  // on screen onto the storefront, and there is no single undo — each one would
+  // have to be taken down again.
+  const [confirmingAll, setConfirmingAll] = useState(false);
+  const [approvingAll, setApprovingAll] = useState(false);
 
   // The full id, not the short reference — the short one is for reading, the
   // full one is what a query or a URL needs.
@@ -110,6 +115,48 @@ export default function PendingProductsPage() {
     }
   };
 
+  /**
+   * Approve everything currently on screen.
+   *
+   * The ids are sent explicitly, not "approve everything pending". Those are
+   * different decisions: the queue is a live list, and a product submitted
+   * between this page loading and the button being pressed would be approved
+   * by someone who never saw it.
+   */
+  const approveAll = async () => {
+    setApprovingAll(true);
+    try {
+      const res = await apiClient.put("/admin/products/approve", {
+        product_ids: products.map((p) => p.id),
+      });
+      const data = res.data.data ?? {};
+      const done = new Set(data.approved_ids ?? []);
+      const skipped = data.skipped ?? [];
+      // Only what actually changed leaves the list. Anything the server skipped
+      // — deleted, or already decided by somebody else — stays on screen rather
+      // than vanishing as though it had been approved.
+      setProducts((current) => current.filter((p) => !done.has(p.id)));
+      setConfirmingAll(false);
+      toast.success(
+        done.size === 1
+          ? "1 product is now listed"
+          : `${done.size} products are now listed`
+      );
+      if (skipped.length > 0) {
+        toast.warning(
+          `${skipped.length} could not be approved — deleted, or already decided by someone else. They are still in the list.`,
+          { duration: 8000 }
+        );
+      }
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || "Could not approve those products"
+      );
+    } finally {
+      setApprovingAll(false);
+    }
+  };
+
   return (
     <motion.div
       className="container mx-auto p-4 md:p-6 space-y-6"
@@ -117,11 +164,14 @@ export default function PendingProductsPage() {
       initial="hidden"
       animate="visible"
     >
-      <motion.div variants={itemVariants} className="flex items-center gap-3">
+      <motion.div
+        variants={itemVariants}
+        className="flex flex-wrap items-center gap-3"
+      >
         <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/25">
           <Package className="h-6 w-6 text-primary-foreground" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Product approvals
           </h1>
@@ -141,7 +191,61 @@ export default function PendingProductsPage() {
                     : `${products.length} approved and listed`}
           </p>
         </div>
+
+        {/* Only on the queue. "Approve all" on the rejected shelf would mean
+            reversing a set of decisions somebody made one at a time, and on the
+            approved tab it would mean nothing at all. */}
+        {tab === "pending" && products.length > 0 && (
+          <Button
+            type="button"
+            onClick={() => setConfirmingAll(true)}
+            disabled={approvingAll || confirmingAll}
+            className="rounded-xl bg-success text-white hover:bg-success/90"
+          >
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Approve all ({products.length})
+          </Button>
+        )}
       </motion.div>
+
+      {/* Asked, not assumed. One click here lists every product on screen, and
+          undoing it is one take-down per product — the cost of the two mistakes
+          is not symmetric, so the reversible one is the default. */}
+      {confirmingAll && (
+        <motion.div
+          variants={itemVariants}
+          className="rounded-2xl border border-success/30 bg-success/10 p-5"
+        >
+          <p className="font-medium text-foreground">
+            Approve all {products.length} products waiting?
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Every one of them goes on the storefront and its owner is notified.
+            Taking them back down is one product at a time.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={approveAll}
+              disabled={approvingAll}
+              className="rounded-xl bg-success text-white hover:bg-success/90"
+            >
+              {approvingAll
+                ? "Approving…"
+                : `Yes, approve all ${products.length}`}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="rounded-xl"
+              disabled={approvingAll}
+              onClick={() => setConfirmingAll(false)}
+            >
+              Review them one by one
+            </Button>
+          </div>
+        </motion.div>
+      )}
 
       <motion.div variants={itemVariants} className="flex gap-1 rounded-xl bg-muted p-1 w-fit">
         {[
