@@ -860,14 +860,24 @@ export const EditProductForm = () => {
         category_id: catId || "",
       });
 
-      if (currentProduct.main_image && currentProduct.main_image_url) {
-        // Same pre-existing pattern as the variant row above: hydrating local
-        // state from fetched data. `existingImage` is not purely derived — the
-        // upload and delete handlers write it too — so it cannot simply be
-        // computed during render.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setExistingImage(currentProduct.main_image_url);
-      }
+      // Same pre-existing pattern as the variant row above: hydrating local
+      // state from fetched data. `existingImage` is not purely derived — the
+      // upload and delete handlers write it too — so it cannot simply be
+      // computed during render.
+      //
+      // This was guarded on `currentProduct.main_image` as well, which is the
+      // mongoose-era NESTED OBJECT — there is no such field any more, only the
+      // `main_image_url` and `main_image_alt` columns (see the same note in
+      // setMainProductImage). So the guard was never true, this never ran, and
+      // the edit screen showed no picture for a product that had one: the
+      // owner saw an empty upload box and a delete button with nothing to
+      // delete, whatever they had uploaded.
+      //
+      // `?? null` rather than only setting when present, so switching to a
+      // product with no main image clears the previous one instead of leaving
+      // it on screen.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setExistingImage(currentProduct.main_image_url ?? null);
     }
   }, [currentProduct, isInitializing, form]);
 
