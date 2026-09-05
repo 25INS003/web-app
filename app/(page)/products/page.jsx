@@ -481,7 +481,8 @@ const ProductsListPage = () => {
                         ) : (
                             products.map((p, index) => {
                                     const isActive = p.is_active;
-                                    const hasValidImage = p.main_image_url && p.main_image_url.trim() !== '';
+                                    const cardImage = p.card_image_url || p.main_image_url;
+                                    const hasValidImage = Boolean(cardImage && cardImage.trim() !== '');
                                     return (
                                         <TableRow
                                             key={p.id}
@@ -494,7 +495,7 @@ const ProductsListPage = () => {
                                                     >
                                                         {hasValidImage ? (
                                                             <ProgressiveImage
-                                                                src={p.main_image_url}
+                                                                src={cardImage}
                                                                 alt="product"
                                                                 className="absolute inset-0 h-full w-full object-cover"
                                                             />

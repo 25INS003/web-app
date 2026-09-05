@@ -177,9 +177,9 @@ export default function RejectedProductsPage() {
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-start">
               <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
-                {p.main_image_url ? (
+                {(p.card_image_url || p.main_image_url) ? (
                   <ProgressiveImage
-                    src={p.main_image_url}
+                    src={p.card_image_url || p.main_image_url}
                     alt={p.name}
                     className="absolute inset-0 h-full w-full object-cover"
                   />

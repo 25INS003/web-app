@@ -239,7 +239,8 @@ export default function AdminShopProductsPage() {
               ) : (
                 products.map((p) => {
                   const hasImage =
-                    p.main_image_url && p.main_image_url.trim() !== "";
+                    (p.card_image_url || p.main_image_url)?.trim() !== "" &&
+                    Boolean(p.card_image_url || p.main_image_url);
                   return (
                     <tr
                       key={p.id}
@@ -251,7 +252,7 @@ export default function AdminShopProductsPage() {
                         <div className="h-12 w-12 relative rounded-xl bg-muted flex items-center justify-center overflow-hidden">
                           {hasImage ? (
                             <ProgressiveImage
-                              src={p.main_image_url}
+                              src={p.card_image_url || p.main_image_url}
                               alt={p.name}
                               className="absolute inset-0 h-full w-full object-cover"
                             />

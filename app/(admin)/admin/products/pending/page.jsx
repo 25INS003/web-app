@@ -327,9 +327,9 @@ export default function PendingProductsPage() {
                 href={viewHref(p)}
                 className="h-24 w-24 shrink-0 relative rounded-xl bg-muted flex items-center justify-center overflow-hidden transition hover:ring-2 hover:ring-primary/40"
               >
-                {p.main_image_url ? (
+                {(p.card_image_url || p.main_image_url) ? (
                   <ProgressiveImage
-                    src={p.main_image_url}
+                    src={p.card_image_url || p.main_image_url}
                     alt={p.name}
                     className="absolute inset-0 h-full w-full object-cover"
                   />

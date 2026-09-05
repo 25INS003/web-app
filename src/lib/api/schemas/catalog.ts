@@ -57,6 +57,8 @@ export const catalogProductSchema = z.object({
   // bug. Found after rehosting the catalogue imagery into our own bucket, when
   // the pictures still did not appear.
   main_image_url: z.string().nullish(),
+  // What a card should render — see productImage below.
+  card_image_url: z.string().nullish(),
   images: z.array(productImageSchema).optional(),
   shop_id: z.union([objectId, shopRefSchema]).nullish(),
   category_id: z.union([objectId, categoryRefSchema]).nullish(),
@@ -188,5 +190,11 @@ export function shopName(p: CatalogProduct): string | undefined {
   return p.shop_id && typeof p.shop_id === "object" ? p.shop_id.name : undefined;
 }
 export function productImage(p: CatalogProduct): string | undefined {
-  return p.main_image_url || p.images?.[0]?.url || undefined;
+  // `card_image_url` is the server's answer to "what should a card show":
+  // the product's own main image, falling back to a variant's only when the
+  // product has none. Resolved there so every card surface agrees, rather than
+  // four clients each deciding.
+  return (
+    p.card_image_url || p.main_image_url || p.images?.[0]?.url || undefined
+  );
 }
