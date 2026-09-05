@@ -223,13 +223,38 @@ export const ProductDetailView = ({ backHref, backLabel, editHref }) => {
     const isLowStock = stockQty <= lowStockThreshold && stockQty > 0;
     const isOutOfStock = stockQty <= 0;
 
-    const galleryImages = [
-        currentProduct.main_image_url,
-        ...(currentProduct.images || []).map((img) => img?.url),
-        ...(selectedVariant?.images || []).map((img) => typeof img === 'string' ? img : img?.url)
-    ].filter((url) => url && url.trim() !== '');
+    // Every image the product owns, not just the selected variant's.
+    //
+    // This listed the main image and `selectedVariant.images`, so a photo
+    // uploaded to any other variant was invisible unless you happened to pick
+    // that variant first — and nothing on the page said it was there. On a
+    // product with three variants that is most of its pictures hidden behind a
+    // control nobody knows to use.
+    //
+    // Each one carries where it came from, because "whose photo is this" is the
+    // question a gallery mixing variants immediately raises. Deduplicated by
+    // URL, keeping the first label: addVariant seeds a variant from the
+    // product's main image, so the same file is legitimately on both and should
+    // appear once, as the main image.
+    const imageEntries = [];
+    const seenImages = new Set();
+    const addImage = (url, label) => {
+        const clean = typeof url === 'string' ? url.trim() : url?.url?.trim();
+        if (!clean || seenImages.has(clean)) return;
+        seenImages.add(clean);
+        imageEntries.push({ url: clean, label });
+    };
 
-    const uniqueImages = [...new Set(galleryImages)];
+    addImage(currentProduct.main_image_url, "Main image");
+    for (const variant of currentVariants || []) {
+        for (const img of variant.images || []) {
+            addImage(img, variant.name || "Variant");
+        }
+    }
+
+    const uniqueImages = imageEntries.map((entry) => entry.url);
+    const imageLabel = (url) =>
+        imageEntries.find((entry) => entry.url === url)?.label ?? "";
 
     return (
         <motion.div
@@ -324,6 +349,7 @@ export const ProductDetailView = ({ backHref, backLabel, editHref }) => {
                                             <button
                                                 key={`${src}-${idx}`}
                                                 onClick={() => setChosenImage(src)}
+                                                title={imageLabel(src)}
                                                 className={cn(
                                                     "relative flex-shrink-0 w-16 h-16 md:w-full md:h-20 rounded-xl overflow-hidden border-2 transition-all",
                                                     activeImage === src
@@ -337,12 +363,21 @@ export const ProductDetailView = ({ backHref, backLabel, editHref }) => {
                                                         <ImageOff className="w-6 h-6 text-destructive" />
                                                     </div>
                                                 ) : (
-                                                    <ProgressiveImage
-                                                        src={src}
-                                                        alt={`Thumbnail ${idx + 1}`}
-                                                        className="absolute inset-0 h-full w-full object-cover"
-                                                        onError={() => handleImageError(src)}
-                                                    />
+                                                    <>
+                                                        <ProgressiveImage
+                                                            src={src}
+                                                            alt={imageLabel(src) || `Thumbnail ${idx + 1}`}
+                                                            className="absolute inset-0 h-full w-full object-cover"
+                                                            onError={() => handleImageError(src)}
+                                                        />
+                                                        {/* Whose photo this is. A gallery that mixes
+                                                            the main image with several variants' is
+                                                            otherwise a row of pictures with no way to
+                                                            tell which belongs to what. */}
+                                                        <span className="absolute inset-x-0 bottom-0 truncate bg-black/60 px-1 py-0.5 text-[9px] leading-tight text-white">
+                                                            {imageLabel(src)}
+                                                        </span>
+                                                    </>
                                                 )}
                                             </button>
                                         )) : (
@@ -360,6 +395,11 @@ export const ProductDetailView = ({ backHref, backLabel, editHref }) => {
                                                     className="absolute inset-0 h-full w-full object-contain transition-all duration-300"
                                                     onError={() => handleImageError(activeImage)}
                                                 />
+                                                <span className="absolute left-0 top-0 rounded-br-xl bg-black/60 px-2 py-1 text-xs text-white">
+                                                    {imageLabel(activeImage)}
+                                                    {uniqueImages.length > 1 &&
+                                                        ` · ${uniqueImages.indexOf(activeImage) + 1} of ${uniqueImages.length}`}
+                                                </span>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center text-muted-foreground">
