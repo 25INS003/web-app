@@ -63,7 +63,7 @@ export function ProductDetail({ productId }: { productId: string }) {
   if (q.isPending) return <DetailSkeleton />;
   if (q.isError || !q.data) return <NotFound />;
 
-  const { product, variants } = q.data;
+  const { product, variants, bulk_pricing: bulkPricing } = q.data;
   const selected =
     variant ?? variants.find((v) => v.is_default) ?? variants[0] ?? null;
   const price = selected?.price ?? product.price;
@@ -300,6 +300,38 @@ export function ProductDetail({ productId }: { productId: string }) {
               )}
             </Button>
           </div>
+
+          {/* What buying more is worth. Shown on the page rather than left to be
+              discovered in the basket: it is a reason to add another one, and
+              a saving nobody knows about changes nothing. */}
+          {bulkPricing?.slabs?.length ? (
+            <div className="mt-6 rounded-2xl border border-border bg-card p-4">
+              <p className="text-sm font-medium">Buy more, pay less</p>
+              <div className="mt-2 space-y-1.5">
+                {bulkPricing.slabs.map((s) => (
+                  <div
+                    key={s.min_qty}
+                    className="flex items-center justify-between gap-3 text-sm"
+                  >
+                    <span className="text-muted-foreground">
+                      {s.max_qty
+                        ? `${s.min_qty}–${s.max_qty - 1}`
+                        : `${s.min_qty}+`}{" "}
+                      units
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono font-medium tabular-nums">
+                        {formatPrice(s.unit_price)}
+                      </span>
+                      <Badge variant="outline" className="text-success">
+                        {s.discount_percent}% off
+                      </Badge>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {product.description && (
             <div className="mt-8 border-t border-border pt-6">

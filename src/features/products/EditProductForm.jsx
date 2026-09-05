@@ -55,6 +55,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { BulkPricingEditor } from "./BulkPricingEditor";
 
 // Animation Variants
 const containerVariants = {
@@ -1092,6 +1093,20 @@ export const EditProductForm = () => {
               </Card>
             </form>
           </Form>
+
+          {/* Bulk pricing. Sits between the product's own details and its
+              variants because it belongs to the PRODUCT — one ladder covers
+              every variant of it — and because an owner setting quantity
+              breaks wants the base price they just edited still on screen. */}
+          <Card className="rounded-2xl border-border shadow-sm bg-card overflow-hidden">
+            <CardContent className="p-6">
+              <BulkPricingEditor
+                shopId={shopId}
+                productId={productId}
+                unitPrice={currentProduct?.price ?? null}
+              />
+            </CardContent>
+          </Card>
 
           {/* Variants Section */}
           <div>

@@ -121,9 +121,27 @@ export const productVariantSchema = z.object({
 });
 export type ProductVariant = z.infer<typeof productVariantSchema>;
 
+/**
+ * Quantity-break pricing, when the product has any live.
+ *
+ * `unit_price` is what a unit costs inside that rung, computed server-side off
+ * the same ladder that prices the order — the page must not re-derive it, or
+ * the advertised saving and the charged one become two implementations of one
+ * rule.
+ */
+export const bulkSlabSchema = z.object({
+  min_qty: z.number(),
+  max_qty: z.number().nullish(),
+  discount_percent: z.number(),
+  unit_price: z.number(),
+});
+
 export const productDetailSchema = z.object({
   product: catalogProductSchema,
   variants: z.array(productVariantSchema),
+  bulk_pricing: z
+    .object({ slabs: z.array(bulkSlabSchema) })
+    .nullish(),
 });
 export type ProductDetail = z.infer<typeof productDetailSchema>;
 
