@@ -149,12 +149,22 @@ export function proxy(request: NextRequest) {
   // and a determined user can edit it. This is the fast, flash-free bounce;
   // the non-forgeable one is `confineUnapprovedOwner` in the layouts.
   if (token && role === "shop_owner" && approval !== "approved") {
+    const home = approval === "pending" ? "/status" : "/onboarding";
+
+    // An application already submitted has no form left to fill, so /onboarding
+    // is not one of the pages that exists for them either. The page itself also
+    // refuses — it reads the session, which cannot be stale — but doing it here
+    // too means a clean redirect rather than a shell that paints and then
+    // navigates away. Same reason /login sends them straight to their
+    // application above: a destination that redirects is a flash you can see.
+    if (approval === "pending" && pathname === "/onboarding") {
+      return redirect("/status");
+    }
+
     const allowed = UNAPPROVED_OWNER_ALLOWED.some(
       (p) => pathname === p || pathname.startsWith(`${p}/`),
     );
-    if (!allowed) {
-      return redirect(approval === "pending" ? "/status" : "/onboarding");
-    }
+    if (!allowed) return redirect(home);
   }
 
   // 3) Non-admin trying to reach the admin area.

@@ -115,9 +115,10 @@ describe("proxy — an unapproved shop owner", () => {
     );
   });
 
-  it("still lets them reach onboarding, status and help", () => {
-    // The only things they may do: submit the application, watch it, ask why.
-    for (const open of ["/onboarding", "/status", "/help"]) {
+  it("still lets them watch their application and ask about it", () => {
+    // The only two things left to someone who has already submitted. The form
+    // is NOT among them — see the next test; that is the reported bug.
+    for (const open of ["/status", "/help"]) {
       const res = proxy(req(`http://localhost${open}`, UNAPPROVED));
       expect(res.headers.get("location"), `${open} should be reachable`).toBeNull();
     }
@@ -185,6 +186,28 @@ describe("proxy — an unapproved shop owner", () => {
       const res = proxy(req(`http://localhost${path}`, UNAPPROVED));
       expect(res.headers.get("location"), `${path} should be reachable`).toBeNull();
     }
+  });
+
+  it("does not offer the form again once the application is submitted", () => {
+    // The reported bug: changing the URL sent them to /onboarding, which
+    // opened the empty application form for one they had already filled in.
+    const res = proxy(req("http://localhost/onboarding", UNAPPROVED));
+    expect(res.headers.get("location")).toMatch(/\/status/);
+  });
+
+  it("still offers the form to someone who has not submitted one", () => {
+    const draft = "accessToken=live.jwt; userRole=shop_owner; approvalStatus=draft";
+    const res = proxy(req("http://localhost/onboarding", draft));
+    expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("still offers the form to someone who was rejected", () => {
+    // Being turned down is the case where filling it in again is the whole
+    // point — locking them out of the form would strand them for good.
+    const rejected =
+      "accessToken=live.jwt; userRole=shop_owner; approvalStatus=rejected";
+    const res = proxy(req("http://localhost/onboarding", rejected));
+    expect(res.headers.get("location")).toBeNull();
   });
 
   it("does not leave /unauthorized as a page they can sit on", () => {
