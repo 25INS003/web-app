@@ -40,6 +40,40 @@ const ADMIN_PATHS = ["/admin", "/verify-owner"];
  */
 export const OWNER_GATED = ["/dashboard", "/products", "/variants", "/myshop"];
 
+/**
+ * The only pages that exist for a seller whose application is unreviewed.
+ *
+ * An ALLOW-list, and that is the point. `OWNER_GATED` above is a blocklist of
+ * shop-owner areas, so everything it did not name stayed open — the whole
+ * storefront included. A seller sitting on /status who deleted the last
+ * segment landed on the customer shopfront, which is not a page they have any
+ * business being on while they are waiting to be let in. Naming what IS
+ * allowed means a page added anywhere else in the app is closed to them by
+ * default, which is the direction that fails safe.
+ *
+ *  - /status      the application, under review
+ *  - /onboarding  the application, still being filled in
+ *  - /help        how they ask why. Kept deliberately: an applicant with a
+ *                 question and nowhere to put it has only support email left,
+ *                 and these pages were built for exactly this state.
+ *  - /t           the ticket link an email sends them to. It renders nothing
+ *                 itself — it reads who is asking and forwards, which for an
+ *                 applicant is /help/:id. Leaving it out would bounce the link
+ *                 to /status and lose the ticket they were sent to read.
+ *
+ * `/unauthorized` is deliberately NOT here. It was, until the confinement
+ * moved above the admin check — an applicant who types /admin is now told
+ * where they actually are instead of being shown an access-denied screen that
+ * says nothing about the thing they are waiting for. Nothing else routes them
+ * there, so allowing it would only be a page they could sit on.
+ */
+export const UNAPPROVED_OWNER_ALLOWED = [
+  "/status",
+  "/onboarding",
+  "/help",
+  "/t",
+];
+
 // Next 16 resolves a proxy file via the NAMED `proxy` export (preferred) or a
 // default export; we provide the named export to match the convention exactly.
 export function proxy(request: NextRequest) {
@@ -88,9 +122,39 @@ export function proxy(request: NextRequest) {
   if (token && (pathname === "/login" || pathname === "/register")) {
     // Customers have no /dashboard — that is the shop-owner area, and sending
     // them there produced a second bounce off the owner guard.
+    //
+    // An unreviewed seller goes straight to their application rather than to
+    // /dashboard, which the rule below would only bounce them off again. A
+    // redirect whose destination redirects is a flash the user can see.
+    const ownerHome =
+      approval === "approved"
+        ? "/dashboard"
+        : approval === "pending"
+          ? "/status"
+          : "/onboarding";
     const home =
-      role === "admin" ? "/admin" : role === "shop_owner" ? "/dashboard" : "/";
+      role === "admin" ? "/admin" : role === "shop_owner" ? ownerHome : "/";
     return redirect(home);
+  }
+
+  // 2b) A seller whose application is unreviewed sees their application and
+  // nothing else — not the owner area, and not the storefront either.
+  //
+  // Before the admin check below, so that every path funnels to one place: an
+  // applicant who types /admin should be told where they actually are, not
+  // handed an "access denied" screen that says nothing about their
+  // application.
+  //
+  // The edge cannot verify any of this — `approvalStatus` is a readable cookie
+  // and a determined user can edit it. This is the fast, flash-free bounce;
+  // the non-forgeable one is `confineUnapprovedOwner` in the layouts.
+  if (token && role === "shop_owner" && approval !== "approved") {
+    const allowed = UNAPPROVED_OWNER_ALLOWED.some(
+      (p) => pathname === p || pathname.startsWith(`${p}/`),
+    );
+    if (!allowed) {
+      return redirect(approval === "pending" ? "/status" : "/onboarding");
+    }
   }
 
   // 3) Non-admin trying to reach the admin area.
@@ -100,18 +164,18 @@ export function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  // 4) Shop-owner approval gating (hint only).
-  if (token && role === "shop_owner") {
-    const gated = OWNER_GATED.some((p) => pathname.startsWith(p));
-    if (approval !== "approved" && gated) {
-      return redirect(approval === "pending" ? "/status" : "/onboarding");
-    }
-    if (
-      approval === "approved" &&
-      (pathname === "/onboarding" || pathname === "/status")
-    ) {
-      return redirect("/dashboard");
-    }
+  // 4) An approved owner has no application to look at.
+  //
+  // The un-approved direction is handled at 2b. `OWNER_GATED` survives as the
+  // list the sync test checks the route tree against, so a new screen in the
+  // owner group still has to be declared somewhere.
+  if (
+    token &&
+    role === "shop_owner" &&
+    approval === "approved" &&
+    (pathname === "/onboarding" || pathname === "/status")
+  ) {
+    return redirect("/dashboard");
   }
 
   return NextResponse.next();

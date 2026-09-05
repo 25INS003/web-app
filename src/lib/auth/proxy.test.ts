@@ -123,6 +123,82 @@ describe("proxy — an unapproved shop owner", () => {
     }
   });
 
+  // The reported bug, exactly: sitting on /status and deleting the segment.
+  it("keeps them off the storefront, not just off the owner area", () => {
+    // The old rule was a blocklist of owner paths, so everything it did not
+    // name — the whole customer shopfront — stayed open to an applicant.
+    for (const path of [
+      "/",
+      "/search",
+      "/p/some-product",
+      "/c/some-category",
+      "/cart",
+      "/checkout",
+      "/account",
+      "/orders",
+      "/wishlist",
+      "/notifications",
+      "/support",
+    ]) {
+      const res = proxy(req(`http://localhost${path}`, UNAPPROVED));
+      expect(
+        res.headers.get("location") ?? "(not redirected)",
+        `${path} should send an applicant back to their application`,
+      ).toMatch(/\/status/);
+    }
+  });
+
+  it("sends a draft applicant to onboarding rather than to status", () => {
+    const draft = "accessToken=live.jwt; userRole=shop_owner; approvalStatus=draft";
+    const res = proxy(req("http://localhost/", draft));
+    expect(res.headers.get("location")).toMatch(/\/onboarding/);
+  });
+
+  it("sends them to their application from /login in one hop", () => {
+    // Not via /dashboard, which the confinement rule would only bounce off
+    // again — a redirect whose destination redirects is a visible flash.
+    const res = proxy(req("http://localhost/login", UNAPPROVED));
+    expect(res.headers.get("location")).toMatch(/\/status/);
+  });
+
+  // The support page is the one place they can be, so it is the place they
+  // would try to leave from. These are the ways a URL bar lets you try.
+  it("cannot be escaped from by dressing a path up as /help", () => {
+    for (const path of [
+      "/helpdesk", // prefix, not a segment
+      "/help-me",
+      "/helpers/dashboard",
+      "/status-page", // same trick on the other allowed path
+      "/onboarding-x",
+    ]) {
+      const res = proxy(req(`http://localhost${path}`, UNAPPROVED));
+      expect(
+        res.headers.get("location") ?? "(not redirected)",
+        `${path} must not pass as an allowed page`,
+      ).toMatch(/\/status/);
+    }
+  });
+
+  it("allows the real sub-paths of the pages they do have", () => {
+    // A ticket they opened, and the form to open one.
+    for (const path of ["/help/some-ticket-id", "/help/new", "/t/some-ticket"]) {
+      const res = proxy(req(`http://localhost${path}`, UNAPPROVED));
+      expect(res.headers.get("location"), `${path} should be reachable`).toBeNull();
+    }
+  });
+
+  it("does not leave /unauthorized as a page they can sit on", () => {
+    const res = proxy(req("http://localhost/unauthorized", UNAPPROVED));
+    expect(res.headers.get("location")).toMatch(/\/status/);
+  });
+
+  it("tells an applicant who types /admin where they actually are", () => {
+    // Rather than an access-denied screen that says nothing about the thing
+    // they are actually waiting for.
+    const res = proxy(req("http://localhost/admin", UNAPPROVED));
+    expect(res.headers.get("location")).toMatch(/\/status/);
+  });
+
   it("lets an approved owner through the same URLs", () => {
     const approved =
       "accessToken=live.jwt; userRole=shop_owner; approvalStatus=approved";
@@ -132,6 +208,22 @@ describe("proxy — an unapproved shop owner", () => {
         res.headers.get("location"),
         `${segment} should be open to an approved owner`,
       ).toBeNull();
+    }
+  });
+
+  it("leaves the storefront public for everyone who is not an applicant", () => {
+    // The confinement must not turn the shop into a login wall. A signed-out
+    // visitor and a customer both keep browsing.
+    const customer =
+      "accessToken=live.jwt; userRole=customer; approvalStatus=";
+    for (const cookie of [undefined, customer]) {
+      for (const path of ["/", "/search", "/p/x"]) {
+        const res = proxy(req(`http://localhost${path}`, cookie));
+        expect(
+          res.headers.get("location"),
+          `${path} should stay public`,
+        ).toBeNull();
+      }
     }
   });
 });

@@ -45,6 +45,34 @@ export async function requireRole(
   return session;
 }
 
+/**
+ * Confine a seller whose application is unreviewed to that application.
+ *
+ * For layouts that are NOT the shop-owner area — the storefront especially,
+ * which is public and therefore had no guard at all. A seller sitting on
+ * /status who deleted the last segment landed on the customer shopfront, and
+ * nothing server-side had an opinion about it.
+ *
+ * The edge proxy bounces these paths too, and does it faster, but it decides on
+ * a readable `approvalStatus` cookie that a determined user can edit. This
+ * reads /auth/me, so it cannot be talked out of. Cheap where it matters:
+ * `getSession` returns null without a fetch when there is no token cookie, so
+ * an anonymous visitor browsing the storefront pays nothing.
+ *
+ * Silent for everyone else — customers, admins, approved owners and signed-out
+ * visitors all pass straight through, which is what lets it sit in a public
+ * layout at all.
+ */
+export async function confineUnapprovedOwner(): Promise<void> {
+  const session = await getSession();
+  if (!session || session.user.user_type !== "shop_owner") return;
+
+  const status = session.shop_owner_status;
+  if (status?.is_approved) return;
+
+  redirect(status?.verification_status === "pending" ? "/status" : "/onboarding");
+}
+
 // Shop-owner area: must be an approved owner, else routed to onboarding/status.
 export async function requireApprovedShopOwner(): Promise<Session> {
   const session = await requireRole("shop_owner");
