@@ -1,3 +1,5 @@
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 import { proxy } from "../../../proxy";
@@ -63,5 +65,73 @@ describe("proxy — unchanged behaviour", () => {
   it("leaves the public storefront alone", () => {
     expect(proxy(req("http://localhost/")).headers.get("location")).toBeNull();
     expect(proxy(req("http://localhost/search")).headers.get("location")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// An unapproved seller, typing URLs.
+//
+// Registering makes someone a `shop_owner` immediately, and they stay one while
+// an admin has not looked at them yet — so the role cookie says nothing about
+// entitlement. The `(page)` layout does guard the whole group, but it streams
+// its redirect in the RSC payload rather than sending a 3xx, so the shell
+// paints before the redirect lands. The edge list is what turns that into a
+// clean bounce, and `/variants` was missing from it.
+
+const UNAPPROVED =
+  "accessToken=live.jwt; userRole=shop_owner; approvalStatus=pending";
+
+/** Every top-level URL segment of the shop-owner route group. */
+const pageSegments = () =>
+  readdirSync(join(process.cwd(), "app", "(page)"), { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    // Route groups and private folders are not URL segments.
+    .filter((e) => !e.name.startsWith("(") && !e.name.startsWith("_"))
+    .map((e) => `/${e.name}`);
+
+describe("proxy — an unapproved shop owner", () => {
+  it("is bounced off every screen in the owner area", () => {
+    // Read from the route tree rather than restated here: the lists in proxy.ts
+    // are hand-kept, nothing connected them to the directory, and that is
+    // precisely how /variants came to be ungated. A test that listed the
+    // segments itself would be a third copy to forget.
+    // `?? "(not redirected)"` so a missing gate reads as the sentence it is,
+    // rather than as ".toMatch() expects a string, but got object".
+    for (const segment of pageSegments()) {
+      const res = proxy(req(`http://localhost${segment}`, UNAPPROVED));
+      expect(
+        res.headers.get("location") ?? "(not redirected)",
+        `${segment} is not gated against an unapproved owner`,
+      ).toMatch(/\/status|\/onboarding/);
+    }
+  });
+
+  it("bounces the deep URLs too, not only the segment root", () => {
+    const res = proxy(
+      req("http://localhost/variants/abc/edit/def", UNAPPROVED),
+    );
+    expect(res.headers.get("location") ?? "(not redirected)").toMatch(
+      /\/status/,
+    );
+  });
+
+  it("still lets them reach onboarding, status and help", () => {
+    // The only things they may do: submit the application, watch it, ask why.
+    for (const open of ["/onboarding", "/status", "/help"]) {
+      const res = proxy(req(`http://localhost${open}`, UNAPPROVED));
+      expect(res.headers.get("location"), `${open} should be reachable`).toBeNull();
+    }
+  });
+
+  it("lets an approved owner through the same URLs", () => {
+    const approved =
+      "accessToken=live.jwt; userRole=shop_owner; approvalStatus=approved";
+    for (const segment of pageSegments()) {
+      const res = proxy(req(`http://localhost${segment}`, approved));
+      expect(
+        res.headers.get("location"),
+        `${segment} should be open to an approved owner`,
+      ).toBeNull();
+    }
   });
 });

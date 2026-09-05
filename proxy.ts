@@ -8,9 +8,10 @@ import type { NextRequest } from "next/server";
 
 // Login-required areas. EVERYTHING ELSE is public — the storefront (/, /search,
 // /c/*, /p/*, ...) must be browsable without an account.
-const PROTECTED = [
+export const PROTECTED = [
   "/dashboard", // shop owner
   "/products",
+  "/variants",
   "/orders",
   "/myshop",
   "/admin", // admin
@@ -21,9 +22,23 @@ const PROTECTED = [
   "/wishlist",
 ];
 const ADMIN_PATHS = ["/admin", "/verify-owner"];
-// /orders is the CUSTOMER order history (login-only); shop orders live under
-// /dashboard, so it's covered here without listing /orders.
-const OWNER_GATED = ["/dashboard", "/products", "/myshop"];
+/**
+ * Shop-owner areas an UNAPPROVED owner is bounced out of.
+ *
+ * Must list every top-level segment of the `(page)` route group. `/variants`
+ * was missing, so an unapproved seller who typed a variant URL got the page
+ * rendered: the group's layout guard does redirect, but it streams that
+ * redirect in the RSC payload rather than sending a 3xx, so the shell paints
+ * first. Listing it here turns that into a redirect before anything renders.
+ *
+ * The list is hand-kept and drifted once, which is what the sync test in
+ * `proxy.test.ts` now prevents — it reads the route tree and fails when a new
+ * `(page)` segment is not covered here.
+ *
+ * /orders is the CUSTOMER order history (login-only); shop orders live under
+ * /dashboard, so it is in PROTECTED but not here.
+ */
+export const OWNER_GATED = ["/dashboard", "/products", "/variants", "/myshop"];
 
 // Next 16 resolves a proxy file via the NAMED `proxy` export (preferred) or a
 // default export; we provide the named export to match the convention exactly.
