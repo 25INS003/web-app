@@ -148,6 +148,36 @@ export const useProductStore = create((set, get) => ({
    * Upload Multiple Product Images
    * Matches frontend: formData.append("image", file)
    */
+  /**
+   * Remove a product's main image.
+   *
+   * The edit screen has had a delete button on this image for as long as the
+   * image has existed, and it only cleared local state — the picture vanished
+   * from the page and came back on reload, because nothing told the server.
+   */
+  deleteProductMainImage: async (shopId, productId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await apiClient.delete(
+        `/shops/${shopId}/products/${productId}/main-img`
+      );
+      const updated = response.data.data?.product || response.data.data;
+
+      set((state) => ({
+        products: state.products.map((p) =>
+          p.id === productId ? updated : p
+        ),
+        currentProduct: updated,
+        isLoading: false,
+      }));
+
+      return true;
+    } catch (err) {
+      set({ error: uploadErrorMessage(err), isLoading: false });
+      return false;
+    }
+  },
+
   uploadProductImages: async (shopId, productId, formData) => {
     set({ isLoading: true, error: null });
     try {

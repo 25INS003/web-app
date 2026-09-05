@@ -809,6 +809,7 @@ export const EditProductForm = () => {
     getProductDetails,
     updateProduct,
     uploadProductImages,
+    deleteProductMainImage,
     isLoading: storeLoading
   } = useProductStore();
 
@@ -816,6 +817,7 @@ export const EditProductForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [existingImage, setExistingImage] = useState(null);
+  const [removingImage, setRemovingImage] = useState(false);
   const [newImageFile, setNewImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
@@ -885,10 +887,36 @@ export const EditProductForm = () => {
     }
   };
 
-  const handleRemoveImage = () => {
+  /**
+   * Remove the main image.
+   *
+   * Two different things wear the same button. Dropping a picture that has not
+   * been uploaded yet is local — nothing has been sent, so nothing has to be
+   * unsent. Removing one that is SAVED has to reach the server, and this used
+   * to only clear the three pieces of local state: the image disappeared from
+   * the page, came back on the next load, and the owner had no way to tell the
+   * difference until they reloaded.
+   */
+  const handleRemoveImage = async () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setNewImageFile(null);
     setPreviewUrl(null);
+
+    // Nothing saved behind it — the pending file is simply dropped.
+    if (!existingImage) return;
+
+    setRemovingImage(true);
+    const removed = await deleteProductMainImage(shopId, productId);
+    setRemovingImage(false);
+
+    if (!removed) {
+      // Left on screen deliberately. Clearing it would show the owner an image
+      // that is gone while the server still has it.
+      toast.error(useProductStore.getState().error);
+      return;
+    }
     setExistingImage(null);
+    toast.success("Main image removed");
   };
 
   const onSubmit = async (values) => {
@@ -1111,10 +1139,16 @@ export const EditProductForm = () => {
                         type="button"
                         variant="destructive"
                         size="icon"
+                        disabled={removingImage}
                         onClick={handleRemoveImage}
+                        aria-label="Remove the main image"
                         className="rounded-xl"
                       >
-                        <Trash2 className="h-5 w-5" />
+                        {removingImage ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-5 w-5" />
+                        )}
                       </Button>
                     </div>
                     <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-medium bg-black/60 text-white backdrop-blur-sm">
