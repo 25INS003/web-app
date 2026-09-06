@@ -2,6 +2,7 @@
 
 import {
   Building2,
+  FileSpreadsheet,
   IndianRupee,
   ReceiptText,
   FolderTree,
@@ -35,6 +36,7 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/myshop", label: "My Shops", icon: Store },
     { href: "/products", label: "Products", icon: Package },
+    { href: "/products/bulk", label: "Bulk tools", icon: FileSpreadsheet },
     // shop orders live under /dashboard to avoid colliding with the customer
     // storefront's /orders (built in Phase 3)
     { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
@@ -72,10 +74,21 @@ export function DashboardShell({
   const [open, setOpen] = useState(false);
   const nav = NAV[section];
 
-  const isActive = (href: string) =>
+  // Match on a path boundary (so /products does not match /productsfoo), then
+  // highlight only the MOST SPECIFIC item. Without the "longest wins" step,
+  // /products/bulk lights up both "Products" (/products) and "Bulk tools"
+  // (/products/bulk), because the former is a prefix of the latter. The roots
+  // (/dashboard, /admin) match exactly only, or they would prefix everything.
+  const matchesPath = (href: string) =>
     href === "/dashboard" || href === "/admin"
       ? pathname === href
-      : pathname.startsWith(href);
+      : pathname === href || pathname.startsWith(`${href}/`);
+
+  const activeHref = nav
+    .filter((item) => matchesPath(item.href))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
+  const isActive = (href: string) => href === activeHref;
 
   const sidebar = (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
