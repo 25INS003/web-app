@@ -16,6 +16,7 @@ export default function AdminBulkPage() {
     <BulkTools
       shopId={String(shopId)}
       backHref={`/admin/shops/${shopId}/products`}
+      productHref={(id) => `/admin/shops/${shopId}/products/${id}`}
     />
   );
 }

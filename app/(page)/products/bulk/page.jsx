@@ -31,6 +31,11 @@ export default function ShopOwnerBulkPage() {
   }
 
   return (
-    <BulkTools shopId={shopId} shopName={currentShop?.name} backHref="/products" />
+    <BulkTools
+      shopId={shopId}
+      shopName={currentShop?.name}
+      backHref="/products"
+      productHref={(id) => `/products/${shopId}/view/${id}`}
+    />
   );
 }

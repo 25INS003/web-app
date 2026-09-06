@@ -1,13 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Download,
   FileSpreadsheet,
+  History,
   Loader2,
+  RotateCcw,
   Upload,
   XCircle,
 } from "lucide-react";
@@ -19,8 +23,13 @@ import { ApiError } from "@/lib/api/types";
 import {
   downloadCatalog,
   downloadCatalogZip,
+  getImport,
   importBulk,
+  listImports,
   previewBulk,
+  rollbackImport,
+  type ImportBatch,
+  type ImportItemRow,
   type ImportResult,
   type PreviewResult,
 } from "./api";
@@ -34,10 +43,13 @@ export function BulkTools({
   shopId,
   shopName,
   backHref,
+  productHref,
 }: {
   shopId: string;
   shopName?: string;
   backHref: string;
+  /** Builds the link to a product's page; existing products become clickable. */
+  productHref?: (productId: string) => string;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [file, setFile] = useState<File | null>(null);
@@ -46,7 +58,55 @@ export function BulkTools({
   const [result, setResult] = useState<ImportResult | null>(null);
   const [dragging, setDragging] = useState(false);
   const [downloading, setDownloading] = useState<null | "zip" | "xlsx">(null);
+  const [history, setHistory] = useState<ImportBatch[]>([]);
+  const [undoing, setUndoing] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [details, setDetails] = useState<Record<string, ImportItemRow[]>>({});
+  const [loadingDetail, setLoadingDetail] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const toggleDetail = async (batchId: string) => {
+    if (openId === batchId) {
+      setOpenId(null);
+      return;
+    }
+    setOpenId(batchId);
+    if (!details[batchId]) {
+      setLoadingDetail(batchId);
+      try {
+        const { batch } = await getImport(shopId, batchId);
+        setDetails((d) => ({ ...d, [batchId]: batch.items }));
+      } catch (e) {
+        toast.error(errMessage(e));
+        setOpenId(null);
+      } finally {
+        setLoadingDetail(null);
+      }
+    }
+  };
+
+  const refreshHistory = useCallback(async () => {
+    try {
+      const { imports } = await listImports(shopId);
+      setHistory(imports);
+    } catch {
+      // History is a convenience; a failure here should not break the page.
+    }
+  }, [shopId]);
+
+  // Load history on mount. State is set in the promise callback (not
+  // synchronously in the effect body), which is the pattern the hooks lint wants.
+  useEffect(() => {
+    let active = true;
+    listImports(shopId)
+      .then(({ imports }) => {
+        if (active) setHistory(imports);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [shopId]);
 
   const busy = phase === "previewing" || phase === "importing";
 
@@ -108,9 +168,25 @@ export function BulkTools({
       const { created, updated, failed } = res.summary;
       if (failed) toast.warning(`Imported ${created + updated}, ${failed} failed`);
       else toast.success(`Imported ${created} new, updated ${updated}`);
+      refreshHistory();
     } catch (e) {
       setPhase("previewed");
       toast.error(errMessage(e));
+    }
+  };
+
+  const onUndo = async (batchId: string) => {
+    setUndoing(batchId);
+    try {
+      const r = await rollbackImport(shopId, batchId);
+      toast.success(
+        `Rolled back — ${r.deleted} removed, ${r.restored} restored`,
+      );
+      await refreshHistory();
+    } catch (e) {
+      toast.error(errMessage(e));
+    } finally {
+      setUndoing(null);
     }
   };
 
@@ -299,6 +375,137 @@ export function BulkTools({
               errors: r.errors ?? [],
             }))}
           />
+        </section>
+      )}
+
+      {/* Import history */}
+      {history.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <History className="size-4" /> Import history
+          </h2>
+          <div className="overflow-hidden rounded-xl border border-border">
+            {history.map((b) => {
+              const undone = b.status === "rolled_back";
+              const open = openId === b.id;
+              return (
+                <div key={b.id} className="border-b border-border last:border-b-0">
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleDetail(b.id)}
+                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                      aria-expanded={open}
+                    >
+                      {open ? (
+                        <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                      )}
+                      <span className="min-w-0">
+                        <span className="block text-sm">
+                          <span className="font-medium">
+                            {b.summary.created} created
+                          </span>
+                          {" · "}
+                          {b.summary.updated} updated
+                          {b.summary.failed
+                            ? ` · ${b.summary.failed} failed`
+                            : ""}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {new Date(b.created_at).toLocaleString()}
+                        </span>
+                      </span>
+                    </button>
+                    {undone ? (
+                      <span className="text-xs text-muted-foreground">Undone</span>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onUndo(b.id)}
+                        disabled={undoing !== null}
+                      >
+                        {undoing === b.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <RotateCcw className="size-4" />
+                        )}
+                        Undo
+                      </Button>
+                    )}
+                  </div>
+
+                  {open && (
+                    <div className="border-t border-border bg-muted/30 px-4 py-3">
+                      {loadingDetail === b.id ? (
+                        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Loader2 className="size-3 animate-spin" /> Loading…
+                        </p>
+                      ) : details[b.id]?.length ? (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead className="text-left text-muted-foreground">
+                              <tr>
+                                <th className="py-1 pr-3 font-medium">Action</th>
+                                <th className="py-1 pr-3 font-medium">Product</th>
+                                <th className="py-1 font-medium">SKUs</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {details[b.id].map((it, i) => (
+                                <tr
+                                  key={i}
+                                  className="border-t border-border/60"
+                                >
+                                  <td className="py-1 pr-3">
+                                    <span
+                                      className={cn(
+                                        "rounded px-1.5 py-0.5",
+                                        it.action === "created"
+                                          ? "bg-success/10 text-success"
+                                          : "bg-primary/10 text-primary",
+                                      )}
+                                    >
+                                      {it.action}
+                                    </span>
+                                  </td>
+                                  <td className="py-1 pr-3">
+                                    {it.exists && productHref && it.name ? (
+                                      <Link
+                                        href={productHref(it.product_id)}
+                                        className="text-primary hover:underline"
+                                      >
+                                        {it.name}
+                                      </Link>
+                                    ) : (
+                                      (it.name ?? "—")
+                                    )}
+                                  </td>
+                                  <td className="py-1 font-mono text-[11px] text-muted-foreground">
+                                    {it.skus.join(", ")}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          No product detail recorded for this import.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Undo deletes the products an import created and restores the ones it
+            updated to their previous values.
+          </p>
         </section>
       )}
     </div>
