@@ -49,7 +49,17 @@ export default defineConfig({
     // `app/` too: the route wrappers there hold real behaviour — which screen
     // a create lands on, whether a spent form stays in history — and none of
     // it was reachable by a test while only `src/` was collected.
-    include: ["src/**/*.{test,spec}.{ts,tsx}", "app/**/*.{test,spec}.{ts,tsx}"],
+    //
+    // `store/` for the same reason. The zustand stores are where API responses
+    // are turned into what a screen renders, which is exactly where a response
+    // whose shape was misread put a wrapper object into the owner list. A test
+    // written there was silently collected by nothing until this line covered
+    // it — the failure mode being a green run that never loaded the file.
+    include: [
+      "src/**/*.{test,spec}.{ts,tsx}",
+      "app/**/*.{test,spec}.{ts,tsx}",
+      "store/**/*.{test,spec}.{ts,tsx}",
+    ],
     exclude: ["e2e/**", "node_modules/**", ".next/**"],
   },
 });

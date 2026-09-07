@@ -3,6 +3,30 @@
 import { create } from "zustand";
 import apiClient from "@/api/apiClient";
 
+/**
+ * The owner row out of an admin action's response.
+ *
+ * `approve` answers with the row itself; `reject` and `revoke` answer with
+ * `{ shopOwner, deactivatedShops }`, because taking an owner down also takes
+ * their live shops down and the count is worth reporting. Three of these
+ * actions fed `response.data.data` straight into the list, so rejecting
+ * replaced the owner row with the WRAPPER — an object with no `id` and no
+ * `is_approved`. The row then rendered as unverified, which is why a rejected
+ * application went on saying "Pending Review".
+ *
+ * Reads either shape rather than assuming one, so the two response bodies stop
+ * being something every call site has to remember.
+ */
+const ownerFrom = (response) => {
+  const data = response?.data?.data ?? response?.data;
+  return data?.shopOwner ?? data;
+};
+
+/** How many of their shops the action took down, when the action says so. */
+const deactivatedCount = (response) =>
+  (response?.data?.data ?? response?.data)?.deactivatedShops ?? 0;
+
+
 export const useShopOwnerStore = create((set, get) => ({
     // --- State ---
     shopOwners: [],
@@ -79,7 +103,7 @@ export const useShopOwnerStore = create((set, get) => ({
         set({ isLoading: true, error: null });
         try {
             const response = await apiClient.put(`/admin/shop-owners/${ownerId}/approve`);
-            const updatedOwner = response.data.data || response.data;
+            const updatedOwner = ownerFrom(response);
             
             set((state) => ({
                 shopOwners: state.shopOwners.map((o) => (o.id === ownerId ? updatedOwner : o)),
@@ -87,7 +111,11 @@ export const useShopOwnerStore = create((set, get) => ({
                 selectedOwner: updatedOwner, // Update selected view
                 isLoading: false,
             }));
-            return { success: true };
+            return {
+                success: true,
+                reactivatedShops:
+                    (response?.data?.data ?? response?.data)?.reactivatedShops ?? 0,
+            };
         } catch (err) {
             set({ error: err.response?.data?.message || "Approval failed", isLoading: false });
             return { success: false };
@@ -99,7 +127,7 @@ export const useShopOwnerStore = create((set, get) => ({
         set({ isLoading: true, error: null });
         try {
             const response = await apiClient.put(`/admin/shop-owners/${ownerId}/reject`);
-            const updatedOwner = response.data.data || response.data;
+            const updatedOwner = ownerFrom(response);
             
             set((state) => ({
                 shopOwners: state.shopOwners.map((o) => (o.id === ownerId ? updatedOwner : o)),
@@ -107,7 +135,7 @@ export const useShopOwnerStore = create((set, get) => ({
                 selectedOwner: updatedOwner, // Update selected view
                 isLoading: false,
             }));
-            return { success: true };
+            return { success: true, deactivatedShops: deactivatedCount(response) };
         } catch (err) {
             set({ error: err.response?.data?.message || "Rejection failed", isLoading: false });
             return { success: false };
@@ -119,7 +147,7 @@ export const useShopOwnerStore = create((set, get) => ({
         set({ isLoading: true, error: null });
         try {
             const response = await apiClient.put(`/admin/shop-owners/${ownerId}/revoke`);
-            const updatedOwner = response.data.data || response.data;
+            const updatedOwner = ownerFrom(response);
             
             set((state) => ({
                 shopOwners: state.shopOwners.map((o) => (o.id === ownerId ? updatedOwner : o)),
@@ -129,7 +157,7 @@ export const useShopOwnerStore = create((set, get) => ({
                 selectedOwner: updatedOwner, // Update selected view
                 isLoading: false,
             }));
-            return { success: true };
+            return { success: true, deactivatedShops: deactivatedCount(response) };
         } catch (err) {
             set({ error: err.response?.data?.message || "Revocation failed", isLoading: false });
             return { success: false };

@@ -27,6 +27,47 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+/**
+ * What each verification state looks like in the list.
+ *
+ * Four states, not two. `is_approved` is a boolean and cannot tell a rejected
+ * owner from one still waiting — which is exactly how a rejected application
+ * went on displaying "Pending Review" to the admin who had just rejected it.
+ *
+ * The wording matches the detail page so one owner reads the same on both
+ * screens.
+ */
+const OWNER_STATES = {
+    approved: {
+        label: "Verified",
+        className: "bg-success/10 text-success border-success/20",
+        dot: "bg-success animate-pulse",
+    },
+    rejected: {
+        label: "Rejected",
+        className: "bg-destructive/10 text-destructive border-destructive/20",
+        dot: "bg-destructive",
+    },
+    revoked: {
+        label: "Revoked",
+        className: "bg-destructive/10 text-destructive border-destructive/20",
+        dot: "bg-destructive",
+    },
+    // `draft` is an application still being filled in; `pending` is one
+    // submitted and waiting. Both are "not yet decided" to an admin scanning
+    // the list, and the queue column already separates them.
+    pending: {
+        label: "Pending Review",
+        className: "bg-warning/10 text-warning border-warning/20",
+        dot: "bg-warning",
+    },
+    draft: {
+        label: "Not submitted",
+        className: "bg-muted text-muted-foreground border-border",
+        dot: "bg-muted-foreground",
+    },
+};
+
 export default function ShopOwnerListPage() {
     const { shopOwners, isLoading, fetchAllOwners, approveOwner, rejectOwner } = useShopOwnerStore();
     const [searchTerm, setSearchTerm] = useState("");
@@ -233,41 +274,34 @@ export default function ShopOwnerListPage() {
                                                 </div>
                                             </td>
                                             <td className="p-6">
-                                                <Badge className={`
-                                                    capitalize font-medium shadow-sm border px-3 py-1 rounded-full
-                                                    ${owner.is_approved
-                                                        ? "bg-success/10 text-success border-success/20"
-                                                        : "bg-warning/10 text-warning border-warning/20"
-                                                    }
-                                                `}>
-                                                    {owner.is_approved ? (
-                                                        <span className="flex items-center gap-1.5">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
-                                                            Verified
-                                                        </span>
-                                                    ) : (
-                                                        <span className="flex items-center gap-1.5">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-warning/10"></span>
-                                                            Pending Review
-                                                        </span>
-                                                    )}
-                                                </Badge>
+                                                {/* Read from `verification_status`, not from `is_approved`.
+                                                    The boolean has only two values and there are four
+                                                    states: a rejected owner and a revoked one are both
+                                                    `is_approved: false`, so both used to render as
+                                                    "Pending Review" — an admin who had just rejected
+                                                    somebody was told the application was still waiting
+                                                    for them. Same vocabulary the detail page uses. */}
+                                                {(() => {
+                                                    const state = OWNER_STATES[owner.verification_status] ??
+                                                        (owner.is_approved ? OWNER_STATES.approved : OWNER_STATES.pending);
+                                                    return (
+                                                        <Badge className={`capitalize font-medium shadow-sm border px-3 py-1 rounded-full ${state.className}`}>
+                                                            <span className="flex items-center gap-1.5">
+                                                                <span className={`w-1.5 h-1.5 rounded-full ${state.dot}`}></span>
+                                                                {state.label}
+                                                            </span>
+                                                        </Badge>
+                                                    );
+                                                })()}
                                             </td>
                                             <td className="p-6 text-center">
                                                 <div className="flex items-center justify-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
-                                                    <TooltipProvider delayDuration={0}>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Link href={`/admin/shop-owners/${owner.id}`}>
-                                                                    <Button size="icon" variant="ghost" className="h-9 w-9 text-primary hover:text-primary hover:bg-primary/10 rounded-xl">
-                                                                        <Eye size={18} />
-                                                                    </Button>
-                                                                </Link>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>View Details</TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-
+                                                    {/* "View Details" used to sit here, pointing at the
+                                                        same /admin/shop-owners/:id as "Review application"
+                                                        below — two buttons, one destination. The other one
+                                                        stays because its tooltip carries the document
+                                                        count, which is the thing worth knowing before
+                                                        clicking into a review. */}
                                                     {!owner.is_approved && (
                                                         <>
                                                             <TooltipProvider delayDuration={0}>

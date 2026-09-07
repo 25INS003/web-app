@@ -43,7 +43,16 @@ export default function ShopOwnerDetailPage() {
     const handleApprove = async () => {
         const result = await approveOwner(ownerId);
         if (result.success) {
-            toast.success("Shop Owner Approved Successfully");
+            // Say what happened to their shops. Approving after a rejection
+            // brings back the storefronts that rejection took down, and an
+            // admin reinstating somebody needs to know whether that seller can
+            // actually trade again — "Approved" alone does not answer it.
+            const back = result.reactivatedShops ?? 0;
+            toast.success(
+                back
+                    ? `Shop owner approved — ${back} shop${back === 1 ? "" : "s"} back online`
+                    : "Shop Owner Approved Successfully"
+            );
         }
     };
 
@@ -251,7 +260,7 @@ export default function ShopOwnerDetailPage() {
                                             onClick={handleApprove}
                                             className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-success text-white hover:bg-success/90 shadow-xl shadow-success/20 dark:shadow-none"
                                         >
-                                            <Check size={20} /> Reconsided & Approve
+                                            <Check size={20} /> Reconsider &amp; Approve
                                         </button>
                                     )}
                                 </div>
