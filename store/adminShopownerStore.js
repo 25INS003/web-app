@@ -144,6 +144,37 @@ export const useShopOwnerStore = create((set, get) => ({
         }
     },
 
+    /**
+     * Open or close the application form for a refused owner.
+     *
+     * Not a verdict — it does not approve or reject anybody — so it is its own
+     * action rather than a flag on one. This is how an admin answers the
+     * support ticket asking for another go.
+     */
+    setResubmission: async (ownerId, allowed) => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await apiClient.put(
+                `/admin/shop-owners/${ownerId}/resubmission`,
+                { allowed }
+            );
+            const updatedOwner = ownerFrom(response);
+
+            set((state) => ({
+                shopOwners: state.shopOwners.map((o) => (o.id === ownerId ? updatedOwner : o)),
+                selectedOwner: updatedOwner,
+                isLoading: false,
+            }));
+            return { success: true, message: response?.data?.message };
+        } catch (err) {
+            set({
+                error: err.response?.data?.message || "Could not change that",
+                isLoading: false,
+            });
+            return { success: false };
+        }
+    },
+
     // 7. Revoke Owner (e.g., suspend or deactivate)
     revokeOwner: async (ownerId, note) => {
         set({ isLoading: true, error: null });

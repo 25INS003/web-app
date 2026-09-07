@@ -13,11 +13,17 @@ export async function generateMetadata() {
   const session = await getSession();
   const status = session?.shop_owner_status?.verification_status;
   const refused = status === "rejected" || status === "revoked";
-  return {
-    title: refused
-      ? "Update your application · Nedyway"
-      : "Set up your shop · Nedyway",
-  };
+  // Only "update" when there is something to update: a refused applicant
+  // without permission gets the decision, not a form, and the tab should not
+  // promise otherwise.
+  if (refused) {
+    return {
+      title: session?.shop_owner_status?.can_resubmit
+        ? "Update your application · Nedyway"
+        : "Application not approved · Nedyway",
+    };
+  }
+  return { title: "Set up your shop · Nedyway" };
 }
 
 /**
@@ -58,6 +64,23 @@ export default async function OnboardingPage() {
     status?.verification_status === "rejected" ||
     status?.verification_status === "revoked";
 
+  // A refusal is final until an admin reopens the form. Somebody who has been
+  // turned down and not been given permission gets the reason and a way to ask
+  // — not a form, and not a form that would be refused on submit anyway.
+  //
+  // The server refuses the submission too. This is what stops them being
+  // walked through five steps first.
+  if (refused && !status?.can_resubmit) {
+    return (
+      <RejectionNotice
+        status={status.verification_status as "rejected" | "revoked"}
+        note={status.approval_note}
+        reviewedAt={status.reviewed_at}
+        canResubmit={false}
+      />
+    );
+  }
+
   return (
     <>
       {refused && (
@@ -65,6 +88,7 @@ export default async function OnboardingPage() {
           status={status.verification_status as "rejected" | "revoked"}
           note={status.approval_note}
           reviewedAt={status.reviewed_at}
+          canResubmit
         />
       )}
       <OnboardingWizard resubmitting={refused} />

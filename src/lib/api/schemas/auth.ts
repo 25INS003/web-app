@@ -45,6 +45,10 @@ export const shopOwnerStatusSchema = z.object({
   // somebody what to fix instead of handing them a blank form.
   approval_note: z.string().nullish(),
   reviewed_at: z.string().nullish(),
+  // Whether an admin has opened the form for a refused applicant. A rejection
+  // is final until they do, so every "update" control asks this first.
+  can_resubmit: z.boolean().nullish(),
+  resubmit_allowed_at: z.string().nullish(),
   owner_id: objectId,
 });
 export type ShopOwnerStatus = z.infer<typeof shopOwnerStatusSchema>;

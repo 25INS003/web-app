@@ -23,10 +23,17 @@ export function RejectionNotice({
   status,
   note,
   reviewedAt,
+  canResubmit = false,
 }: {
   status: "rejected" | "revoked";
   note?: string | null;
   reviewedAt?: string | null;
+  /**
+   * Whether an admin has opened the form for them. A refusal is final until
+   * one does, so without it this is the whole page rather than a heading above
+   * a wizard — and what it offers is the way to ask, not the way to edit.
+   */
+  canResubmit?: boolean;
 }) {
   const revoked = status === "revoked";
 
@@ -78,17 +85,28 @@ export function RejectionNotice({
           )}
 
           <p className="mt-3 text-sm text-muted-foreground">
-            {revoked
-              ? "Update the details below and send them again to have your shop reviewed."
-              : "Update the details below and send your application again."}
+            {canResubmit
+              ? revoked
+                ? "Update the details below and send them again to have your shop reviewed."
+                : "Update the details below and send your application again."
+              : // Says plainly that the decision stands and what the one
+                // available action is. "Contact support" on its own reads as
+                // a formality; naming what to ask for makes it a step.
+                "This decision stands for now. If you would like to correct your application and send it again, ask support to reopen it."}
           </p>
 
           <Link
             href="/help"
-            className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+            className={
+              canResubmit
+                ? "mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                : // The only thing they can do, so it is a button rather than
+                  // a line of text under one.
+                  "mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+            }
           >
             <LifeBuoy className="size-4" />
-            Ask support about this
+            {canResubmit ? "Ask support about this" : "Ask support to reopen it"}
           </Link>
         </div>
       </div>

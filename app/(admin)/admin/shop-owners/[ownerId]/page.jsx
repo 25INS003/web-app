@@ -6,7 +6,7 @@ import { useShopOwnerStore } from "@/store/adminShopownerStore";
 import { toast } from "sonner";
 import {
     ArrowLeft, Building2, MapPin, Landmark,
-    Receipt, Calendar, Check, X, FileText, Download
+    Receipt, Calendar, Check, X, FileText, Download, PencilLine
 } from "lucide-react";
 
 // `createdAt` is a Mongo-era name. The column is `created_at`, so this read
@@ -34,7 +34,7 @@ const formatDay = (value) =>
 export default function ShopOwnerDetailPage() {
     const { ownerId } = useParams();
     const router = useRouter();
-    const { selectedOwner, fetchOwnerById, approveOwner, rejectOwner, revokeOwner, isLoading, error } = useShopOwnerStore();
+    const { selectedOwner, fetchOwnerById, approveOwner, rejectOwner, revokeOwner, isLoading, error , setResubmission } = useShopOwnerStore();
 
     useEffect(() => {
         if (ownerId) fetchOwnerById(ownerId);
@@ -333,6 +333,47 @@ export default function ShopOwnerDetailPage() {
                                                 <Check size={20} /> Approve
                                             </button>
                                         </div>
+                                    )}
+
+                                    {/* Reopening the form, which is a different
+                                        decision from approving. A refusal
+                                        stands until an admin does this, so it
+                                        is the answer to the support ticket a
+                                        refused owner sends — and it buys them
+                                        exactly one resubmission. */}
+                                    {(selectedOwner.verification_status === "rejected" ||
+                                      selectedOwner.verification_status === "revoked") && (
+                                        <button
+                                            onClick={async () => {
+                                                const next = !selectedOwner.can_resubmit;
+                                                const res = await setResubmission(ownerId, next);
+                                                if (res.success) {
+                                                    toast.success(
+                                                        next
+                                                            ? "They can update and resubmit once"
+                                                            : "The application is closed again"
+                                                    );
+                                                } else {
+                                                    toast.error(useShopOwnerStore.getState().error);
+                                                }
+                                            }}
+                                            className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 border ${
+                                                selectedOwner.can_resubmit
+                                                    ? "bg-warning/10 text-warning border-warning/30"
+                                                    : "bg-card text-foreground border-border hover:bg-muted"
+                                            }`}
+                                        >
+                                            <PencilLine size={20} />
+                                            {selectedOwner.can_resubmit
+                                                ? "Close the application again"
+                                                : "Let them update & resubmit"}
+                                        </button>
+                                    )}
+
+                                    {selectedOwner.can_resubmit && (
+                                        <p className="text-xs text-center text-muted-foreground -mt-1">
+                                            They can send one updated application. Sending it spends this.
+                                        </p>
                                     )}
 
                                     {/* Rejected State: Show Approve (Reconsider) */}
