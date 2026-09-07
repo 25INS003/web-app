@@ -90,9 +90,47 @@ describe("BulkTools", () => {
     renderTools();
     await screen.findByText(/2 created/); // let the mount fetch settle
     fireEvent.click(screen.getByRole("button", { name: /ZIP with images/i }));
+    // A progress callback goes with it: the ZIP is the workbook plus every
+    // product image — tens of megabytes and about a minute for a real
+    // catalogue — so a spinner alone is indistinguishable from a hang.
     await vi.waitFor(() =>
-      expect(api.downloadCatalogZip).toHaveBeenCalledWith("s1"),
+      expect(api.downloadCatalogZip).toHaveBeenCalledWith(
+        "s1",
+        expect.any(Function),
+      ),
     );
+  });
+
+  it("shows how far the download has got", async () => {
+    vi.mocked(api.downloadCatalogZip).mockImplementation(
+      async (_shopId: string, onProgress?: (p: number) => void) => {
+        onProgress?.(42);
+        // Held open so the bar is still on screen when we look for it.
+        await new Promise((r) => setTimeout(r, 50));
+      },
+    );
+
+    renderTools();
+    await screen.findByText(/2 created/);
+    fireEvent.click(screen.getByRole("button", { name: /ZIP with images/i }));
+
+    expect(await screen.findByText(/42%/)).toBeInTheDocument();
+  });
+
+  it("reports an export with no known size without inventing a percentage", async () => {
+    // A chunked or gzipped response carries no Content-Length, so there is no
+    // percentage to show — an honest indeterminate bar beats a made-up number.
+    vi.mocked(api.downloadCatalog).mockImplementation(
+      async () => new Promise((r) => setTimeout(r, 50)),
+    );
+
+    renderTools();
+    await screen.findByText(/2 created/);
+    fireEvent.click(screen.getByRole("button", { name: /Workbook only/i }));
+
+    expect(
+      await screen.findByText(/Building your workbook/i),
+    ).toBeInTheDocument();
   });
 
   it("expands a history row and links products that exist", async () => {

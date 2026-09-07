@@ -58,6 +58,10 @@ export function BulkTools({
   const [result, setResult] = useState<ImportResult | null>(null);
   const [dragging, setDragging] = useState(false);
   const [downloading, setDownloading] = useState<null | "zip" | "xlsx">(null);
+  // `null` means "started, but the size is unknown" — a chunked or gzipped
+  // response carries no Content-Length, and a made-up percentage is worse than
+  // an honest indeterminate bar.
+  const [downloadPct, setDownloadPct] = useState<number | null>(null);
   const [history, setHistory] = useState<ImportBatch[]>([]);
   const [undoing, setUndoing] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -121,14 +125,19 @@ export function BulkTools({
 
   const onDownload = async (kind: "zip" | "xlsx") => {
     setDownloading(kind);
+    setDownloadPct(null);
     try {
-      if (kind === "zip") await downloadCatalogZip(shopId);
-      else await downloadCatalog(shopId);
+      // The ZIP is the slow one: the workbook plus every product image, which
+      // for a real catalogue is tens of megabytes and about a minute. A
+      // spinner alone leaves that indistinguishable from a hang.
+      if (kind === "zip") await downloadCatalogZip(shopId, setDownloadPct);
+      else await downloadCatalog(shopId, setDownloadPct);
       toast.success("Catalog downloaded");
     } catch (e) {
       toast.error(errMessage(e));
     } finally {
       setDownloading(null);
+      setDownloadPct(null);
     }
   };
 
@@ -230,6 +239,33 @@ export function BulkTools({
           </Button>
         </div>
       </div>
+
+      {/* How far the export has got. Same bar the upload uses, so the two
+          halves of this screen report progress the same way — and it is
+          indeterminate when the response carries no Content-Length rather
+          than pretending to a percentage. */}
+      {downloading && (
+        <div className="mb-6" aria-live="polite">
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div
+              className={
+                downloadPct === null
+                  ? "h-full w-1/3 animate-pulse rounded-full bg-primary"
+                  : "h-full rounded-full bg-primary transition-[width]"
+              }
+              style={
+                downloadPct === null ? undefined : { width: `${downloadPct}%` }
+              }
+            />
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {downloading === "zip"
+              ? "Building your catalog with images…"
+              : "Building your workbook…"}{" "}
+            {downloadPct === null ? "" : `${downloadPct}%`}
+          </p>
+        </div>
+      )}
 
       {/* Dropzone */}
       <div

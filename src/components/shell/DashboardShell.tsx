@@ -51,6 +51,7 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     { href: "/admin/shops", label: "Shops", icon: Store },
     { href: "/admin/products/pending", label: "Product approvals", icon: Package },
     { href: "/admin/bulk-pricing", label: "Bulk pricing", icon: Layers },
+    { href: "/admin/bulk", label: "Bulk catalogue", icon: FileSpreadsheet },
     { href: "/admin/shop-owners", label: "Shop Owners", icon: Users },
     { href: "/admin/categories", label: "Categories", icon: FolderTree },
     { href: "/admin/promotions", label: "Discount codes", icon: Tag },

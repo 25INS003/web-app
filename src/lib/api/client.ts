@@ -122,12 +122,32 @@ export const api = {
    * or a plain anchor: cookies are attached wherever the API lives, and a 401
    * refreshes and retries rather than downloading an error page.
    */
-  download: async (url: string, config?: AxiosRequestConfig): Promise<Blob> => {
+  download: async (
+    url: string,
+    onProgress?: (percent: number) => void,
+    config?: AxiosRequestConfig,
+  ): Promise<Blob> => {
     const res = await http.request<Blob>({
       ...config,
       method: "GET",
       url,
       responseType: "blob",
+      // No deadline, for the same reason `upload` has none: a transfer's
+      // duration is a function of size and bandwidth, not of whether anything
+      // is wrong. This inherited the client-wide 20s, and a shop's
+      // catalog.zip — the workbook plus every product image — is 24 MB and 76
+      // seconds for a 31-product shop, so the export was aborted mid-stream
+      // for every catalogue big enough to be worth exporting.
+      timeout: 0,
+      onDownloadProgress: onProgress
+        ? (e) => {
+            // `total` needs a Content-Length. A chunked or gzipped response
+            // has none, and inventing a percentage is worse than showing an
+            // indeterminate bar — the caller distinguishes the two.
+            if (!e.total) return;
+            onProgress(Math.min(100, Math.round((e.loaded / e.total) * 100)));
+          }
+        : undefined,
     });
     return res.data;
   },

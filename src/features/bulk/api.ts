@@ -74,15 +74,27 @@ export const importBulk = (
     onProgress,
   );
 
-export const downloadCatalog = async (shopId: string) => {
-  const blob = await api.download(`/shops/${shopId}/catalog.xlsx`);
+export const downloadCatalog = async (
+  shopId: string,
+  onProgress?: (percent: number) => void,
+) => {
+  const blob = await api.download(`/shops/${shopId}/catalog.xlsx`, onProgress);
   const stamp = new Date().toISOString().slice(0, 10);
   saveBlob(blob, `catalog-${stamp}.xlsx`);
 };
 
-/** The workbook plus an images/ folder of the actual image files. */
-export const downloadCatalogZip = async (shopId: string) => {
-  const blob = await api.download(`/shops/${shopId}/catalog.zip`);
+/**
+ * The workbook plus an images/ folder of the actual image files.
+ *
+ * This is the big one — every product image, fetched from the bucket and
+ * bundled. A 31-product shop is 24 MB and about a minute, so it needs both the
+ * progress callback and the absent deadline `api.download` now sets.
+ */
+export const downloadCatalogZip = async (
+  shopId: string,
+  onProgress?: (percent: number) => void,
+) => {
+  const blob = await api.download(`/shops/${shopId}/catalog.zip`, onProgress);
   const stamp = new Date().toISOString().slice(0, 10);
   saveBlob(blob, `catalog-${stamp}.zip`);
 };
