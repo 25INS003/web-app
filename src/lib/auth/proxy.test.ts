@@ -150,6 +150,7 @@ describe("proxy — an unapproved shop owner", () => {
   });
 
   it("sends a draft applicant to onboarding rather than to status", () => {
+    // The one state where the form IS the page they want.
     const draft = "accessToken=live.jwt; userRole=shop_owner; approvalStatus=draft";
     const res = proxy(req("http://localhost/", draft));
     expect(res.headers.get("location")).toMatch(/\/onboarding/);
@@ -186,6 +187,37 @@ describe("proxy — an unapproved shop owner", () => {
       const res = proxy(req(`http://localhost${path}`, UNAPPROVED));
       expect(res.headers.get("location"), `${path} should be reachable`).toBeNull();
     }
+  });
+
+  it("lands a refused owner on their decision, not on the form", () => {
+    // The form is not theirs to open — reopening it is an admin's decision —
+    // so signing in has to land them where the decision and, if it has been
+    // reopened, the button through to it are.
+    const rejected =
+      "accessToken=live.jwt; userRole=shop_owner; approvalStatus=rejected";
+    expect(proxy(req("http://localhost/login", rejected)).headers.get("location"))
+      .toMatch(/\/status/);
+    expect(proxy(req("http://localhost/", rejected)).headers.get("location"))
+      .toMatch(/\/status/);
+  });
+
+  it("still lands a first-time applicant on the form", () => {
+    // Nothing has been decided about them, so there is nothing to read first.
+    const draft =
+      "accessToken=live.jwt; userRole=shop_owner; approvalStatus=draft";
+    expect(proxy(req("http://localhost/login", draft)).headers.get("location"))
+      .toMatch(/\/onboarding/);
+  });
+
+  it("leaves /onboarding reachable for a refused owner, for the page to judge", () => {
+    // The edge knows the verdict but not whether an admin reopened the form —
+    // `approvalStatus` carries one and not the other. Bouncing here would shut
+    // the door on somebody who has been given permission.
+    const rejected =
+      "accessToken=live.jwt; userRole=shop_owner; approvalStatus=rejected";
+    expect(
+      proxy(req("http://localhost/onboarding", rejected)).headers.get("location"),
+    ).toBeNull();
   });
 
   it("does not offer the form again once the application is submitted", () => {

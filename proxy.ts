@@ -126,12 +126,16 @@ export function proxy(request: NextRequest) {
     // An unreviewed seller goes straight to their application rather than to
     // /dashboard, which the rule below would only bounce them off again. A
     // redirect whose destination redirects is a flash the user can see.
+    // Only a `draft` applicant lands on the form. Everybody else has something
+    // to read first: `pending` is waiting, and a refused owner has a decision
+    // and a reason — and may not have a form at all, since reopening it is an
+    // admin's call. Dropping them straight into the wizard skipped all of it.
     const ownerHome =
       approval === "approved"
         ? "/dashboard"
-        : approval === "pending"
-          ? "/status"
-          : "/onboarding";
+        : approval === "draft"
+          ? "/onboarding"
+          : "/status";
     const home =
       role === "admin" ? "/admin" : role === "shop_owner" ? ownerHome : "/";
     return redirect(home);
@@ -149,14 +153,21 @@ export function proxy(request: NextRequest) {
   // and a determined user can edit it. This is the fast, flash-free bounce;
   // the non-forgeable one is `confineUnapprovedOwner` in the layouts.
   if (token && role === "shop_owner" && approval !== "approved") {
-    const home = approval === "pending" ? "/status" : "/onboarding";
+    // Where they belong when they ask for something they may not have. The
+    // form is the answer only for somebody who has never submitted one.
+    const home = approval === "draft" ? "/onboarding" : "/status";
 
     // An application already submitted has no form left to fill, so /onboarding
     // is not one of the pages that exists for them either. The page itself also
     // refuses — it reads the session, which cannot be stale — but doing it here
     // too means a clean redirect rather than a shell that paints and then
-    // navigates away. Same reason /login sends them straight to their
-    // application above: a destination that redirects is a flash you can see.
+    // navigates away. Same reason /login sends them somewhere final above: a
+    // destination that redirects is a flash you can see.
+    //
+    // A REFUSED owner is not bounced off /onboarding here, because the edge
+    // cannot tell whether an admin has reopened it — `approvalStatus` carries
+    // the verdict, not the permission. The page makes that call from the
+    // session, and the server refuses the submission regardless.
     if (approval === "pending" && pathname === "/onboarding") {
       return redirect("/status");
     }
