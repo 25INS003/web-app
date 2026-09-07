@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useShopOwnerStore } from "@/store/adminShopownerStore";
 import { 
@@ -71,13 +71,29 @@ const OWNER_STATES = {
 export default function ShopOwnerListPage() {
     const { shopOwners, isLoading, fetchAllOwners, approveOwner } = useShopOwnerStore();
     const [searchTerm, setSearchTerm] = useState("");
-    // ?status=pending — what the dashboard's approval card links to. Kept in
-    // the URL rather than in component state so the link is shareable and the
-    // back button behaves.
+    // ?status=pending — what the dashboard's approval card links to.
+    //
+    // Read FROM the url on every render rather than copied into state once.
+    // It used to seed a `useState` and never write back, so the comment here
+    // claiming the back button behaved was simply untrue: turning the filter
+    // off left `?status=pending` in the address bar, so Back walked off the
+    // page instead of undoing the filter, and a refresh silently re-applied
+    // it. One source of truth fixes all three at once — Back, refresh, and a
+    // shared link.
     const searchParams = useSearchParams();
-    const [pendingOnly, setPendingOnly] = useState(
-        searchParams.get("status") === "pending"
-    );
+    const router = useRouter();
+    const pathname = usePathname();
+    const pendingOnly = searchParams.get("status") === "pending";
+
+    const setPendingOnly = (next) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (next) params.set("status", "pending");
+        else params.delete("status");
+        const query = params.toString();
+        // `push`, not `replace`: turning the filter on is a place the admin
+        // navigated to, and Back is how they expect to leave it.
+        router.push(query ? `${pathname}?${query}` : pathname);
+    };
 
     useEffect(() => {
         fetchAllOwners();
@@ -119,6 +135,8 @@ export default function ShopOwnerListPage() {
         );
 
     const pendingCount = shopOwners.filter(o => !o.is_approved).length;
+    // Everyone the pending filter is keeping off screen.
+    const hiddenCount = shopOwners.length - pendingCount;
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -171,12 +189,20 @@ export default function ShopOwnerListPage() {
                     {/* The queue, made visible. Without a control the filter is
                         invisible state: an admin arriving from the dashboard
                         link sees a short list and no reason for it. */}
+                    {/* `aria-pressed` because this is a toggle, not a link:
+                        a screen reader otherwise announces "Pending only"
+                        identically whether the list is filtered or not. */}
                     <Button
-                        onClick={() => setPendingOnly((v) => !v)}
+                        onClick={() => setPendingOnly(!pendingOnly)}
                         variant={pendingOnly ? "default" : "outline"}
+                        aria-pressed={pendingOnly}
                         className="gap-2"
                     >
-                        Pending only
+                        {/* Says what pressing it DOES once it is on. "Pending
+                            only" while already filtered reads as a label for
+                            the state, not as the way out of it — which is why
+                            a filtered list looked like one with no way back. */}
+                        {pendingOnly ? "Showing pending — show all" : "Pending only"}
                         <span className={`rounded-full px-2 py-0.5 text-xs tabular-nums ${
                             pendingCount > 0
                                 ? "bg-warning/15 text-warning"
@@ -195,6 +221,34 @@ export default function ShopOwnerListPage() {
                     </Button>
                 </div>
             </div>
+
+            {/* What the filter is hiding, and one click to see it.
+                
+                The dashboard's "Shop owners awaiting approval" card links
+                here with ?status=pending, so an admin who clicks it watches
+                every approved owner vanish from a page titled "Shop Owners"
+                — with nothing saying they still exist. Counting them is the
+                honest version: the queue is still what you came for, and the
+                rest are one click away. */}
+            {pendingOnly && hiddenCount > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 px-5 py-3">
+                    <p className="text-sm text-muted-foreground">
+                        Showing the{" "}
+                        <span className="font-medium text-foreground">{pendingCount}</span>{" "}
+                        awaiting approval.{" "}
+                        <span className="font-medium text-foreground">{hiddenCount}</span>{" "}
+                        approved {hiddenCount === 1 ? "owner is" : "owners are"} hidden.
+                    </p>
+                    <Button
+                        onClick={() => setPendingOnly(false)}
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5"
+                    >
+                        Show all {shopOwners.length}
+                    </Button>
+                </div>
+            )}
 
             {/* Shop Owners Table */}
             <motion.div 
@@ -228,8 +282,31 @@ export default function ShopOwnerListPage() {
                                             <div className="p-4 rounded-full bg-muted">
                                                 <Users className="w-8 h-8 text-muted-foreground" />
                                             </div>
-                                            <p className="text-lg font-medium text-foreground">No shop owners found</p>
-                                            <p className="text-sm">Try adjusting your search terms.</p>
+                                            {/* "No shop owners found" is untrue when a
+                                                filter is the reason the list is empty —
+                                                and an empty queue is good news, not a
+                                                failed search. Say which it is. */}
+                                            {pendingOnly && pendingCount === 0 ? (
+                                                <>
+                                                    <p className="text-lg font-medium text-foreground">Nothing waiting for approval</p>
+                                                    <p className="text-sm">Every application has been reviewed.</p>
+                                                    {shopOwners.length > 0 && (
+                                                        <Button
+                                                            onClick={() => setPendingOnly(false)}
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="mt-1"
+                                                        >
+                                                            Show all {shopOwners.length}
+                                                        </Button>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="text-lg font-medium text-foreground">No shop owners found</p>
+                                                    <p className="text-sm">Try adjusting your search terms.</p>
+                                                </>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -49,7 +49,26 @@ export default function AdminShopsPage() {
     const router = useRouter();
     const { shops, fetchAllShops, updateShopStatus, isLoading } = useAdminShopStore();
     const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState("all"); 
+    // ?status=… — what the dashboard's "Shops awaiting approval" card links
+    // to. It used to be plain state initialised to "all", so that link landed
+    // an admin on an unfiltered list: they clicked a count of shops waiting
+    // for them and got every shop on the platform, with nothing to say the
+    // filter had been ignored.
+    //
+    // Read from the URL, like the shop-owners list, so the two approval cards
+    // on the dashboard behave the same way and Back undoes either one.
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const statusFilter = searchParams.get("status") ?? "all";
+
+    const setStatusFilter = (next) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (next && next !== "all") params.set("status", next);
+        else params.delete("status");
+        const query = params.toString();
+        router.push(query ? `${pathname}?${query}` : pathname);
+    };
+
     
     // Approval/Rejection Dialog State
     const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -172,6 +191,35 @@ export default function AdminShopsPage() {
                     </div>
                 </div>
             </motion.div>
+
+            {/* What the filter is hiding, and one click to see it — the same
+                notice the shop-owners list carries, because the dashboard's
+                two approval cards land in these two places and should behave
+                alike. Without it an admin clicks a count and watches every
+                other shop vanish from a page titled "Shops". */}
+            {statusFilter !== "all" && shops.length > filteredShops.length && (
+                <motion.div
+                    variants={itemVariants}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-5 py-3"
+                >
+                    <p className="text-sm text-muted-foreground">
+                        Showing{" "}
+                        <span className="font-medium text-foreground">{filteredShops.length}</span>{" "}
+                        {statusFilter} {filteredShops.length === 1 ? "shop" : "shops"}.{" "}
+                        <span className="font-medium text-foreground">
+                            {shops.length - filteredShops.length}
+                        </span>{" "}
+                        hidden.
+                    </p>
+                    <Button
+                        onClick={() => setStatusFilter("all")}
+                        variant="outline"
+                        size="sm"
+                    >
+                        Show all {shops.length}
+                    </Button>
+                </motion.div>
+            )}
 
             {/* Shops Table */}
             <motion.div 
