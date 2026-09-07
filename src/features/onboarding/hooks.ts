@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -43,5 +43,25 @@ export function useSubmitOnboarding() {
           ? err.message
           : "Could not submit your application",
       ),
+  });
+}
+
+/**
+ * The application already on file, for pre-filling a resubmission.
+ *
+ * Only fetched when it is worth having: a first-time applicant has nothing to
+ * pre-fill, and asking anyway would put a request in front of an empty form.
+ *
+ * `staleTime: Infinity` because the answer cannot change while this screen is
+ * open — the only thing that writes it is the submit at the end, after which
+ * the owner is redirected away.
+ */
+export function useExistingApplication(enabled: boolean) {
+  return useQuery({
+    queryKey: ["onboarding", "current"],
+    queryFn: onboardingApi.current,
+    enabled,
+    staleTime: Infinity,
+    retry: false,
   });
 }

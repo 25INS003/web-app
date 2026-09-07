@@ -37,6 +37,25 @@ import {
  * The wording matches the detail page so one owner reads the same on both
  * screens.
  */
+/**
+ * Is this owner still waiting on a decision?
+ *
+ * `!is_approved` is not the same question, and the list used to ask that one.
+ * The boolean has two values where there are four states, so a REJECTED owner
+ * — whose application has very much been decided — was counted as pending and
+ * shown by the "Pending only" filter.
+ *
+ * That is why the dashboard could read 0 while this page's badge read 1: the
+ * dashboard asks the server, which selects on
+ * `verification_status IN ('draft','pending')`, and the two were answering
+ * different questions about the same people. This is that same question,
+ * asked the same way.
+ */
+const isAwaitingDecision = (owner) =>
+    !owner?.is_approved &&
+    (owner?.verification_status === "pending" ||
+        owner?.verification_status === "draft");
+
 const OWNER_STATES = {
     approved: {
         label: "Verified",
@@ -127,14 +146,14 @@ export default function ShopOwnerListPage() {
     };
 
     const filteredOwners = shopOwners
-        .filter(owner => !pendingOnly || !owner.is_approved)
+        .filter(owner => !pendingOnly || isAwaitingDecision(owner))
         .filter(owner =>
             owner.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             ownerName(owner).toLowerCase().includes(searchTerm.toLowerCase()) ||
             owner.gst_number?.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
-    const pendingCount = shopOwners.filter(o => !o.is_approved).length;
+    const pendingCount = shopOwners.filter(isAwaitingDecision).length;
     // Everyone the pending filter is keeping off screen.
     const hiddenCount = shopOwners.length - pendingCount;
 

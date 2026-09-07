@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { useSubmitOnboarding } from "./hooks";
+import { useExistingApplication, useSubmitOnboarding } from "./hooks";
 import {
   allErrors,
   emptyForm,
@@ -52,9 +52,22 @@ const MAX_DOCUMENTS = 5;
 /** Mirrors the backend's multer filter. */
 const ACCEPT = "image/*,application/pdf,.doc,.docx";
 
-export function OnboardingWizard() {
+/**
+ * @param resubmitting true when this application has already been refused, so
+ *   the person is fixing one rather than starting one. The fields are the same;
+ *   what they are being asked to do is not.
+ */
+export function OnboardingWizard({
+  resubmitting = false,
+}: {
+  resubmitting?: boolean;
+} = {}) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<OnboardingForm>(emptyForm);
+  // What they submitted last time. Only asked for when resubmitting: a first
+  // application has nothing to pre-fill and should not wait on a request.
+  const existing = useExistingApplication(resubmitting);
+  const [seeded, setSeeded] = useState(false);
   const [documents, setDocuments] = useState<File[]>([]);
   const [logo, setLogo] = useState<File | null>(null);
   // Errors appear once a step has been left, not while somebody is still
@@ -62,6 +75,17 @@ export function OnboardingWizard() {
   const [touched, setTouched] = useState<Record<number, boolean>>({});
 
   const submit = useSubmitOnboarding();
+
+  // Seeded once, during render rather than from an effect — the React-endorsed
+  // "adjust state when a prop changes" pattern. An effect would paint the empty
+  // form first and then refill it, which reads as the fields being wiped.
+  //
+  // `seeded` and not `form === emptyForm`: an owner who clears a field back to
+  // blank must not have the old value put back under them.
+  if (resubmitting && !seeded && existing.data) {
+    setSeeded(true);
+    setForm((f) => ({ ...f, ...existing.data }));
+  }
 
   const set = (key: keyof OnboardingForm, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -95,12 +119,24 @@ export function OnboardingWizard() {
 
   return (
     <div className="mx-auto w-full max-w-2xl">
+      {/* "Set up your shop" is wrong for somebody who already did that and was
+          turned down — it reads as though nothing had happened, which is the
+          same thing the missing rejection notice used to imply. The refusal
+          and its reason sit directly above this. */}
       <h1 className="font-display text-2xl font-bold tracking-tight">
-        Set up your shop
+        {resubmitting ? "Update your application" : "Set up your shop"}
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        An admin reviews this before your shop goes live.
+        {resubmitting
+          ? "Fix what the reviewer asked for, then send it again."
+          : "An admin reviews this before your shop goes live."}
       </p>
+
+      {resubmitting && existing.isPending && (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Loading what you sent last time…
+        </p>
+      )}
 
       <StepBar
         current={step}
@@ -336,8 +372,9 @@ export function OnboardingWizard() {
               />
             </dl>
             <p className="rounded-xl bg-muted p-3 text-xs text-muted-foreground">
-              Submitting sends this for review. You can update it later, but
-              changes go back through approval.
+              {resubmitting
+                ? "Sending this puts your application back in the queue for review."
+                : "Submitting sends this for review. You can update it later, but changes go back through approval."}
             </p>
           </Section>
         )}
@@ -354,7 +391,7 @@ export function OnboardingWizard() {
           {isReview ? (
             <Button onClick={send} disabled={submit.isPending}>
               {submit.isPending && <Loader2 className="size-4 animate-spin" />}
-              Submit application
+              {resubmitting ? "Send it again" : "Submit application"}
             </Button>
           ) : (
             <Button onClick={next}>Continue</Button>

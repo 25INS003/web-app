@@ -1,9 +1,24 @@
 import { redirect } from "next/navigation";
 import { OnboardingWizard } from "@/features/onboarding/OnboardingWizard";
 import { requireRole } from "@/lib/auth/guards";
+import { getSession } from "@/lib/auth/session.server";
 import { RejectionNotice } from "@/features/onboarding/RejectionNotice";
 
-export const metadata = { title: "Set up your shop · Nedyway" };
+/**
+ * Set per request rather than as a static export, because which page this is
+ * depends on who is reading it: a refused applicant is not setting up a shop,
+ * they are fixing an application — and the browser tab said otherwise.
+ */
+export async function generateMetadata() {
+  const session = await getSession();
+  const status = session?.shop_owner_status?.verification_status;
+  const refused = status === "rejected" || status === "revoked";
+  return {
+    title: refused
+      ? "Update your application · Nedyway"
+      : "Set up your shop · Nedyway",
+  };
+}
 
 /**
  * The shop owner's application.
@@ -52,7 +67,7 @@ export default async function OnboardingPage() {
           reviewedAt={status.reviewed_at}
         />
       )}
-      <OnboardingWizard />
+      <OnboardingWizard resubmitting={refused} />
     </>
   );
 }

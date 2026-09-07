@@ -41,6 +41,15 @@ vi.mock("@/store/adminShopownerStore", () => ({
         verification_status: "approved",
         user_id: { first_name: "Bo", last_name: "Bel" },
       },
+      // Decided, not waiting. `!is_approved` is true of this owner, which is
+      // exactly why counting on that boolean was wrong.
+      {
+        id: "o3",
+        business_name: "Turned Down Ltd",
+        is_approved: false,
+        verification_status: "rejected",
+        user_id: { first_name: "Cy", last_name: "Cor" },
+      },
     ],
     isLoading: false,
     fetchAllOwners: vi.fn(),
@@ -111,7 +120,7 @@ describe("the pending-only filter", () => {
     // nothing saying they still existed.
     expect(screen.getByText(/hidden/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /show all 2/i }),
+      screen.getByRole("button", { name: /show all 3/i }),
     ).toBeInTheDocument();
   });
 
@@ -119,9 +128,27 @@ describe("the pending-only filter", () => {
     query = "status=pending";
     render(<ShopOwnersPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: /show all 2/i }));
+    fireEvent.click(screen.getByRole("button", { name: /show all 3/i }));
 
     expect(push).toHaveBeenCalledWith("/admin/shop-owners");
+  });
+
+  it("does not count a rejected owner as awaiting a decision", () => {
+    render(<ShopOwnersPage />);
+
+    // The reported symptom: the dashboard said 0 awaiting approval while this
+    // badge said 1, because the dashboard asks the server — which selects on
+    // verification_status IN ('draft','pending') — and this page was counting
+    // `!is_approved`, which is also true of everyone already turned down.
+    expect(toggle()).toHaveTextContent(/pending only\s*1$/i);
+  });
+
+  it("keeps a rejected owner out of the pending list", () => {
+    query = "status=pending";
+    render(<ShopOwnersPage />);
+
+    expect(screen.getByText(/Waiting Traders/)).toBeInTheDocument();
+    expect(screen.queryByText(/Turned Down Ltd/)).not.toBeInTheDocument();
   });
 
   it("keeps any other query params it did not put there", () => {
