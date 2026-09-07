@@ -68,7 +68,7 @@ describe("rejecting an owner", () => {
   it("keeps a usable owner row rather than storing the wrapper", async () => {
     put.mockResolvedValue(REJECTED);
 
-    await useShopOwnerStore.getState().rejectOwner("owner-1");
+    await useShopOwnerStore.getState().rejectOwner("owner-1", "Documents unreadable.");
 
     const row = rowFor("owner-1");
     // The row survived: the wrapper has neither of these.
@@ -79,7 +79,7 @@ describe("rejecting an owner", () => {
   it("records that the application was rejected, not that it is pending", async () => {
     put.mockResolvedValue(REJECTED);
 
-    await useShopOwnerStore.getState().rejectOwner("owner-1");
+    await useShopOwnerStore.getState().rejectOwner("owner-1", "Documents unreadable.");
 
     // The symptom: without this the list reads `is_approved: undefined` off the
     // wrapper and falls through to its "not approved yet" branch.
@@ -89,11 +89,41 @@ describe("rejecting an owner", () => {
   it("reports how many shops went down with them", async () => {
     put.mockResolvedValue(REJECTED);
 
-    const result = await useShopOwnerStore.getState().rejectOwner("owner-1");
+    const result = await useShopOwnerStore.getState().rejectOwner("owner-1", "Documents unreadable.");
 
     // The count is the only thing the wrapper carried that the row does not,
     // so unwrapping must not simply throw it away.
     expect(result).toMatchObject({ success: true, deactivatedShops: 2 });
+  });
+});
+
+describe("the reason a decision was made", () => {
+  it("is sent with a rejection, since the owner is shown it", async () => {
+    put.mockResolvedValue({
+      data: { data: { shopOwner: { ...OWNER, verification_status: "rejected" }, deactivatedShops: 0 } },
+    });
+
+    await useShopOwnerStore.getState().rejectOwner("owner-1", "GST is unreadable.");
+
+    // The server requires it; a store that dropped it would 400 every
+    // rejection while the admin watched a dialog they had filled in correctly.
+    expect(put).toHaveBeenCalledWith(
+      "/admin/shop-owners/owner-1/reject",
+      { note: "GST is unreadable." },
+    );
+  });
+
+  it("is sent with a revocation too", async () => {
+    put.mockResolvedValue({
+      data: { data: { shopOwner: { ...OWNER, verification_status: "revoked" }, deactivatedShops: 0 } },
+    });
+
+    await useShopOwnerStore.getState().revokeOwner("owner-1", "Licence lapsed.");
+
+    expect(put).toHaveBeenCalledWith(
+      "/admin/shop-owners/owner-1/revoke",
+      { note: "Licence lapsed." },
+    );
   });
 });
 
@@ -108,7 +138,7 @@ describe("revoking an owner", () => {
       },
     });
 
-    await useShopOwnerStore.getState().revokeOwner("owner-1");
+    await useShopOwnerStore.getState().revokeOwner("owner-1", "Licence lapsed.");
 
     expect(rowFor("owner-1")?.id).toBe("owner-1");
     expect(rowFor("owner-1")?.verification_status).toBe("revoked");

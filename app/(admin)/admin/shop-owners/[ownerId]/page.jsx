@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useShopOwnerStore } from "@/store/adminShopownerStore";
 import { toast } from "sonner";
@@ -56,18 +56,48 @@ export default function ShopOwnerDetailPage() {
         }
     };
 
-    const handleReject = async () => {
-        const result = await rejectOwner(ownerId);
+    // Which decision is waiting on a reason. `null` means no dialog is open.
+    //
+    // Rejecting and revoking both require one: the applicant is SHOWN this
+    // text, and a refusal they cannot act on sends them back with the same
+    // application. Collected here rather than typed into a prompt so the admin
+    // can see the business details while writing it.
+    const [deciding, setDeciding] = useState(null);
+    const [note, setNote] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    const submitDecision = async () => {
+        const reason = note.trim();
+        if (!reason) {
+            toast.error("Say why — the shop owner is shown this.");
+            return;
+        }
+        setSubmitting(true);
+        const act = deciding === "reject" ? rejectOwner : revokeOwner;
+        const result = await act(ownerId, reason);
+        setSubmitting(false);
         if (result.success) {
-            toast.success("Application Rejected");
+            const down = result.deactivatedShops ?? 0;
+            toast.success(
+                down
+                    ? `${deciding === "reject" ? "Application rejected" : "Approval revoked"} — ${down} shop${down === 1 ? "" : "s"} taken offline`
+                    : deciding === "reject"
+                      ? "Application rejected"
+                      : "Approval revoked"
+            );
+            setDeciding(null);
+            setNote("");
         }
     };
 
-    const handleRevoke = async () => {
-        const result = await revokeOwner(ownerId);
-        if (result.success) {
-            toast.success("Application Revoked");
-        }
+    const handleReject = () => {
+        setNote("");
+        setDeciding("reject");
+    };
+
+    const handleRevoke = () => {
+        setNote("");
+        setDeciding("revoke");
     };
 
     if (isLoading) return <div className="p-10 text-center animate-pulse text-muted-foreground">Loading business credentials...</div>;
@@ -225,6 +255,57 @@ export default function ShopOwnerDetailPage() {
                             {/* Verification Actions */}
                             <div className="pt-4 border-t border-border">
                                 <h4 className="text-xs font-bold text-muted-foreground uppercase mb-4 tracking-tighter">Decision Panel</h4>
+
+                                {/* The reason already on file, so a reviewer
+                                    picking this up second knows what was said
+                                    and does not repeat or contradict it. */}
+                                {selectedOwner.approval_note &&
+                                    selectedOwner.verification_status !== "approved" && (
+                                    <div className="mb-4 rounded-2xl border border-destructive/20 bg-destructive/5 p-4">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-destructive">
+                                            Reason given to the owner
+                                        </p>
+                                        <p className="mt-1 text-sm text-foreground">{selectedOwner.approval_note}</p>
+                                    </div>
+                                )}
+
+                                {/* Asking for the reason, before the decision lands. */}
+                                {deciding && (
+                                    <div className="mb-4 rounded-2xl border border-border bg-muted/40 p-4">
+                                        <label htmlFor="decision-note" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                            Why? The shop owner reads this
+                                        </label>
+                                        <textarea
+                                            id="decision-note"
+                                            rows={3}
+                                            autoFocus
+                                            value={note}
+                                            onChange={(e) => setNote(e.target.value)}
+                                            placeholder="e.g. The GST certificate is unreadable — please upload a clearer scan."
+                                            className="mt-2 w-full rounded-xl border border-border bg-background p-3 text-sm text-foreground outline-none focus:border-primary"
+                                        />
+                                        <div className="mt-3 flex gap-2">
+                                            <button
+                                                onClick={submitDecision}
+                                                disabled={submitting || !note.trim()}
+                                                className="flex-1 rounded-xl bg-destructive px-4 py-3 text-sm font-bold text-white transition hover:bg-destructive/90 disabled:opacity-40"
+                                            >
+                                                {submitting
+                                                    ? "Sending…"
+                                                    : deciding === "reject"
+                                                      ? "Reject application"
+                                                      : "Revoke approval"}
+                                            </button>
+                                            <button
+                                                onClick={() => setDeciding(null)}
+                                                disabled={submitting}
+                                                className="rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-muted"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex flex-col gap-3">
                                     {/* Approved State: Show Revoke */}
                                     {selectedOwner.verification_status === "approved" && (

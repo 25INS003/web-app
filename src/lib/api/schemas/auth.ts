@@ -40,6 +40,11 @@ export type User = z.infer<typeof userSchema>;
 export const shopOwnerStatusSchema = z.object({
   is_approved: z.boolean(),
   verification_status: verificationStatusSchema,
+  // Why an application was refused, in the reviewer's own words. Present only
+  // on a rejected or revoked owner, and the reason the screens below can tell
+  // somebody what to fix instead of handing them a blank form.
+  approval_note: z.string().nullish(),
+  reviewed_at: z.string().nullish(),
   owner_id: objectId,
 });
 export type ShopOwnerStatus = z.infer<typeof shopOwnerStatusSchema>;

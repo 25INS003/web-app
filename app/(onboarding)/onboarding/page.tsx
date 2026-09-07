@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { OnboardingWizard } from "@/features/onboarding/OnboardingWizard";
 import { requireRole } from "@/lib/auth/guards";
+import { RejectionNotice } from "@/features/onboarding/RejectionNotice";
 
 export const metadata = { title: "Set up your shop · Nedyway" };
 
@@ -34,5 +35,24 @@ export default async function OnboardingPage() {
   if (status?.is_approved) redirect("/dashboard");
   if (status?.verification_status === "pending") redirect("/status");
 
-  return <OnboardingWizard />;
+  // A refused applicant is told so, and why, above the form they are being
+  // asked to fill in again. Without it the page reads as a first application:
+  // they signed in, landed on "Set up your shop", and nothing said a decision
+  // had been made at all.
+  const refused =
+    status?.verification_status === "rejected" ||
+    status?.verification_status === "revoked";
+
+  return (
+    <>
+      {refused && (
+        <RejectionNotice
+          status={status.verification_status as "rejected" | "revoked"}
+          note={status.approval_note}
+          reviewedAt={status.reviewed_at}
+        />
+      )}
+      <OnboardingWizard />
+    </>
+  );
 }

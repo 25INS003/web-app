@@ -69,7 +69,7 @@ const OWNER_STATES = {
 };
 
 export default function ShopOwnerListPage() {
-    const { shopOwners, isLoading, fetchAllOwners, approveOwner, rejectOwner } = useShopOwnerStore();
+    const { shopOwners, isLoading, fetchAllOwners, approveOwner } = useShopOwnerStore();
     const [searchTerm, setSearchTerm] = useState("");
     // ?status=pending — what the dashboard's approval card links to. Kept in
     // the URL rather than in component state so the link is shareable and the
@@ -320,19 +320,23 @@ export default function ShopOwnerListPage() {
                                                                 </Tooltip>
                                                             </TooltipProvider>
 
+                                                            {/* Rejecting needs a written reason — the owner is
+                                                                shown it — and a table row is no place to write
+                                                                one. This links to the review screen, which has
+                                                                the business details on screen beside the box.
+                                                                Approve stays a click: it asks nothing of the
+                                                                person being approved. */}
                                                             <TooltipProvider delayDuration={0}>
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
-                                                                        <Button 
-                                                                            size="icon" 
-                                                                            variant="ghost" 
-                                                                            onClick={() => rejectOwner(owner.id)}
-                                                                            className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-xl"
+                                                                        <Link
+                                                                            href={`/admin/shop-owners/${owner.id}`}
+                                                                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-destructive transition hover:bg-destructive/10 dark:hover:bg-destructive/20"
                                                                         >
                                                                             <XCircle className="h-[18px] w-[18px]" />
-                                                                        </Button>
+                                                                        </Link>
                                                                     </TooltipTrigger>
-                                                                    <TooltipContent>Reject Application</TooltipContent>
+                                                                    <TooltipContent>Reject — opens the review screen to give a reason</TooltipContent>
                                                                 </Tooltip>
                                                             </TooltipProvider>
                                                         </>

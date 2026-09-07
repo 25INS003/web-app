@@ -123,10 +123,12 @@ export const useShopOwnerStore = create((set, get) => ({
     },
 
     // 6. Reject Owner
-    rejectOwner: async (ownerId) => {
+    // `note` is required by the server: the owner is shown it, so a refusal
+    // without one would leave them with nothing to act on.
+    rejectOwner: async (ownerId, note) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await apiClient.put(`/admin/shop-owners/${ownerId}/reject`);
+            const response = await apiClient.put(`/admin/shop-owners/${ownerId}/reject`, { note });
             const updatedOwner = ownerFrom(response);
             
             set((state) => ({
@@ -143,10 +145,10 @@ export const useShopOwnerStore = create((set, get) => ({
     },
 
     // 7. Revoke Owner (e.g., suspend or deactivate)
-    revokeOwner: async (ownerId) => {
+    revokeOwner: async (ownerId, note) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await apiClient.put(`/admin/shop-owners/${ownerId}/revoke`);
+            const response = await apiClient.put(`/admin/shop-owners/${ownerId}/revoke`, { note });
             const updatedOwner = ownerFrom(response);
             
             set((state) => ({

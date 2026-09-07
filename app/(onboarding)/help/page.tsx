@@ -29,8 +29,15 @@ export default async function PendingHelpPage() {
           the sign-out in the layout are the only exits from this group — and
           a support page with no way back to what you were waiting on is its
           own kind of stuck. */}
+      {/* Wherever their application actually is. /status says "under review",
+          which is only true for someone waiting — a refused owner belongs on
+          /onboarding, where the reason and the form are. */}
       <Link
-        href="/status"
+        href={
+          session.shop_owner_status?.verification_status === "pending"
+            ? "/status"
+            : "/onboarding"
+        }
         className="inline-flex items-center gap-1.5 px-4 text-sm text-muted-foreground transition hover:text-foreground sm:px-6"
       >
         <ArrowLeft className="size-4" />

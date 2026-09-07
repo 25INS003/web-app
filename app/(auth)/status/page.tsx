@@ -1,10 +1,31 @@
 import { Clock } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { SignOutButton } from "@/features/auth/SignOutButton";
+import { getSession } from "@/lib/auth/session.server";
 
 export const metadata = { title: "Under review · Nedyway" };
 
-export default function StatusPage() {
+/**
+ * "Your application is being reviewed" — true only while it is.
+ *
+ * This page is static, so a rejected or revoked owner reaching it was told
+ * their application was still under review, which is the opposite of what had
+ * happened. They belong on /onboarding, where the reason they were refused is
+ * shown above the form they can fix and resubmit.
+ */
+export default async function StatusPage() {
+  const session = await getSession();
+  const status = session?.shop_owner_status;
+  if (
+    status?.verification_status === "rejected" ||
+    status?.verification_status === "revoked" ||
+    status?.verification_status === "draft"
+  ) {
+    redirect("/onboarding");
+  }
+  if (status?.is_approved) redirect("/dashboard");
+
   return (
     <div className="text-center">
       <span className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-warning/15 text-warning">
