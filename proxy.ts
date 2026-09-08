@@ -74,6 +74,33 @@ export const UNAPPROVED_OWNER_ALLOWED = [
   "/t",
 ];
 
+/**
+ * The customer shop: every top-level segment of the `(storefront)` group.
+ *
+ * A signed-in owner or admin has no business on any of them — it is a search
+ * bar, a wishlist, a cart and a checkout — and the storefront being public
+ * meant nothing stopped one from typing a URL into it.
+ *
+ * Hand-kept like `OWNER_GATED`, and drifting the same way if left alone, so
+ * `proxy.test.ts` reads the route tree and fails when a new `(storefront)`
+ * segment is not covered here.
+ *
+ * `/` is the shopfront itself and is handled separately below: it is a bare
+ * path, not a prefix, and treating it as one would match every URL in the app.
+ */
+export const STOREFRONT_PATHS = [
+  "/account",
+  "/c",
+  "/cart",
+  "/checkout",
+  "/notifications",
+  "/orders",
+  "/p",
+  "/search",
+  "/support",
+  "/wishlist",
+];
+
 // Next 16 resolves a proxy file via the NAMED `proxy` export (preferred) or a
 // default export; we provide the named export to match the convention exactly.
 export function proxy(request: NextRequest) {
@@ -176,6 +203,28 @@ export function proxy(request: NextRequest) {
       (p) => pathname === p || pathname.startsWith(`${p}/`),
     );
     if (!allowed) return redirect(home);
+  }
+
+  // 2c) The customer shop is for customers.
+  //
+  // After 2b, which has a more specific answer for an owner who has not been
+  // approved yet: their application, not their dashboard.
+  //
+  // Delivery executives are deliberately not bounced — this app has no area
+  // for them, so the redirect would have nowhere to go.
+  //
+  // Like every rule here this decides on cookies the edge cannot verify;
+  // `confineToOwnArea` in the storefront layout is the check that cannot be
+  // edited. This one exists so the bounce happens before the shopfront paints.
+  if (token && (role === "admin" || role === "shop_owner")) {
+    const inStorefront =
+      pathname === "/" ||
+      STOREFRONT_PATHS.some(
+        (p) => pathname === p || pathname.startsWith(`${p}/`),
+      );
+    if (inStorefront) {
+      return redirect(role === "admin" ? "/admin" : "/dashboard");
+    }
   }
 
   // 3) Non-admin trying to reach the admin area.

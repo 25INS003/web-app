@@ -282,3 +282,98 @@ describe("proxy — an unapproved shop owner", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// The customer shop is for customers.
+//
+// The storefront is public, so nothing gated it beyond a rule for sellers whose
+// application was unreviewed. An APPROVED owner or an admin who shortened a URL
+// landed in the shopfront — search bar, wishlist, Cart button, checkout — none
+// of which belongs to them.
+
+/** Every top-level URL segment of the customer route group. */
+const storefrontSegments = () =>
+  readdirSync(join(process.cwd(), "app", "(storefront)"), {
+    withFileTypes: true,
+  })
+    .filter((e) => e.isDirectory())
+    .filter((e) => !e.name.startsWith("(") && !e.name.startsWith("_"))
+    .map((e) => `/${e.name}`);
+
+const APPROVED_OWNER =
+  "accessToken=live.jwt; userRole=shop_owner; approvalStatus=approved";
+const ADMIN = "accessToken=live.jwt; userRole=admin";
+const CUSTOMER = "accessToken=live.jwt; userRole=customer";
+
+describe("proxy — the storefront", () => {
+  it("is closed to an approved shop owner, on every screen", () => {
+    // Read from the route tree, like the owner-area test above: the list in
+    // proxy.ts is hand-kept, and that is exactly how /variants came to be
+    // ungated on the other side.
+    for (const segment of storefrontSegments()) {
+      const res = proxy(req(`http://localhost${segment}`, APPROVED_OWNER));
+      expect(
+        res.headers.get("location") ?? "(not redirected)",
+        `${segment} is open to a shop owner`,
+      ).toMatch(/\/dashboard/);
+    }
+  });
+
+  it("is closed to an admin too", () => {
+    for (const segment of storefrontSegments()) {
+      const res = proxy(req(`http://localhost${segment}`, ADMIN));
+      expect(
+        res.headers.get("location") ?? "(not redirected)",
+        `${segment} is open to an admin`,
+      ).toMatch(/\/admin/);
+    }
+  });
+
+  it("closes the shopfront itself", () => {
+    // `/` is the one path that is not a prefix — treating it as one would match
+    // every URL in the app, so it is handled separately and needs its own test.
+    expect(
+      proxy(req("http://localhost/", APPROVED_OWNER)).headers.get("location"),
+    ).toMatch(/\/dashboard/);
+    expect(
+      proxy(req("http://localhost/", ADMIN)).headers.get("location"),
+    ).toMatch(/\/admin/);
+  });
+
+  it("closes the deep URLs, not only the segment root", () => {
+    const res = proxy(
+      req("http://localhost/p/some-product-slug", APPROVED_OWNER),
+    );
+    expect(res.headers.get("location")).toMatch(/\/dashboard/);
+  });
+
+  it("leaves it open to a customer", () => {
+    for (const segment of storefrontSegments()) {
+      const res = proxy(req(`http://localhost${segment}`, CUSTOMER));
+      expect(
+        res.headers.get("location") ?? "(not redirected)",
+        `${segment} is closed to a customer`,
+      ).toBe("(not redirected)");
+    }
+  });
+
+  it("leaves it open to a signed-out visitor", () => {
+    // The storefront is public. A guard that shut it to everybody would be a
+    // shop nobody can browse.
+    expect(
+      proxy(req("http://localhost/")).headers.get("location") ??
+        "(not redirected)",
+    ).toBe("(not redirected)");
+    expect(
+      proxy(req("http://localhost/search")).headers.get("location") ??
+        "(not redirected)",
+    ).toBe("(not redirected)");
+  });
+
+  it("still sends an UNAPPROVED owner to their application, not the dashboard", () => {
+    // The more specific rule wins: a seller who has not been approved has no
+    // dashboard to be sent to.
+    const res = proxy(req("http://localhost/search", UNAPPROVED));
+    expect(res.headers.get("location")).toMatch(/\/status/);
+  });
+});

@@ -1,26 +1,26 @@
 import type { ReactNode } from "react";
 import { StorefrontHeader } from "@/components/shell/StorefrontHeader";
-import { confineUnapprovedOwner } from "@/lib/auth/guards";
+import { confineToOwnArea } from "@/lib/auth/guards";
 
 /**
- * The public shop. Deliberately browsable without an account — except by a
- * seller who is still waiting to be approved.
+ * The public shop. Browsable without an account, and by customers — and by
+ * nobody else who is signed in.
  *
- * They are the one signed-in party with no business here: the storefront is
- * where customers buy, and an applicant belongs on their application until
- * somebody decides. Removing `/status` from the URL used to land them here,
- * because a public layout had no guard to say otherwise.
+ * It began with no guard at all, then with one that bounced only a seller
+ * whose application was unreviewed. An APPROVED owner or an admin who
+ * shortened a URL still landed in the shopfront: a search bar, a wishlist, a
+ * Cart button and a checkout, none of which is theirs. `confineToOwnArea`
+ * sends every signed-in non-customer back to their own area.
  *
- * `confineUnapprovedOwner` is silent for everyone else and does not even call
- * the backend for a visitor with no session, so the page stays as public as it
- * has always been.
+ * It stays silent for signed-out visitors and does not even call the backend
+ * for them, so the page is as public as it has always been.
  */
 export default async function StorefrontLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  await confineUnapprovedOwner();
+  await confineToOwnArea();
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">

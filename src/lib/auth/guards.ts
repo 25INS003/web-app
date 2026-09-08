@@ -46,31 +46,44 @@ export async function requireRole(
 }
 
 /**
- * Confine a seller whose application is unreviewed to that application.
+ * Keep the customer shop for customers.
  *
- * For layouts that are NOT the shop-owner area — the storefront especially,
- * which is public and therefore had no guard at all. A seller sitting on
- * /status who deleted the last segment landed on the customer shopfront, and
- * nothing server-side had an opinion about it.
+ * The storefront is public, so it had no guard at all, and then only enough of
+ * one to bounce an UNREVIEWED seller. An approved owner or an admin who
+ * shortened a URL landed in the shopfront — a search bar, a wishlist, a Cart
+ * button and a checkout, none of which belongs to them. Signed in, they have
+ * their own area; this sends them back to it.
+ *
+ * Who passes through:
+ *  - signed-out visitors, because that is what the storefront is for;
+ *  - customers, obviously;
+ *  - delivery executives, who have no area of their own in this app yet.
+ *    Bouncing them would be a redirect to nowhere. When that area exists this
+ *    is the line to change.
  *
  * The edge proxy bounces these paths too, and does it faster, but it decides on
- * a readable `approvalStatus` cookie that a determined user can edit. This
- * reads /auth/me, so it cannot be talked out of. Cheap where it matters:
+ * a readable `userRole` cookie that a determined user can edit. This reads
+ * /auth/me, so it cannot be talked out of. Cheap where it matters:
  * `getSession` returns null without a fetch when there is no token cookie, so
  * an anonymous visitor browsing the storefront pays nothing.
- *
- * Silent for everyone else — customers, admins, approved owners and signed-out
- * visitors all pass straight through, which is what lets it sit in a public
- * layout at all.
  */
-export async function confineUnapprovedOwner(): Promise<void> {
+export async function confineToOwnArea(): Promise<void> {
   const session = await getSession();
-  if (!session || session.user.user_type !== "shop_owner") return;
+  if (!session) return;
 
+  const { user_type } = session.user;
+  if (user_type === "customer" || user_type === "delivery_executive") return;
+  if (user_type === "admin") redirect("/admin");
+
+  // A shop owner, approved or not. Only a `draft` applicant has a form left to
+  // fill; everybody else has something to read first — `pending` is waiting,
+  // and a refused owner has a decision and a reason, and may not have a form at
+  // all since reopening it is an admin's call. This matches the proxy's
+  // `ownerHome`, which the previous version of this guard did not: it sent
+  // every non-pending applicant to /onboarding, including refused ones.
   const status = session.shop_owner_status;
-  if (status?.is_approved) return;
-
-  redirect(status?.verification_status === "pending" ? "/status" : "/onboarding");
+  if (status?.is_approved) redirect("/dashboard");
+  redirect(status?.verification_status === "draft" ? "/onboarding" : "/status");
 }
 
 // Shop-owner area: must be an approved owner, else routed to onboarding/status.
