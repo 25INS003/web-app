@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useProductStore } from "@/store/productStore";
 import { useVariantStore } from "@/store/productVariantStore";
 import VariantList from "./variant";
+import { toast } from "sonner";
 // --- Icons ---
 import {
     ArrowLeft,
@@ -84,6 +85,8 @@ const ViewProductPage = ({ shopId, productId }) => {
     // but keeping the hook if you use it for other logic.
     const {
         isLoading: isStoreLoading,
+        setVariantActive,
+        deleteVariant,
     } = useVariantStore();
 
     const [isInitializing, setIsInitializing] = useState(true);
@@ -108,6 +111,56 @@ const ViewProductPage = ({ shopId, productId }) => {
             resetProduct();
         };
     }, [shopId, productId, getProductDetails, resetProduct]);
+
+    // --- Variant actions ---
+    //
+    // The row menu has always offered Delete; nothing was ever passed for it,
+    // so the item rendered, looked live, and did nothing when clicked. These
+    // are the handlers it was written for, plus the deactivate the menu was
+    // missing entirely.
+    //
+    // Both re-read the product afterwards rather than patching a row in place:
+    // removing or deactivating a variant re-syncs the parent product's price
+    // range and can deactivate the product itself when the last live variant
+    // goes, and none of that is knowable from here.
+    const refreshProduct = () => getProductDetails(shopId, productId);
+
+    const handleSetVariantActive = async (variantId, nextActive) => {
+        if (
+            !nextActive &&
+            !window.confirm(
+                "Take this variant off sale? Customers will not see it, and you can turn it back on at any time."
+            )
+        )
+            return;
+
+        const ok = await setVariantActive(variantId, nextActive);
+        if (ok) {
+            toast.success(nextActive ? "Variant is back on sale" : "Variant deactivated");
+            await refreshProduct();
+        } else {
+            toast.error(useVariantStore.getState().error || "Could not change the variant's status");
+        }
+    };
+
+    const handleDeleteVariant = async (variantId) => {
+        if (
+            !window.confirm(
+                "Delete this variant permanently? Its images go too, and this cannot be undone. To take it off sale and keep it, use Deactivate."
+            )
+        )
+            return;
+
+        const ok = await deleteVariant(variantId);
+        if (ok) {
+            toast.success("Variant deleted");
+            // The selected variant may be the one that just went.
+            setSelectedVariant(null);
+            await refreshProduct();
+        } else {
+            toast.error(useVariantStore.getState().error || "Could not delete the variant");
+        }
+    };
 
     // --- 2. Set Default Variant ---
     useEffect(() => {
@@ -378,6 +431,8 @@ const ViewProductPage = ({ shopId, productId }) => {
                                         <VariantList 
                                             variants={currentVariants} 
                                             shopId={shopId} // Pass down if needed
+                                            onSetActive={handleSetVariantActive}
+                                            onDelete={handleDeleteVariant}
                                         />
                                     </div>
                                 </TabsContent>

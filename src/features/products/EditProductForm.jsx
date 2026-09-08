@@ -28,7 +28,9 @@ import {
   Boxes,
   Sparkles,
   Edit3,
-  Eye
+  Eye,
+  XCircle,
+  CheckCircle
 } from "lucide-react";
 
 // --- Shadcn UI ---
@@ -125,20 +127,31 @@ const variantPayload = (data) => {
   return out;
 };
 
+/**
+ * Tax as the form edits it: a list of `{ name, rate }`.
+ *
+ * Stored as an array now, but older rows kept it as an object keyed by name,
+ * so both shapes still arrive. Lifted out of the row component because the ADD
+ * form needs it too.
+ */
+const normalizeTax = (tax) => {
+  if (!tax) return [];
+  if (Array.isArray(tax)) return tax.map(t => ({ name: t?.name ?? "", rate: t?.rate ?? 0 }));
+  if (typeof tax === 'object') {
+    return Object.entries(tax).map(([name, rate]) => ({ name, rate: rate || 0 }));
+  }
+  return [];
+};
+
 // --- Variant Row Component ---
 const VariantRow = ({ variant, shopId, onRefresh }) => {
-  const { updateVariant, deleteVariant, uploadVariantImages, deleteVariantImage, isLoading } = useVariantStore();
+  const { updateVariant, deleteVariant, setVariantActive, uploadVariantImages, deleteVariantImage, isLoading } = useVariantStore();
 
   const [isOpen, setIsOpen] = useState(false);
+  // `!== false` rather than truthiness: the column defaults to true, so a
+  // payload that omits the field means on sale, not off it.
+  const isActive = variant.is_active !== false;
 
-  const normalizeTax = (tax) => {
-    if (!tax) return [];
-    if (Array.isArray(tax)) return tax.map(t => ({ name: t?.name ?? "", rate: t?.rate ?? 0 }));
-    if (typeof tax === 'object') {
-      return Object.entries(tax).map(([name, rate]) => ({ name, rate: rate || 0 }));
-    }
-    return [];
-  };
 
   // The row's editable copy of the variant.
   const fromVariant = (v) => ({
@@ -244,11 +257,44 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Delete this variant?")) return;
+    if (
+      !window.confirm(
+        "Delete this variant permanently? Its images go too, and this cannot be undone. To take it off sale and keep it, use Deactivate."
+      )
+    )
+      return;
     const success = await deleteVariant(variant.id);
     if (success) {
       toast.success("Variant deleted");
       onRefresh();
+    }
+  };
+
+  /**
+   * Take a variant off sale without destroying it.
+   *
+   * The only thing this screen offered was a permanent delete, so an owner
+   * with one size out of stock for a fortnight had to delete it — losing its
+   * price, SKU, stock history and images — and build it again afterwards.
+   * Deactivating is what they actually wanted, and the endpoint for it has
+   * been there all along.
+   */
+  const handleToggleActive = async () => {
+    const nextActive = !isActive;
+    if (
+      !nextActive &&
+      !window.confirm(
+        "Take this variant off sale? Customers will not see it, and you can turn it back on at any time."
+      )
+    )
+      return;
+
+    const success = await setVariantActive(variant.id, nextActive);
+    if (success) {
+      toast.success(nextActive ? "Variant is back on sale" : "Variant deactivated");
+      onRefresh();
+    } else {
+      toast.error(useVariantStore.getState().error || "Could not change the variant's status");
     }
   };
 
@@ -276,7 +322,7 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
   };
 
   return (
-    <Card className="rounded-2xl border-border bg-card overflow-hidden shadow-sm border-l-4 border-l-primary hover:shadow-md transition-shadow">
+    <Card className={`rounded-2xl border-border bg-card overflow-hidden shadow-sm border-l-4 hover:shadow-md transition-shadow ${isActive ? "border-l-primary" : "border-l-warning"}`}>
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 bg-muted rounded-xl flex items-center justify-center overflow-hidden shadow-sm">
@@ -287,7 +333,19 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
             )}
           </div>
           <div>
-            <h4 className="font-semibold text-foreground">{variant.name || "Unnamed Variant"}</h4>
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="font-semibold text-foreground">{variant.name || "Unnamed Variant"}</h4>
+              {/* Only shown when it is off sale. A card that has to be
+                  expanded before the owner can tell whether customers can buy
+                  it is a card that will be left deactivated by accident — and
+                  a green "Active" chip on every other variant would say
+                  nothing. */}
+              {!isActive && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+                  <XCircle className="h-3 w-3" /> Off sale
+                </span>
+              )}
+            </div>
             <div className="text-xs text-muted-foreground flex gap-2 items-center mt-0.5">
               <span className="font-medium text-primary">{formatPrice(variant.price)}</span>
               <span>•</span>
@@ -530,10 +588,32 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
             )}
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t border-border">
-            <Button variant="destructive" size="sm" onClick={handleDelete} className="h-9 rounded-xl">
-              <Trash2 className="h-3 w-3 mr-2" /> Delete Variant
-            </Button>
+          <div className="flex flex-wrap justify-between items-center gap-2 pt-4 border-t border-border">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Deactivate first and Delete second, in that order and with
+                  that emphasis: taking a variant off sale is the reversible
+                  one and almost always the one meant. Delete destroys the
+                  price, SKU, stock history and images with no way back. */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleToggleActive}
+                className={
+                  isActive
+                    ? "h-9 rounded-xl border-warning/40 text-warning hover:bg-warning/10 hover:text-warning"
+                    : "h-9 rounded-xl border-success/40 text-success hover:bg-success/10 hover:text-success"
+                }
+              >
+                {isActive ? (
+                  <><XCircle className="h-3 w-3 mr-2" /> Deactivate</>
+                ) : (
+                  <><CheckCircle className="h-3 w-3 mr-2" /> Activate</>
+                )}
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleDelete} className="h-9 rounded-xl">
+                <Trash2 className="h-3 w-3 mr-2" /> Delete Variant
+              </Button>
+            </div>
             <Button onClick={handleSave} disabled={isSaving} size="sm" className="bg-primary hover:bg-primary/90 h-9 rounded-xl shadow-lg shadow-primary/25">
               {isSaving ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Save className="h-3 w-3 mr-2" />} Save Changes
             </Button>
@@ -546,7 +626,7 @@ const VariantRow = ({ variant, shopId, onRefresh }) => {
 
 
 // --- Add Variant Form Component ---
-const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
+const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0, siblingTax = [] }) => {
   const { addVariant, uploadVariantImages, isLoading } = useVariantStore();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -565,7 +645,18 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
     warehouse_location: "",
     cost_price: 0,
     compare_at_price: "",
-    attributes: []
+    attributes: [],
+    // Tax was missing from this form entirely — the edit screen has always had
+    // it and the API has always accepted it on create, so every variant added
+    // to an existing product was created with no GST at all, silently, while
+    // its siblings carried 18%. Nothing on screen said so and the invoice was
+    // simply short.
+    //
+    // Seeded from the product's other variants rather than left empty: GST is
+    // a property of what is being sold, so the second size of a thing is taxed
+    // like the first. Shown and editable, never assumed — see the note under
+    // the field.
+    tax: siblingTax
   };
 
   const [newData, setNewData] = useState(EMPTY_VARIANT);
@@ -633,7 +724,19 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
 
   if (!isOpen) {
     return (
-      <Button onClick={() => setIsOpen(true)} className="w-full border-dashed rounded-xl h-12" variant="outline">
+      <Button
+        // Seeded on open, not at mount. `useState(EMPTY_VARIANT)` reads its
+        // argument once, and this form mounts collapsed while the variants are
+        // still loading — so a seed taken at mount is `[]` for exactly the
+        // products that have siblings to copy from. Only when the owner has
+        // not already entered tax of their own.
+        onClick={() => {
+          setNewData(prev => (prev.tax?.length ? prev : { ...prev, tax: siblingTax }));
+          setIsOpen(true);
+        }}
+        className="w-full border-dashed rounded-xl h-12"
+        variant="outline"
+      >
         <Plus className="mr-2 h-4 w-4" /> Add New Variant
       </Button>
     );
@@ -684,6 +787,75 @@ const AddVariantForm = ({ productId, onRefresh, existingVariantCount = 0 }) => {
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Warehouse Location</label>
           <Input placeholder="e.g. Aisle 3, Rack B" value={newData.warehouse_location} onChange={e => setNewData({ ...newData, warehouse_location: e.target.value })} className="h-10 rounded-xl" />
+        </div>
+
+        {/* Tax / GST. The same editor the variant rows have — this form did
+            not have one at all, so a variant added here went out untaxed. */}
+        <div className="space-y-3 border-t pt-4 border-border">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-muted-foreground">Tax / GST</label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-[10px] rounded-lg hover:bg-warning/10 hover:text-warning"
+              onClick={() => setNewData({ ...newData, tax: [...(newData.tax || []), { name: "", rate: 0 }] })}
+            >
+              + Add Tax
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {(newData.tax || []).map((t, idx) => (
+              <div key={idx} className="flex gap-2 items-center">
+                <Input
+                  placeholder="Name (e.g. IGST)"
+                  value={t?.name ?? ""}
+                  onChange={e => {
+                    const newTax = [...(newData.tax || [])];
+                    newTax[idx] = { ...newTax[idx], name: e.target.value.toUpperCase() };
+                    setNewData({ ...newData, tax: newTax });
+                  }}
+                  className="h-9 text-xs rounded-xl"
+                />
+                <div className="relative w-24">
+                  <Input
+                    type="number"
+                    placeholder="%"
+                    value={t?.rate ?? 0}
+                    onChange={e => {
+                      const newTax = [...(newData.tax || [])];
+                      newTax[idx] = { ...newTax[idx], rate: parseFloat(e.target.value) || 0 };
+                      setNewData({ ...newData, tax: newTax });
+                    }}
+                    className="h-9 text-xs rounded-xl pr-6"
+                  />
+                  <span className="absolute right-2 top-2.5 text-xs text-muted-foreground">%</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-destructive hover:text-destructive/80 rounded-xl"
+                  onClick={() => setNewData({ ...newData, tax: (newData.tax || []).filter((_, i) => i !== idx) })}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            {(newData.tax || []).length === 0 ? (
+              <p className="text-[10px] text-muted-foreground italic">
+                No tax on this variant. Add one if this product is taxable.
+              </p>
+            ) : (
+              siblingTax.length > 0 && (
+                // Said out loud, because a pre-filled field the owner did not
+                // type is one they will not check otherwise.
+                <p className="text-[10px] text-muted-foreground italic">
+                  Copied from this product&apos;s other variants — change it if this one differs.
+                </p>
+              )
+            )}
+          </div>
         </div>
 
         {/* Attributes — what actually distinguishes this variant from the
@@ -1133,6 +1305,13 @@ export const EditProductForm = () => {
                 productId={productId}
                 onRefresh={refreshData}
                 existingVariantCount={currentVariants?.length ?? 0}
+                // The first sibling that actually has a tax, not simply the
+                // first sibling: a product whose earliest variant was added
+                // before this field existed carries none, and seeding from
+                // that one would reintroduce the very gap this closes.
+                siblingTax={normalizeTax(
+                  (currentVariants || []).find((v) => normalizeTax(v.tax).length > 0)?.tax
+                )}
               />
             </div>
           </div>

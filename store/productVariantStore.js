@@ -101,14 +101,25 @@ export const useVariantStore = create((set, get) => ({
     },
 
     /**
-     * Soft Delete / Toggle Status
+     * Deactivate or reactivate a variant.
+     *
      * Route: PATCH /variants/:variantId/status
+     *
+     * The body is not optional. This sent none at all, and the handler's first
+     * line is `if (typeof is_active !== "boolean") throw new ApiError(400)` —
+     * so the action could never have succeeded, whoever called it. Nothing in
+     * the app did, which is why a 400 on every call went unnoticed.
+     *
+     * Explicit `is_active` rather than a server-side toggle: two tabs open on
+     * the same variant, both pressing "Deactivate", should agree on the
+     * outcome instead of flipping it twice.
      */
-    softDeleteVariant: async (variantId) => {
+    setVariantActive: async (variantId, isActive) => {
         set({ isLoading: true, error: null });
         try {
             const response = await apiClient.patch(
-                `/variants/${variantId}/status`
+                `/variants/${variantId}/status`,
+                { is_active: isActive }
             );
 
             // Update local state if we are currently viewing this variant

@@ -39,7 +39,15 @@ const formatPrice = (amount) => {
     }).format(amount || 0);
 };
 
-const VariantList = ({ variants = [], onEdit, onDelete }) => {
+/**
+ * @param {Function} [onSetActive] (variantId, isActive) => void
+ * @param {Function} [onDelete]    (variantId) => void
+ *
+ * Both optional and both, until now, never passed: the "Delete" item called
+ * `onDelete && onDelete(...)`, and no caller supplied one — so the menu item
+ * existed, looked live, and did nothing at all when clicked.
+ */
+const VariantList = ({ variants = [], onEdit, onDelete, onSetActive }) => {
     
     if (!variants || variants.length === 0) {
         return (
@@ -185,6 +193,19 @@ const VariantList = ({ variants = [], onEdit, onDelete }) => {
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onClick={() => onEdit && onEdit(variant)}>
                                                 <Edit className="mr-2 h-4 w-4" /> Edit Variant
+                                            </DropdownMenuItem>
+                                            {/* Off sale and back, without destroying the
+                                                row. Deleting a variant to stop selling it
+                                                for a fortnight loses its price, SKU, stock
+                                                history and images. */}
+                                            <DropdownMenuItem
+                                                onClick={() => onSetActive && onSetActive(variant.id, !(variant.is_active !== false))}
+                                            >
+                                                {variant.is_active !== false ? (
+                                                    <><AlertCircle className="mr-2 h-4 w-4" /> Deactivate</>
+                                                ) : (
+                                                    <><CheckCircle2 className="mr-2 h-4 w-4" /> Activate</>
+                                                )}
                                             </DropdownMenuItem>
                                             <DropdownMenuItem 
                                                 className="text-red-600 focus:text-red-600 focus:bg-red-50"
