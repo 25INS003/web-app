@@ -176,7 +176,16 @@ export function DashboardShell({
                 its reason, or edited by an admin — was written and emitted with
                 nowhere on their side to see it. The admin section shares this
                 shell and gets it for the same reason. */}
-            <NotificationBell />
+            {/* The notifications page inside THIS shell. The default is the
+                storefront's, which would send a seller or an admin into the
+                customer shop. */}
+            <NotificationBell
+              viewAllHref={
+                section === "admin"
+                  ? "/admin/notifications"
+                  : "/dashboard/notifications"
+              }
+            />
             <ThemeToggle />
           </div>
         </header>

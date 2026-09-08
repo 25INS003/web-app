@@ -8,10 +8,27 @@ import { Button } from "@/components/ui/button";
 import { useIsAuthed, useSession } from "@/features/auth/useAuth";
 import type { Notification } from "@/lib/api/schemas/notifications";
 import { useMarkAllRead, useNotifications, useUnreadCount } from "./hooks";
-import { NotificationIcon, timeAgo } from "./ui";
+import { NotificationDetail } from "./NotificationDetail";
+import { NotificationIcon, timeAgo, toneFor, TONE_CLASSES } from "./ui";
 import { useNotificationsRealtime } from "./useNotificationsRealtime";
 
-export function NotificationBell() {
+/**
+ * @param viewAllHref where "View all" goes.
+ *
+ * The bell is mounted in three shells — the storefront, the seller dashboard
+ * and the admin — and it used to link to `/notifications` in all of them. That
+ * route lives under `(storefront)`, so a seller or an admin pressing "View
+ * all" landed in the CUSTOMER shop, complete with a search bar, a Cart button
+ * and a Nedyway logo pointing at `/`.
+ *
+ * A prop rather than a `user_type` check inside the bell: the shell already
+ * knows which one it is, and the bell has no business asking.
+ */
+export function NotificationBell({
+  viewAllHref = "/notifications",
+}: {
+  viewAllHref?: string;
+} = {}) {
   const router = useRouter();
   const authed = useIsAuthed();
   const [open, setOpen] = useState(false);
@@ -24,6 +41,20 @@ export function NotificationBell() {
   const { data: unread = 0 } = useUnreadCount(authed);
   const { data: items = [], isLoading } = useNotifications(authed && open);
   const markAllRead = useMarkAllRead();
+
+  /**
+   * The notification being read in full, if any.
+   *
+   * The panel clamps the title AND the message to one line each, so a message
+   * carrying a decision and its reason was unreadable here — and clicking it
+   * navigated away, which was the only thing a click could do. It opens the
+   * full text now; `action_url` is a button inside it.
+   *
+   * Declared with the other hooks, above `if (!authed) return null` — below it
+   * this is a conditional hook, and the order changes the moment somebody
+   * signs in.
+   */
+  const [opened, setOpened] = useState<Notification | null>(null);
 
   // Which items were unread at the moment the panel opened.
   //
@@ -68,10 +99,9 @@ export function NotificationBell() {
 
   if (!authed) return null;
 
-  // Navigation only — opening the panel marked it read already.
   const onItem = (n: Notification) => {
     setOpen(false);
-    if (n.action_url) router.push(n.action_url);
+    setOpened(n);
   };
 
   return (
@@ -101,14 +131,26 @@ export function NotificationBell() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border bg-card shadow-pop"
+          // `shadow-lg`, not `shadow-pop`. The pop shadow is a hard 3px
+          // offset in a solid colour — the app's tactile house style, and
+          // wrong for a panel that hangs off a header: it painted a slab down
+          // the right edge that read as a border rather than as depth. A
+          // dropdown wants ordinary elevation.
+          className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
             {/* No "Mark all read": opening the panel already did it. */}
             <span className="text-sm font-semibold">Notifications</span>
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          {/* Scrolls, and cannot outgrow the screen.
+          
+              `max-h-96` alone is 384px, which is taller than the space under
+              the header on a short phone — the panel ran off the bottom and
+              the last rows were unreachable, because the overflow that would
+              have scrolled them was never triggered. Whichever of the two is
+              smaller wins. */}
+          <div className="max-h-[min(24rem,60vh)] overflow-y-auto overscroll-contain">
             {isLoading ? (
               <p className="px-4 py-6 text-center text-sm text-muted-foreground">
                 Loading…
@@ -128,7 +170,9 @@ export function NotificationBell() {
                     n.is_read && !wasUnread.has(n.id) ? "" : "bg-primary/5"
                   }`}
                 >
-                  <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-muted text-foreground">
+                  <span
+                  className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-full ${TONE_CLASSES[toneFor(n.type)]}`}
+                >
                     <NotificationIcon type={n.type} />
                   </span>
                   <span className="min-w-0 flex-1">
@@ -148,7 +192,7 @@ export function NotificationBell() {
           </div>
 
           <Link
-            href="/notifications"
+            href={viewAllHref}
             onClick={() => setOpen(false)}
             className="block border-t border-border px-4 py-2.5 text-center text-xs font-medium text-primary hover:underline"
           >
@@ -156,6 +200,11 @@ export function NotificationBell() {
           </Link>
         </div>
       )}
+
+      <NotificationDetail
+        notification={opened}
+        onClose={() => setOpened(null)}
+      />
     </div>
   );
 }

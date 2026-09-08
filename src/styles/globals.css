@@ -115,6 +115,21 @@
   --sidebar-accent-foreground: oklch(0.94 0.01 85);
   --sidebar-border: oklch(0.24 0.018 152);
   --sidebar-ring: oklch(0.68 0.18 40);
+
+  /* The tactile offset shadow, in a colour that reads as a shadow.
+   *
+   * `--shadow-pop` is `3px 3px 0 var(--foreground)` and was defined once, in
+   * @theme, with no dark counterpart. `var()` resolves against the element, so
+   * inside `.dark` the foreground is a near-white cream — every `shadow-pop`
+   * surface wore a solid 3px CREAM SLAB down its right side and along its
+   * bottom. On the notifications panel it read as a white border; it was the
+   * same on the auth and onboarding shells, the storefront header and the
+   * avatar.
+   *
+   * Kept as a hard offset rather than softened, because the offset IS the
+   * house style — only the colour was wrong. Darker than the darkest surface
+   * so it reads as depth on every one of them. */
+  --shadow-pop: 3px 3px 0 oklch(0.11 0.012 152);
 }
 
 @theme inline {

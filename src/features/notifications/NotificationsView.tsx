@@ -1,22 +1,31 @@
 "use client";
 
 import { Bell } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type { Notification } from "@/lib/api/schemas/notifications";
 import { useMarkAllRead, useMarkRead, useNotifications } from "./hooks";
-import { NotificationIcon, timeAgo } from "./ui";
+import { NotificationDetail } from "./NotificationDetail";
+import { NotificationIcon, timeAgo, toneFor, TONE_CLASSES } from "./ui";
 
 export function NotificationsView() {
-  const router = useRouter();
+  const [opened, setOpened] = useState<Notification | null>(null);
   const { data: items = [], isLoading, isError } = useNotifications();
   const markRead = useMarkRead();
   const markAllRead = useMarkAllRead();
 
   const hasUnread = items.some((n) => !n.is_read);
 
+  /**
+   * Open it, rather than leave.
+   *
+   * A click used to push `action_url` straight away, so a notification whose
+   * point is what it SAYS — a shop taken offline and why, an application
+   * refused and why — could only be navigated away from. `action_url` is a
+   * button in the dialog now.
+   */
   const onItem = (n: Notification) => {
     if (!n.is_read && n.notification_id) markRead.mutate(n.notification_id);
-    if (n.action_url) router.push(n.action_url);
+    setOpened(n);
   };
 
   return (
@@ -66,7 +75,9 @@ export function NotificationsView() {
                   n.is_read ? "" : "bg-primary/5"
                 }`}
               >
-                <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-muted text-foreground">
+                <span
+                  className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-full ${TONE_CLASSES[toneFor(n.type)]}`}
+                >
                   <NotificationIcon type={n.type} className="size-4.5" />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -78,7 +89,10 @@ export function NotificationsView() {
                       <span className="size-2 shrink-0 rounded-full bg-primary" />
                     )}
                   </span>
-                  <span className="mt-0.5 block text-sm text-muted-foreground">
+                  {/* Two lines here, the whole thing in the dialog. The row
+                      is a list item; an eight-line message would bury the ones
+                      under it. */}
+                  <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">
                     {n.message}
                   </span>
                 </span>
@@ -90,6 +104,11 @@ export function NotificationsView() {
           ))}
         </ul>
       )}
+
+      <NotificationDetail
+        notification={opened}
+        onClose={() => setOpened(null)}
+      />
     </div>
   );
 }

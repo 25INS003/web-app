@@ -18,6 +18,18 @@ vi.mock("./useNotificationsRealtime", () => ({
   useNotificationsRealtime: () => {},
 }));
 
+/**
+ * The long one is the point of the detail view.
+ *
+ * A decision an admin makes — a shop taken offline, an application refused —
+ * arrives as a notification whose reason IS the message. The panel clamps it
+ * to a single line, so at this length it was legible only as an ellipsis.
+ */
+const LONG_MESSAGE =
+  "Corner Store is no longer visible to customers. Reason: the licence on " +
+  "file expired in March and the certificate you uploaded is for a different " +
+  "address. Send the current one through support and we will review it again.";
+
 const items = [
   {
     id: "n1",
@@ -28,6 +40,19 @@ const items = [
     is_read: false,
     data: {},
     action_url: "/orders/abc",
+    created_at: "2026-06-14T08:44:17.340Z",
+  },
+  {
+    id: "n2",
+    notification_id: "nid2",
+    title: "Your shop has been taken offline",
+    message: LONG_MESSAGE,
+    type: "system_alert",
+    is_read: true,
+    data: {},
+    // No action_url: nothing to go to, so reading it is the only thing there
+    // is to do — and before this there was no way to.
+    action_url: null,
     created_at: "2026-06-14T08:44:17.340Z",
   },
 ];
@@ -61,11 +86,48 @@ describe("NotificationBell", () => {
     expect(screen.getByText("Order Ready! 📦")).toBeInTheDocument();
   });
 
-  it("navigates to an item's action_url when it is clicked", () => {
+  it("opens the notification instead of leaving the page", () => {
     render(<NotificationBell />);
     fireEvent.click(screen.getByRole("button", { name: /unread/i }));
     fireEvent.click(screen.getByText("Order Ready! 📦"));
+
+    // The panel clamps the title and the message to one line each, so a click
+    // used to be the only thing you could do with a notification — and it took
+    // you away from it. It opens now.
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("still gets you there, from a button that names the destination", () => {
+    render(<NotificationBell />);
+    fireEvent.click(screen.getByRole("button", { name: /unread/i }));
+    fireEvent.click(screen.getByText("Order Ready! 📦"));
+    fireEvent.click(screen.getByRole("button", { name: /view order/i }));
+
     expect(push).toHaveBeenCalledWith("/orders/abc");
+  });
+
+  it("shows a long message in full", () => {
+    render(<NotificationBell />);
+    fireEvent.click(screen.getByRole("button", { name: /unread/i }));
+    fireEvent.click(screen.getByText("Your shop has been taken offline"));
+
+    // The row's copy is clamped by CSS; the dialog's is the whole string.
+    expect(screen.getByRole("dialog")).toHaveTextContent(LONG_MESSAGE);
+  });
+
+  it("offers no destination when there is none", () => {
+    render(<NotificationBell />);
+    fireEvent.click(screen.getByRole("button", { name: /unread/i }));
+    fireEvent.click(screen.getByText("Your shop has been taken offline"));
+
+    // A destination button that goes nowhere is worse than no button.
+    expect(
+      screen.queryByRole("button", { name: /view order|go to/i }),
+    ).not.toBeInTheDocument();
+    // The dialog's own cross is the way out, and the only one — a second
+    // control also called "Close" is the fault just fixed elsewhere.
+    expect(screen.getAllByRole("button", { name: /^close$/i })).toHaveLength(1);
   });
 
   it("marks everything read as soon as the bell is opened", () => {
@@ -98,5 +160,40 @@ describe("NotificationBell", () => {
 
     expect(markAllRead.mutate).not.toHaveBeenCalled();
     unreadCount = 3;
+  });
+});
+
+/**
+ * Where "View all" goes.
+ *
+ * The bell is mounted in the storefront header, the seller dashboard and the
+ * admin shell, and it linked to `/notifications` in all three. That route
+ * lives under `(storefront)`, so a seller or an admin pressing "View all"
+ * landed in the CUSTOMER shop — search bar, Cart button, and a Nedyway logo
+ * pointing at `/`, with no way back but the browser.
+ */
+describe("the bell's View all link", () => {
+  const viewAll = () => screen.getByRole("link", { name: /view all/i });
+
+  it("goes to the storefront page by default", () => {
+    render(<NotificationBell />);
+    fireEvent.click(screen.getByRole("button", { name: /unread/i }));
+
+    expect(viewAll()).toHaveAttribute("href", "/notifications");
+  });
+
+  it("goes where the shell tells it to", () => {
+    render(<NotificationBell viewAllHref="/dashboard/notifications" />);
+    fireEvent.click(screen.getByRole("button", { name: /unread/i }));
+
+    // The seller's own page, inside the seller's own shell.
+    expect(viewAll()).toHaveAttribute("href", "/dashboard/notifications");
+  });
+
+  it("works for the admin shell too", () => {
+    render(<NotificationBell viewAllHref="/admin/notifications" />);
+    fireEvent.click(screen.getByRole("button", { name: /unread/i }));
+
+    expect(viewAll()).toHaveAttribute("href", "/admin/notifications");
   });
 });
