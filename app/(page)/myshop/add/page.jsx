@@ -177,6 +177,15 @@ const AddShopPage = () => {
 
         if (result) {
             reset();
+            // Say what actually happened. The redirect used to be silent, so a
+            // shop that is waiting for an admin looked exactly like one that
+            // had gone live — and the owner would go looking for orders that
+            // cannot arrive yet.
+            toast.success("Shop submitted for approval", {
+                description:
+                    "An admin will review it. Customers will see it once it is approved.",
+                duration: 6000,
+            });
             router.push("/myshop");
         }
     };

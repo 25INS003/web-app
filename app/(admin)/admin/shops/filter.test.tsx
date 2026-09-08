@@ -17,9 +17,9 @@ const push = vi.fn();
 let query = "";
 
 const SHOPS = [
-  { id: "s1", name: "Waiting Mart", shop_status: "pending", owner_id: {} },
-  { id: "s2", name: "Live Mart", shop_status: "active", owner_id: {} },
-  { id: "s3", name: "Closed Mart", shop_status: "inactive", owner_id: {} },
+  { id: "s1", name: "Waiting Mart", shop_status: "pending", owner_id: "o1" },
+  { id: "s2", name: "Live Mart", shop_status: "active", owner_id: "o1" },
+  { id: "s3", name: "Closed Mart", shop_status: "inactive", owner_id: "o2" },
 ];
 
 vi.mock("next/navigation", () => ({
@@ -77,6 +77,34 @@ describe("the shops status filter", () => {
     fireEvent.click(screen.getByRole("button", { name: /show all 3/i }));
 
     expect(push).toHaveBeenCalledWith("/admin/shops");
+  });
+
+  it("shows one owner's shops when asked for them", () => {
+    // Where "View their shops" on the shop-owners list lands.
+    query = "owner=o1";
+    render(<AdminShopsPage />);
+
+    expect(screen.getByText("Waiting Mart")).toBeInTheDocument();
+    expect(screen.getByText("Live Mart")).toBeInTheDocument();
+    expect(screen.queryByText("Closed Mart")).not.toBeInTheDocument();
+  });
+
+  it("says it is showing one owner, and offers the way out", () => {
+    query = "owner=o1";
+    render(<AdminShopsPage />);
+
+    expect(screen.getByText(/shops of one owner/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /show all 3/i }));
+    expect(push).toHaveBeenCalledWith("/admin/shops");
+  });
+
+  it("keeps the status filter alongside an owner filter", () => {
+    query = "owner=o1&status=pending";
+    render(<AdminShopsPage />);
+
+    // Both narrow: owner o1 AND pending is only Waiting Mart.
+    expect(screen.getByText("Waiting Mart")).toBeInTheDocument();
+    expect(screen.queryByText("Live Mart")).not.toBeInTheDocument();
   });
 
   it("puts a chosen status into the URL", () => {

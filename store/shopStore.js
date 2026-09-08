@@ -161,20 +161,62 @@ export const useShopStore = create((set, get) => ({
    * Permanently deletes a shop and all related data.
    * Route: DELETE /shopowneruser/shops/:shopId/permanent
    */
-  permanentlyDeleteShop: async (shopId) => {
+  /**
+   * Ask an admin to delete a shop.
+   *
+   * Replaces `permanentlyDeleteShop`, which called the owner's old
+   * permanent-delete route — the one thing in the system that could erase a
+   * shop's order history, sitting on the dashboard of the person least likely
+   * to be weighing that. The decision is an admin's now; this records the ask.
+   *
+   * The shop stays in `myShops` on purpose. Nothing has been deleted, and a
+   * row that vanished on "request sent" would tell the owner the opposite of
+   * what happened.
+   */
+  requestShopDeletion: async (shopId, reason) => {
     set({ isLoading: true, error: null });
     try {
-      await apiClient.delete(`/shopowneruser/shops/${shopId}/permanent`);
-      
+      const { data } = await apiClient.post(
+        `/shopowneruser/shops/${shopId}/deletion-request`,
+        { reason }
+      );
+      const request = data?.data?.deletion_request;
+
       set((state) => ({
-        myShops: state.myShops.filter((shop) => shop.id !== shopId),
+        myShops: state.myShops.map((shop) =>
+          shop.id === shopId
+            ? { ...shop, metadata: { ...(shop.metadata || {}), deletion_request: request } }
+            : shop
+        ),
         isLoading: false,
       }));
-      
-      return { success: true, message: "Shop permanently deleted" };
+
+      return { success: true, message: "Deletion request sent — an admin will review it" };
     } catch (err) {
-      console.error(`Error permanently deleting shop ${shopId}:`, err);
-      const errorMessage = err.response?.data?.message || "Failed to delete shop permanently.";
+      const errorMessage = err.response?.data?.message || "Failed to send the deletion request.";
+      set({ error: errorMessage, isLoading: false });
+      return { success: false, message: errorMessage };
+    }
+  },
+
+  withdrawShopDeletionRequest: async (shopId) => {
+    set({ isLoading: true, error: null });
+    try {
+      await apiClient.delete(`/shopowneruser/shops/${shopId}/deletion-request`);
+
+      set((state) => ({
+        myShops: state.myShops.map((shop) => {
+          if (shop.id !== shopId) return shop;
+          const metadata = { ...(shop.metadata || {}) };
+          delete metadata.deletion_request;
+          return { ...shop, metadata };
+        }),
+        isLoading: false,
+      }));
+
+      return { success: true, message: "Deletion request withdrawn" };
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Failed to withdraw the request.";
       set({ error: errorMessage, isLoading: false });
       return { success: false, message: errorMessage };
     }

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Store, Users, AlertCircle } from "lucide-react";
+import { Store, Users, AlertCircle, Trash2 } from "lucide-react";
 import type { ComponentType } from "react";
 
 import { useShopOwnerStore } from "@/store/adminShopownerStore";
@@ -29,15 +29,18 @@ type Stat = {
 
 export default function AdminHome() {
   const { pendingOwners, fetchPendingOwners } = useShopOwnerStore();
-  const { pendingShops, fetchPendingShops } = useAdminShopStore();
+  const { pendingShops, fetchPendingShops, deletionRequests, fetchDeletionRequests } =
+    useAdminShopStore();
 
   useEffect(() => {
     fetchPendingOwners();
     fetchPendingShops();
-  }, [fetchPendingOwners, fetchPendingShops]);
+    fetchDeletionRequests();
+  }, [fetchPendingOwners, fetchPendingShops, fetchDeletionRequests]);
 
   const owners = Array.isArray(pendingOwners) ? pendingOwners.length : null;
   const shops = Array.isArray(pendingShops) ? pendingShops.length : null;
+  const deletions = Array.isArray(deletionRequests) ? deletionRequests.length : null;
 
   const stats: Stat[] = [
     {
@@ -53,6 +56,17 @@ export default function AdminHome() {
       href: "/admin/shops?status=pending",
       icon: Store,
       urgent: (shops ?? 0) > 0,
+    },
+    {
+      // The third queue. Owners can no longer delete a shop themselves — they
+      // ask, and the ask arrives here. Without a card it would live only as a
+      // panel on a row somebody happened to scroll past, which is how the
+      // other two queues used to go unnoticed.
+      label: "Shop deletion requests",
+      value: deletions,
+      href: "/admin/shops?deletion=requested",
+      icon: Trash2,
+      urgent: (deletions ?? 0) > 0,
     },
   ];
 
