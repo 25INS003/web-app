@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -21,14 +21,66 @@ import {
     Globe,
     FileText,
     ArrowLeft,
-    Truck
+    Truck,
+    Navigation
 } from "lucide-react";
+import dynamic from "next/dynamic";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Leaflet reads `window` on import, so it cannot be server-rendered. Same
+// dynamic import the add-shop form uses.
+const MapPicker = dynamic(() => import("@/components/Maps/MapPicker"), {
+    ssr: false,
+    loading: () => (
+        <div className="h-[300px] w-full bg-muted animate-pulse rounded-xl flex items-center justify-center text-muted-foreground">
+            Loading Map...
+        </div>
+    ),
+});
+
+/**
+ * The city out of a Nominatim address, which does not reliably have one.
+ *
+ * Checked against real Indian pincodes rather than assumed:
+ *   110001 → `city: "New Delhi"`
+ *   180001 → no `city` at all; `county: "Jammu"`
+ *   400001 → no `city` and no `county`; `state_district: "Mumbai City District"`
+ *
+ * So `address.city` — what the detect-location path already read — is empty
+ * for two of those three, and writing it straight into the form would blank a
+ * city the owner had typed correctly. Hence a chain, widening from the exact
+ * to the approximate, and `undefined` rather than `""` when nothing matches so
+ * a caller can tell "not found" from "found nothing".
+ *
+ * `state_district` sits above `city_district` deliberately: for 400001 that is
+ * "Mumbai City District" → "Mumbai City", where `city_district` is "Mumbai
+ * Zone 2". Neither is the word "Mumbai"; the first is the one a human would
+ * recognise.
+ */
+const cityFrom = (address = {}) => {
+    const candidate =
+        address.city ||
+        address.town ||
+        address.village ||
+        address.municipality ||
+        address.county ||
+        address.state_district ||
+        address.city_district ||
+        address.suburb;
+    // "Jammu district" → "Jammu", "Mumbai City District" → "Mumbai City".
+    return candidate ? candidate.replace(/\s+district$/i, "").trim() : undefined;
+};
+
+/** ["city", "state", "pincode"] → "city, state and pincode". */
+const listOf = (items) =>
+    items.length < 2
+        ? items.join("")
+        : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -83,7 +135,23 @@ export const EditShopForm = ({
     const [currentPincode, setCurrentPincode] = useState("");
     const [imagePreview, setImagePreview] = useState("");
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm();
+    const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm();
+    // The map is driven by the form values, not its own state, so typing a
+    // coordinate moves the pin and dragging the pin fills the boxes.
+    //
+    // `useWatch`, not `watch()`: the latter returns a fresh function the React
+    // Compiler cannot memoize, so it bails out of optimising the whole
+    // component. This subscribes to the two fields and nothing else.
+    const shopLat = useWatch({ control, name: "shop_lat" });
+    const shopLng = useWatch({ control, name: "shop_lng" });
+    const pincode = useWatch({ control, name: "pincode" });
+    const [isDetecting, setIsDetecting] = useState(false);
+    // Set when the form is seeded from the row, and compared against below so
+    // loading a shop does not look like the owner editing its pincode. Without
+    // it, simply opening the page would move the pin to the centre of the
+    // area — overwriting a coordinate somebody had placed by hand.
+    const seededPincodeRef = useRef(null);
+    const [pinMovedFor, setPinMovedFor] = useState(null);
 
     useEffect(() => {
         if (myShops.length === 0) {
@@ -124,6 +192,7 @@ export const EditShopForm = ({
                 min_order_amount: shop.min_order_amount || 0,
                 free_delivery_threshold: shop.free_delivery_threshold || 0,
             });
+            seededPincodeRef.current = shop.pincode || "";
             setPincodes(shop.delivery_pincodes || []);
             setImagePreview(shop.image || "");
         } else if (!storeLoading && myShops.length > 0) {
@@ -156,6 +225,206 @@ export const EditShopForm = ({
         }
     };
 
+    /**
+     * Move the pin when the owner changes the pincode.
+     *
+     * A pincode is the coarsest useful location there is — the answer is the
+     * centre of a whole delivery area, not the shop — so this is a starting
+     * point, never the final answer. It says so on screen, right where the pin
+     * lands, because a pin that moves on its own and does not explain itself
+     * is indistinguishable from one that moved by mistake.
+     *
+     * Three things stop it firing when it should not:
+     *   - the seeded value, so opening the page is not read as an edit;
+     *   - a 6-digit check, so it does not fire on every keystroke of one;
+     *   - a debounce, because Nominatim asks for at most one request a second
+     *     and typing a pincode is six changes in about that long.
+     */
+    useEffect(() => {
+        const pin = String(pincode ?? "").trim();
+        if (!/^\d{6}$/.test(pin)) return;
+        // The shop's own pincode, as loaded. Changing it back to what it
+        // always was is not a reason to move a pin that was already right.
+        if (pin === seededPincodeRef.current) return;
+
+        const controller = new AbortController();
+        const timer = setTimeout(async () => {
+            try {
+                // `addressdetails=1` so the same request that gives the
+                // coordinates also gives the city and state — a second call
+                // would be a second request against a geocoder that asks for
+                // no more than one a second.
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&country=India&postalcode=${pin}&limit=1`,
+                    { signal: controller.signal }
+                );
+                const results = await response.json();
+                const hit = Array.isArray(results) ? results[0] : null;
+                if (!hit) return;
+
+                setValue("shop_lat", Number(hit.lat), { shouldDirty: true });
+                setValue("shop_lng", Number(hit.lon), { shouldDirty: true });
+
+                // Only what came back. A pincode the geocoder knows the state
+                // for but not the city must not blank the city — the owner's
+                // own answer is better than nothing, and this runs while they
+                // are mid-edit.
+                const city = cityFrom(hit.address);
+                const state = hit.address?.state;
+                if (city) setValue("city", city, { shouldDirty: true });
+                if (state) setValue("state", state, { shouldDirty: true });
+
+                setPinMovedFor({ source: "pincode", pincode: pin, filledAddress: Boolean(city || state) });
+            } catch {
+                // Aborted, offline, or the geocoder is down. The pin simply
+                // stays where it was, which is the safe outcome — the owner
+                // can still drag it or type the coordinates.
+            }
+        }, 700);
+
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    }, [pincode, setValue]);
+
+    // The pending reverse-geocode for a pin move. Held in refs so a drag
+    // followed by another drag cancels the first — Nominatim asks for no more
+    // than one request a second, and a map is easy to click repeatedly.
+    const reverseTimerRef = useRef(null);
+    const reverseAbortRef = useRef(null);
+
+    useEffect(
+        () => () => {
+            clearTimeout(reverseTimerRef.current);
+            reverseAbortRef.current?.abort();
+        },
+        []
+    );
+
+    /**
+     * The pin moved — by drag, by map click, or by the coordinate boxes.
+     *
+     * The address follows it: city, state and pincode are read back from the
+     * new point. The street line is left alone; see `reverseGeocode`.
+     */
+    const setCoordinates = (lat, lng) => {
+        setValue("shop_lat", lat, { shouldDirty: true });
+        setValue("shop_lng", lng, { shouldDirty: true });
+        // Placed by hand now, so the "this is only the area centre" notice has
+        // stopped being true.
+        setPinMovedFor(null);
+
+        clearTimeout(reverseTimerRef.current);
+        reverseAbortRef.current?.abort();
+        const controller = new AbortController();
+        reverseAbortRef.current = controller;
+
+        reverseTimerRef.current = setTimeout(async () => {
+            const filled = await reverseGeocode(lat, lng, {
+                includeStreet: false,
+                signal: controller.signal,
+            });
+            if (filled.length) setPinMovedFor({ source: "pin", filled });
+        }, 600);
+    };
+
+    /**
+     * Where the browser says the owner is, plus the address that goes with it.
+     *
+     * The address is only overwritten HERE, on an explicit press. Dragging the
+     * pin moves the coordinates alone: on this form the address is already
+     * filled in and usually correct — a shop's postal address and the point a
+     * rider is sent to are not the same fact — so a nudge of the pin quietly
+     * rewriting four typed fields would lose work the owner did not ask to
+     * undo.
+     */
+    const handleDetectLocation = () => {
+        if (!navigator.geolocation) {
+            setErrorMessage("Geolocation is not supported by your browser.");
+            return;
+        }
+
+        setIsDetecting(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                setCoordinates(latitude, longitude);
+                await reverseGeocode(latitude, longitude);
+                setIsDetecting(false);
+                setSuccessMessage("Location detected. Save to apply it.");
+                setTimeout(() => setSuccessMessage(""), 3000);
+            },
+            () => {
+                setIsDetecting(false);
+                setErrorMessage("Could not detect your location. Enter it manually or move the pin.");
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+    };
+
+    /**
+     * Read the address at a point and write it into the form.
+     *
+     * @param {boolean} includeStreet whether to overwrite `address_line` too.
+     *   False when the pin was moved: the street line is the one an owner
+     *   writes by hand — "Shop 4, opposite the temple" — and a geocoded road
+     *   name is usually worse than what is already there. True for "Use my
+     *   current location", which is an explicit "set all of this from where I
+     *   am".
+     * @returns {Promise<string[]>} the fields actually written, so the caller
+     *   can say what changed instead of guessing.
+     */
+    const reverseGeocode = async (lat, lng, { includeStreet = true, signal } = {}) => {
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+                { signal }
+            );
+            const data = await response.json();
+            if (!data.address) return [];
+
+            const { road, suburb, neighbourhood, state, postcode } = data.address;
+            const line = [road, neighbourhood, suburb].filter(Boolean).join(", ");
+            const city = cityFrom(data.address);
+            const filled = [];
+
+            // Each guarded. This used to write `city || town || village || ""`
+            // and the same for state and pincode, so a point the geocoder knew
+            // little about cleared three fields the owner had filled in
+            // correctly — an "autofill" that deleted.
+            if (includeStreet && line) {
+                setValue("address_line", line, { shouldDirty: true });
+                filled.push("street");
+            }
+            if (city) {
+                setValue("city", city, { shouldDirty: true });
+                filled.push("city");
+            }
+            if (state) {
+                setValue("state", state, { shouldDirty: true });
+                filled.push("state");
+            }
+            if (postcode) {
+                // Recorded as already-in-sync BEFORE the write.
+                //
+                // Otherwise this is a loop: the pin sets the pincode, the
+                // pincode effect sees a new value and geocodes it, and the pin
+                // jumps from the exact spot the owner just dropped it on to
+                // the centre of the postal area. The two features would fight
+                // every time, and the owner would lose.
+                seededPincodeRef.current = postcode;
+                setValue("pincode", postcode, { shouldDirty: true });
+                filled.push("pincode");
+            }
+            return filled;
+        } catch {
+            // Best effort. The coordinates are the part that matters and they
+            // are already set; a geocoder being down must not lose them.
+            return [];
+        }
+    };
+
     const onSubmit = async (data) => {
         setIsSaving(true);
         setSuccessMessage("");
@@ -169,7 +438,16 @@ export const EditShopForm = ({
             
             // Explicitly cast numbers and append others
             Object.keys(data).forEach(key => {
-                if (key === 'shop_lat' || key === 'shop_lng' || key === 'delivery_fee' || key === 'min_order_amount' || key === 'free_delivery_threshold' || key === 'preparation_time') {
+                if (key === 'shop_lat' || key === 'shop_lng') {
+                    // Skipped when blank rather than sent as `Number("")`,
+                    // which is 0 — and 0,0 is a real place in the Gulf of
+                    // Guinea. An empty box means "leave it alone", not "move
+                    // the shop to the Atlantic".
+                    const n = Number(data[key]);
+                    if (data[key] !== "" && data[key] !== null && Number.isFinite(n)) {
+                        formData.set(key, n);
+                    }
+                } else if (key === 'delivery_fee' || key === 'min_order_amount' || key === 'free_delivery_threshold' || key === 'preparation_time') {
                     formData.set(key, Number(data[key]));
                 } else if (data[key] !== null && data[key] !== undefined) {
                     formData.set(key, data[key]);
@@ -238,14 +516,28 @@ export const EditShopForm = ({
                         <p className="text-sm text-muted-foreground mt-1">Manage your business profile and availability</p>
                     </div>
                 </div>
-                <Badge 
+                {/* `shop_status`, not `status`. The column has never been
+                    called `status`, so both reads here were `undefined` — and
+                    because each fell back to "active", a shop waiting for
+                    approval told its owner it was live. The same field drift
+                    as `main_image` / `main_image_url`, and with the same
+                    signature: no error, just a confident wrong answer.
+
+                    No fallback now either. `shop_status` is NOT NULL, so a
+                    missing value means the shop was not loaded — and printing
+                    "ACTIVE" for that is how this got here. */}
+                <Badge
                     className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-                        selectedShop.status === 'active'
+                        selectedShop.shop_status === 'active'
                             ? 'bg-success/15 text-success'
+                            : selectedShop.shop_status === 'pending'
+                            ? 'bg-warning/15 text-warning'
                             : 'bg-muted text-muted-foreground'
                     }`}
                 >
-                    {selectedShop.status?.toUpperCase() || 'ACTIVE'}
+                    {selectedShop.shop_status === 'pending'
+                        ? 'AWAITING APPROVAL'
+                        : selectedShop.shop_status?.toUpperCase() ?? '—'}
                 </Badge>
             </motion.div>
 
@@ -451,6 +743,132 @@ export const EditShopForm = ({
                                         />
                                     </div>
                                 </div>
+
+                                {/* The map pin.
+                                
+                                    The add-shop form has always asked for this
+                                    — coordinates are required to create a shop
+                                    — and the edit form had no way to change
+                                    it. It seeded the values into form state
+                                    and posted them back untouched, so a shop
+                                    that moved kept sending riders to the old
+                                    address forever, with no field anywhere
+                                    saying why.
+                                    
+                                    The address above and the pin here are two
+                                    different facts: one is what a customer
+                                    reads, the other is where a rider is sent.
+                                    An owner editing one usually means to edit
+                                    the other, so they sit together. */}
+                                <div className="pt-2 space-y-4 border-t border-border">
+                                    <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
+                                        <div>
+                                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                                <Navigation className="h-4 w-4 text-muted-foreground" /> Map location
+                                            </label>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Where delivery riders are sent. Drag the pin or type the coordinates.
+                                            </p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleDetectLocation}
+                                            disabled={isDetecting}
+                                            className="rounded-xl"
+                                        >
+                                            {isDetecting ? (
+                                                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                                            ) : (
+                                                <Navigation className="h-4 w-4 mr-1.5" />
+                                            )}
+                                            {isDetecting ? "Detecting..." : "Use my current location"}
+                                        </Button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label htmlFor="shop_lat" className="text-sm font-medium text-foreground">Latitude</label>
+                                            <Input
+                                                id="shop_lat"
+                                                type="number"
+                                                step="any"
+                                                {...register("shop_lat")}
+                                                placeholder="0.000000"
+                                                className="rounded-xl bg-muted/50"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label htmlFor="shop_lng" className="text-sm font-medium text-foreground">Longitude</label>
+                                            <Input
+                                                id="shop_lng"
+                                                type="number"
+                                                step="any"
+                                                {...register("shop_lng")}
+                                                placeholder="0.000000"
+                                                className="rounded-xl bg-muted/50"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Says what just happened and that it is not
+                                        finished. A pincode resolves to the centre of a
+                                        whole area, so the pin is in the right
+                                        neighbourhood and the wrong street — and an owner
+                                        who does not know that will save it as-is. */}
+                                    {pinMovedFor && (
+                                        <p className="flex items-start gap-2 rounded-xl border border-warning/25 bg-warning/5 p-3 text-xs text-muted-foreground">
+                                            <Navigation className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+                                            <span>
+                                                {/* One interpolated string, not text
+                                                    either side of `{pinMovedFor}` — JSX splits
+                                                    that into three text nodes, and a reader
+                                                    (or a test) looking for the whole sentence
+                                                    finds none of it. */}
+                                                {/* Named rather than left to be noticed: several
+                                                    fields changing at once from one edit is
+                                                    surprising, and the city in particular can
+                                                    be a district name rather than the one
+                                                    locals use.
+                                                    
+                                                    Two directions, two messages. Typing a
+                                                    pincode gives an area centre and the pin
+                                                    still needs placing; moving the pin gives an
+                                                    exact point and it is the address that needs
+                                                    checking. */}
+                                                {pinMovedFor.source === "pin" ? (
+                                                    <>
+                                                        <span className="font-medium text-foreground">
+                                                            {`Updated from the pin: ${listOf(pinMovedFor.filled)}.`}
+                                                        </span>{" "}
+                                                        Check them before saving.
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="font-medium text-foreground">
+                                                            {pinMovedFor.filledAddress
+                                                                ? `Pin, city and state set from ${pinMovedFor.pincode}.`
+                                                                : `Pin moved to the centre of ${pinMovedFor.pincode}.`}
+                                                        </span>{" "}
+                                                        The pin is the middle of the area, not your door — drag it to
+                                                        where the shop actually is
+                                                        {pinMovedFor.filledAddress ? ", and check the city and state." : "."}
+                                                    </>
+                                                )}
+                                            </span>
+                                        </p>
+                                    )}
+
+                                    {/* Moving the pin writes the two boxes above and
+                                        nothing else — see `handleDetectLocation` for why
+                                        the address is left alone. */}
+                                    <MapPicker
+                                        lat={Number(shopLat) || null}
+                                        lng={Number(shopLng) || null}
+                                        onLocationChange={setCoordinates}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </TabsContent>
@@ -652,7 +1070,15 @@ export const EditShopForm = ({
                 {[
                     { label: "Inventory", value: selectedShop.total_products || 0, tone: "text-primary", bg: "bg-primary/10" },
                     { label: "Total Sales", value: selectedShop.total_orders || 0, tone: "text-success", bg: "bg-success/10" },
-                    { label: "Account Status", value: selectedShop.status || 'Active', tone: "text-foreground", bg: "bg-muted" }
+                    {
+                        label: "Account Status",
+                        value:
+                            selectedShop.shop_status === 'pending'
+                                ? 'Awaiting approval'
+                                : selectedShop.shop_status ?? '—',
+                        tone: "text-foreground",
+                        bg: "bg-muted",
+                    }
                 ].map((stat, i) => (
                     <motion.div 
                         key={i} 
