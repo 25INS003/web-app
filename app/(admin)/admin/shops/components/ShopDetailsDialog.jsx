@@ -15,8 +15,7 @@ import {
     Mail, 
     Clock, 
     Calendar,
-    CreditCard,
-    X
+    CreditCard
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -37,14 +36,14 @@ export function ShopDetailsDialog({ open, onOpenChange, shop }) {
             <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden bg-card border-none shadow-2xl">
                 
                 {/* Header Section with Gradient */}
+                {/* No close button of its own. `DialogContent` already renders
+                    one — a Radix `Close` at `absolute top-4 right-4` — and the
+                    hand-rolled one here sat at exactly the same coordinates,
+                    so the header showed two crosses. The built-in is the one
+                    to keep: it carries an sr-only "Close" label and a focus
+                    ring, where this one was a bare button around an icon with
+                    no accessible name at all. */}
                 <div className="relative p-6 bg-gradient-to-r text-white">
-                    <button 
-                        onClick={() => onOpenChange(false)}
-                        className="absolute top-4 right-4 p-2 rounded-full hover:bg-card/10 transition-colors"
-                    >
-                        <X className="h-5 w-5 text-muted-foreground hover:text-white" />
-                    </button>
-
                     <div className="flex items-center gap-5">
                         <div className="h-20 w-20 rounded-2xl bg-card/10 backdrop-blur-sm border border-white/10 overflow-hidden flex items-center justify-center shrink-0 shadow-xl">
                             {shop.logo_url ? (
