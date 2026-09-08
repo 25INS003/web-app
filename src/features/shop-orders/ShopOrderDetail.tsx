@@ -205,7 +205,7 @@ export function ShopOrderDetail({
             {order.items.map((item, i) => (
               <li
                 key={`${item.product_id ?? item.product_name}-${i}`}
-                className="flex items-center gap-4 py-3"
+                className="flex items-start gap-4 py-3"
               >
                 <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
                   {item.image_url ? (
@@ -221,12 +221,71 @@ export function ShopOrderDetail({
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-foreground">
+                  <p className="font-medium text-foreground">
                     {item.product_name ?? "Item"}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+
+                  {/* Which variant, in the words the packer will read off the
+                      shelf. `attributes` first — "Size: 1kg" identifies the
+                      thing better than a variant name usually does — with the
+                      name as the fallback for a product whose single variant
+                      has none. */}
+                  {(item.variant?.attributes?.length ||
+                    item.variant?.name) && (
+                    <p className="mt-0.5 text-sm text-foreground">
+                      {item.variant.attributes?.length
+                        ? item.variant.attributes
+                            .map((a) => [a.name, a.value].filter(Boolean).join(": "))
+                            .join(" · ")
+                        : item.variant.name}
+                      {item.variant.per_unit_qty && item.variant.unit
+                        ? ` · ${item.variant.per_unit_qty}${item.variant.unit}`
+                        : ""}
+                    </p>
+                  )}
+
+                  <p className="mt-0.5 text-sm text-muted-foreground">
                     {money(item.unit_price)} each
                   </p>
+
+                  {/* Where to walk, and what to scan. The two facts a picking
+                      list exists for, and neither was on this screen — the
+                      order line does not carry them, so finding a rack meant
+                      opening the catalogue in a second tab. */}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    {item.variant?.warehouse_location ? (
+                      <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                        <MapPin className="size-3.5 text-primary" aria-hidden />
+                        {item.variant.warehouse_location}
+                      </span>
+                    ) : (
+                      item.variant && (
+                        // Said rather than left blank: an empty space reads as
+                        // "somewhere", and the fix is for somebody to set it.
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="size-3.5" aria-hidden />
+                          No location set
+                        </span>
+                      )
+                    )}
+                    {item.variant?.sku && (
+                      <span className="font-mono">{item.variant.sku}</span>
+                    )}
+                    {typeof item.variant?.stock_quantity === "number" && (
+                      // The stock left AFTER this order was taken, which is
+                      // what a picker is about to disagree with if it is
+                      // wrong.
+                      <span>{item.variant.stock_quantity} in stock</span>
+                    )}
+                  </div>
+
+                  {/* A line whose variant is gone still has to be packed from
+                      what the line itself kept. */}
+                  {item.variant_id && !item.variant && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      This variant has since been removed from the catalogue.
+                    </p>
+                  )}
                 </div>
                 <div className="text-right">
                   {/* The pack count, given the most weight on the row — it is

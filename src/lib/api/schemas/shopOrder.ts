@@ -133,6 +133,30 @@ export const shopOrderSchema = z.object({
         // until the board asked for them.
         unit_price: z.number().nullish(),
         total_price: z.number().nullish(),
+        // What the line does NOT snapshot, looked up live on the detail
+        // endpoint: which variant it was, its SKU, and where it is shelved.
+        // Null when the variant has since been deleted — `variant_id` is
+        // ON DELETE SET NULL, so the line outlives it and still has to render.
+        variant: z
+          .object({
+            id: objectId.nullish(),
+            name: z.string().nullish(),
+            sku: z.string().nullish(),
+            warehouse_location: z.string().nullish(),
+            stock_quantity: z.number().nullish(),
+            is_active: z.boolean().nullish(),
+            unit: z.string().nullish(),
+            per_unit_qty: z.number().nullish(),
+            attributes: z
+              .array(
+                z.object({
+                  name: z.string().nullish(),
+                  value: z.string().nullish(),
+                }),
+              )
+              .catch([]),
+          })
+          .nullish(),
       }),
     )
     .catch([]),
