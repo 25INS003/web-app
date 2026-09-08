@@ -5,7 +5,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useShopOwnerStore } from "@/store/adminShopownerStore";
 import { 
-    Eye, 
     CheckCircle, 
     ShieldCheck, 
     RefreshCcw, 
@@ -14,6 +13,7 @@ import {
     Users,
     Fingerprint,
     Search,
+    Store,
     XCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -416,7 +416,7 @@ export default function ShopOwnerListPage() {
                                                                 </Tooltip>
                                                             </TooltipProvider>
 
-                                                            {/* Rejecting needs a written reason — the owner is
+                                                    {/* Rejecting needs a written reason — the owner is
                                                                 shown it — and a table row is no place to write
                                                                 one. This links to the review screen, which has
                                                                 the business details on screen beside the box.
@@ -438,7 +438,26 @@ export default function ShopOwnerListPage() {
                                                         </>
                                                     )}
 
-<TooltipProvider delayDuration={0}>
+                                                    {/* Their shops. Outside the unapproved-only block
+                                                        above, deliberately: an APPROVED owner is the one
+                                                        most likely to have storefronts worth looking at,
+                                                        and this first landed inside it — visible for
+                                                        exactly the owners who have none. */}
+                                                    <TooltipProvider delayDuration={0}>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Link
+                                                                    href={`/admin/shops?owner=${owner.id}`}
+                                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-foreground transition hover:bg-muted"
+                                                                >
+                                                                    <Store size={18} />
+                                                                </Link>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>View their shops</TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+
+                                                    <TooltipProvider delayDuration={0}>
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
                                                                 <Link

@@ -151,6 +151,27 @@ describe("the pending-only filter", () => {
     expect(screen.queryByText(/Turned Down Ltd/)).not.toBeInTheDocument();
   });
 
+  it("offers 'view their shops' for an APPROVED owner", () => {
+    // The one this got wrong first time: the link landed inside the block that
+    // only renders for unapproved owners, so it appeared for exactly the
+    // owners least likely to have a shop.
+    render(<ShopOwnersPage />);
+
+    const links = screen
+      .getAllByRole("link")
+      .map((a) => a.getAttribute("href"));
+    expect(links).toContain("/admin/shops?owner=o2"); // Live Grocers, approved
+  });
+
+  it("offers it for an unapproved owner too", () => {
+    render(<ShopOwnersPage />);
+
+    const links = screen
+      .getAllByRole("link")
+      .map((a) => a.getAttribute("href"));
+    expect(links).toContain("/admin/shops?owner=o1"); // Waiting Traders
+  });
+
   it("keeps any other query params it did not put there", () => {
     query = "q=grocers";
     render(<ShopOwnersPage />);
