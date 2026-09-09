@@ -184,6 +184,24 @@ export function ShopOrderDetail({
             </p>
           )}
 
+          {/* Only when they gave one, which is most orders' answer: no row.
+              A business buyer needs it on the invoice, so it is shown as
+              something to copy — monospaced and selectable — rather than as
+              prose. */}
+          {order.customer_gst_number && (
+            <div className="mt-4 rounded-xl border border-border bg-muted/50 p-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                Customer GST number
+              </p>
+              <p className="mt-0.5 select-all font-mono text-sm tracking-wide text-foreground">
+                {order.customer_gst_number}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                This is a business purchase — put it on the invoice.
+              </p>
+            </div>
+          )}
+
           {order.special_instructions && (
             <div className="mt-4 rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm">
               <p className="font-medium text-warning">Customer note</p>

@@ -4,6 +4,7 @@ import { CheckCircle2, Loader2, MapPin, Plus, Tag, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useCartTotal } from "@/features/cart/useCart";
 import type { Address } from "@/lib/api/schemas/address";
 import { cn, formatPrice } from "@/lib/utils";
@@ -27,6 +28,9 @@ export function CheckoutView() {
   } = useSelectedAddress();
   const [showForm, setShowForm] = useState(false);
   const [quote, setQuote] = useState<PromotionQuote | null>(null);
+  // Optional, and empty for almost every order — a business buyer gives one so
+  // the invoice carries it and they can claim input credit.
+  const [gstNumber, setGstNumber] = useState("");
 
   if (place.isSuccess) return <Confirmation orderId={place.data.orderId} />;
   if (total.data?.is_empty) return <EmptyCart />;
@@ -114,6 +118,36 @@ export function CheckoutView() {
               onApplied={setQuote}
             />
 
+            {/* Buying for a business.
+            
+                Optional, and quiet about it: this is a retail checkout and
+                almost nobody fills it in, so it does not get a heading or a
+                place in the flow — but a business buyer who needs it on the
+                invoice cannot add it afterwards, so it has to be here rather
+                than in an account setting. */}
+            <div className="mt-4">
+              <label htmlFor="gstin" className="text-xs font-medium">
+                GST number{" "}
+                <span className="font-normal text-muted-foreground">
+                  (optional)
+                </span>
+              </label>
+              <Input
+                id="gstin"
+                value={gstNumber}
+                onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                placeholder="22AAAAA0000A1Z5"
+                autoComplete="off"
+                spellCheck={false}
+                inputMode="text"
+                maxLength={15}
+                className="mt-1 font-mono tracking-wide"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                For a business purchase. It goes on the order the shop sees.
+              </p>
+            </div>
+
             <div className="mt-4 rounded-xl bg-muted p-3 text-xs text-muted-foreground">
               Payment: <span className="font-medium text-foreground">Cash on delivery</span>
             </div>
@@ -129,6 +163,7 @@ export function CheckoutView() {
                   // The code, not the quoted amount — checkout prices it again
                   // against the real basket.
                   promotionCode: quote?.promotion.code ?? null,
+                  gstNumber,
                 })
               }
             >

@@ -161,6 +161,10 @@ export const shopOrderSchema = z.object({
     )
     .catch([]),
 
+  // The buyer's GSTIN, when they gave one at checkout. Nullish rather than
+  // defaulted: absent means they did not give one, which is most orders.
+  customer_gst_number: z.string().nullish(),
+
   delivery_address_snapshot: addressSnapshotSchema,
   customer: z
     .object({

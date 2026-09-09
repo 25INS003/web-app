@@ -144,3 +144,47 @@ describe("an order line's packing details", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+/**
+ * The buyer's GST number on the order the shop is packing.
+ *
+ * Optional at checkout and empty for almost every retail order, so the panel
+ * has to be absent rather than present-and-blank — an empty "GST number" row
+ * on forty orders a day is noise that trains people to stop reading the panel.
+ */
+describe("a business buyer's GST number", () => {
+  it("is shown when the customer gave one", () => {
+    order = { ...ORDER, customer_gst_number: "22AAAAA0000A1Z5" };
+    show();
+
+    expect(screen.getByText("22AAAAA0000A1Z5")).toBeInTheDocument();
+    expect(screen.getByText(/customer gst number/i)).toBeInTheDocument();
+  });
+
+  it("says what to do with it", () => {
+    order = { ...ORDER, customer_gst_number: "22AAAAA0000A1Z5" };
+    show();
+
+    // A number with no instruction is a number people ignore.
+    expect(screen.getByText(/put it on the invoice/i)).toBeInTheDocument();
+  });
+
+  it("shows no panel at all when there is none", () => {
+    order = { ...ORDER, customer_gst_number: null };
+    show();
+
+    expect(screen.queryByText(/customer gst number/i)).not.toBeInTheDocument();
+  });
+
+  it("shows no panel for an older order that predates the field", () => {
+    // The key is simply absent, rather than null.
+    const { customer_gst_number: _omitted, ...withoutIt } = {
+      ...ORDER,
+      customer_gst_number: undefined,
+    };
+    order = withoutIt;
+    show();
+
+    expect(screen.queryByText(/customer gst number/i)).not.toBeInTheDocument();
+  });
+});

@@ -11,46 +11,23 @@ import {
   type HeroSlide,
 } from "@/features/storefront/HeroCarousel";
 
-/**
- * What the shopfront opens with when an admin has uploaded nothing.
- *
- * Not a placeholder to be deleted: a fresh install, or one where somebody
- * removes the last banner, still gets a designed front page rather than a blank
- * band. Uploaded images replace these entirely — they are an either/or, not a
- * list the uploads are appended to, because mixing shipped artwork into
- * somebody's own campaign is not something an admin asked for.
- */
-const DEFAULT_HERO_SLIDES: HeroSlide[] = [
-  {
-    src: "/hero/01-fresh.svg",
-    alt: "Fresh groceries from the shops next door",
-    href: "/search",
-  },
-  {
-    src: "/hero/02-delivery.svg",
-    alt: "Free delivery on orders over ₹199",
-    href: "/search",
-  },
-  {
-    src: "/hero/03-cod.svg",
-    alt: "Pay cash when your order arrives",
-    href: "/search",
-  },
-  {
-    src: "/hero/04-local.svg",
-    alt: "Shops from your own neighbourhood, now online",
-    href: "/search",
-  },
-];
 
 /**
- * The admin's banner, if there is one.
+ * The admin's banner images, or nothing.
  *
  * Read on the server so the first paint already has the right images — a
  * carousel that swaps its contents a beat after the page appears is worse than
- * either version of it. Failure is not an error state here: the storefront is
- * the front page, and it renders with the shipped artwork if the settings call
- * is unreachable.
+ * either version of it.
+ *
+ * An empty list is the honest answer for "no banner has been uploaded", and
+ * the carousel turns that into the written hero below rather than a blank
+ * band. There is deliberately no shipped artwork behind this any more: default
+ * images would mean a fresh install advertises pictures nobody chose, and an
+ * admin who removes their last banner would get stock photos instead of the
+ * headline they had before.
+ *
+ * A failed request answers the same way. The storefront is the front page —
+ * it renders with the headline if settings are unreachable.
  */
 async function heroSlides(): Promise<HeroSlide[]> {
   // The docker-network base, not the browser's — this runs on the server. No
@@ -73,7 +50,7 @@ async function heroSlides(): Promise<HeroSlide[]> {
       // and stock on every view.
       cache: "no-store",
     });
-    if (!res.ok) return DEFAULT_HERO_SLIDES;
+    if (!res.ok) return [];
     const body = await res.json();
     const uploaded: Array<{ url?: string; src?: string; alt?: string; href?: string | null }> =
       body?.data?.slides ?? [];
@@ -88,9 +65,9 @@ async function heroSlides(): Promise<HeroSlide[]> {
       }))
       .filter((s) => s.src);
 
-    return mapped.length > 0 ? mapped : DEFAULT_HERO_SLIDES;
+    return mapped;
   } catch {
-    return DEFAULT_HERO_SLIDES;
+    return [];
   }
 }
 
@@ -104,8 +81,8 @@ export default async function StorefrontHome() {
   const slides = await heroSlides();
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6">
-      {/* The opening image strip, or — with no images configured — the
-          headline hero it replaced. The fallback is the point: a shopfront
+      {/* The admin's image strip, or — with nothing uploaded — the headline
+          hero that was here before it. The fallback is the point: a shopfront
           whose first screen is an empty rounded rectangle looks broken, and
           "no banners are set up" is not the visitor's problem. */}
       <HeroCarousel slides={slides}>

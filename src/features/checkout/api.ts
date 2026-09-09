@@ -91,6 +91,7 @@ export const checkoutApi = {
   async placeOrder(
     addressId: string,
     promotionCode?: string | null,
+    gstNumber?: string | null,
   ): Promise<{ orderId: string; discount: number }> {
     const data = await api.post<{
       main_order?: { order_number?: string; discount_amount?: number };
@@ -101,6 +102,11 @@ export const checkoutApi = {
       // against the real basket. Sending an amount would let anyone post their
       // own.
       ...(promotionCode ? { promotion_code: promotionCode } : {}),
+      // Omitted entirely when blank rather than sent as "", so "they left it
+      // empty" and "they typed nothing" are the same request.
+      ...(gstNumber?.trim()
+        ? { customer_gst_number: gstNumber.trim() }
+        : {}),
     });
     return {
       orderId: String(data?.main_order?.order_number ?? ""),

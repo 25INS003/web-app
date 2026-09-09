@@ -114,10 +114,12 @@ export function usePlaceOrder() {
     mutationFn: ({
       addressId,
       promotionCode,
+      gstNumber,
     }: {
       addressId: string;
       promotionCode?: string | null;
-    }) => checkoutApi.placeOrder(addressId, promotionCode),
+      gstNumber?: string | null;
+    }) => checkoutApi.placeOrder(addressId, promotionCode, gstNumber),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cart"] });
     },
