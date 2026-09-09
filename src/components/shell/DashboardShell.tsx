@@ -6,6 +6,7 @@ import {
   IndianRupee,
   ReceiptText,
   FolderTree,
+  GalleryHorizontal,
   Layers,
   LayoutDashboard,
   LifeBuoy,
@@ -59,6 +60,7 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     { href: "/admin/platform-fees", label: "Platform fees", icon: IndianRupee },
     { href: "/admin/support", label: "Get help", icon: LifeBuoy },
     { href: "/admin/reports", label: "Reports", icon: ShieldCheck },
+    { href: "/admin/storefront", label: "Storefront banner", icon: GalleryHorizontal },
     { href: "/admin/settings", label: "Business details", icon: Building2 },
   ],
 };

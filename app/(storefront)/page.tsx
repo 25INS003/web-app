@@ -6,6 +6,93 @@ import { CategoryRow } from "@/features/catalog/CategoryRow";
 import { DeliverableSections } from "@/features/catalog/DeliverableSections";
 import { FreshPicks } from "@/features/catalog/FreshPicks";
 import { SuggestionRow } from "@/features/suggestions/SuggestionRow";
+import {
+  HeroCarousel,
+  type HeroSlide,
+} from "@/features/storefront/HeroCarousel";
+
+/**
+ * What the shopfront opens with when an admin has uploaded nothing.
+ *
+ * Not a placeholder to be deleted: a fresh install, or one where somebody
+ * removes the last banner, still gets a designed front page rather than a blank
+ * band. Uploaded images replace these entirely — they are an either/or, not a
+ * list the uploads are appended to, because mixing shipped artwork into
+ * somebody's own campaign is not something an admin asked for.
+ */
+const DEFAULT_HERO_SLIDES: HeroSlide[] = [
+  {
+    src: "/hero/01-fresh.svg",
+    alt: "Fresh groceries from the shops next door",
+    href: "/search",
+  },
+  {
+    src: "/hero/02-delivery.svg",
+    alt: "Free delivery on orders over ₹199",
+    href: "/search",
+  },
+  {
+    src: "/hero/03-cod.svg",
+    alt: "Pay cash when your order arrives",
+    href: "/search",
+  },
+  {
+    src: "/hero/04-local.svg",
+    alt: "Shops from your own neighbourhood, now online",
+    href: "/search",
+  },
+];
+
+/**
+ * The admin's banner, if there is one.
+ *
+ * Read on the server so the first paint already has the right images — a
+ * carousel that swaps its contents a beat after the page appears is worse than
+ * either version of it. Failure is not an error state here: the storefront is
+ * the front page, and it renders with the shipped artwork if the settings call
+ * is unreachable.
+ */
+async function heroSlides(): Promise<HeroSlide[]> {
+  // The docker-network base, not the browser's — this runs on the server. No
+  // cookies: the endpoint is public, and sending them would make the response
+  // per-user for something that is the same for everybody.
+  const base =
+    process.env.API_INTERNAL_URL ?? "http://ins03-backend-dev:8000/api/v1";
+
+  try {
+    const res = await fetch(`${base}/public/hero-slides`, {
+      // `no-store`, deliberately, after trying to be clever with
+      // `next: { revalidate: 60 }`.
+      //
+      // Caching the response meant an admin uploaded a banner, refreshed the
+      // shop, saw the old set and had nothing to tell them why — the change
+      // had landed in the database and the page was serving a cached empty
+      // list. A minute of staleness is not worth that, and the saving was
+      // imaginary: this is one indexed read of a single row over the docker
+      // network, next to a page that already queries categories, suggestions
+      // and stock on every view.
+      cache: "no-store",
+    });
+    if (!res.ok) return DEFAULT_HERO_SLIDES;
+    const body = await res.json();
+    const uploaded: Array<{ url?: string; src?: string; alt?: string; href?: string | null }> =
+      body?.data?.slides ?? [];
+    const mapped = uploaded
+      // The API stores `url`; the carousel takes `src`. Mapped here rather
+      // than renaming the column, so the stored shape stays the one the admin
+      // form writes.
+      .map((s) => ({
+        src: s.url ?? s.src ?? "",
+        alt: s.alt ?? "",
+        href: s.href ?? undefined,
+      }))
+      .filter((s) => s.src);
+
+    return mapped.length > 0 ? mapped : DEFAULT_HERO_SLIDES;
+  } catch {
+    return DEFAULT_HERO_SLIDES;
+  }
+}
 
 const TRUST = [
   { icon: Truck, label: "Free delivery", sub: "on orders over ₹199" },
@@ -13,10 +100,15 @@ const TRUST = [
   { icon: Wallet, label: "Cash on delivery", sub: "pay when it arrives" },
 ];
 
-export default function StorefrontHome() {
+export default async function StorefrontHome() {
+  const slides = await heroSlides();
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6">
-      {/* Hero */}
+      {/* The opening image strip, or — with no images configured — the
+          headline hero it replaced. The fallback is the point: a shopfront
+          whose first screen is an empty rounded rectangle looks broken, and
+          "no banners are set up" is not the visitor's problem. */}
+      <HeroCarousel slides={slides}>
       <section className="relative my-6 overflow-hidden rounded-3xl border border-border bg-card px-6 py-14 shadow-sm sm:px-12 sm:py-20">
         <div
           aria-hidden
@@ -51,6 +143,7 @@ export default function StorefrontHome() {
           </div>
         </div>
       </section>
+      </HeroCarousel>
 
       {/* Trust strip */}
       <section className="grid gap-3 sm:grid-cols-3">

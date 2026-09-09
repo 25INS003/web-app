@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 540" width="1440" height="540" role="img" aria-label="Shops from your own neighbourhood, now online">
+  <rect width="1440" height="540" fill="#fdf6ee"/>
+  <rect y="392" width="1440" height="148" fill="#f0e2d2"/>
+  <g transform="translate(880 172)">
+    <rect width="160" height="220" rx="10" fill="#ffffff" stroke="#e3d3c1" stroke-width="4"/>
+    <path d="M-14 0 H174 L150 -46 H10 Z" fill="#e0663c"/>
+    <rect x="30" y="66" width="100" height="70" rx="8" fill="#eef6f0"/>
+    <rect x="58" y="156" width="44" height="64" rx="6" fill="#3f8b5c"/>
+  </g>
+  <g transform="translate(1070 132)">
+    <rect width="180" height="260" rx="10" fill="#ffffff" stroke="#e3d3c1" stroke-width="4"/>
+    <path d="M-14 0 H194 L168 -50 H12 Z" fill="#5aa87a"/>
+    <rect x="34" y="70" width="112" height="80" rx="8" fill="#fbeee5"/>
+    <rect x="66" y="176" width="48" height="84" rx="6" fill="#e0663c"/>
+  </g>
+  <g transform="translate(1280 196)">
+    <rect width="130" height="196" rx="10" fill="#ffffff" stroke="#e3d3c1" stroke-width="4"/>
+    <path d="M-12 0 H142 L120 -40 H8 Z" fill="#e8a33d"/>
+    <rect x="26" y="56" width="78" height="60" rx="8" fill="#eef6f0"/>
+  </g>
+  <text x="110" y="228" font-family="Georgia, 'Times New Roman', serif" font-size="80" font-weight="700" fill="#1e2a24">Your street,</text>
+  <text x="110" y="314" font-family="Georgia, 'Times New Roman', serif" font-size="80" font-weight="700" fill="#e0663c">now open online.</text>
+  <text x="112" y="374" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="27" fill="#4a5b52">Real shops you already know, with the stock they actually have.</text>
+</svg>
