@@ -90,6 +90,10 @@ export const onboardingApi = {
     // The field name is `documents` and multer caps it at 5 — see the route.
     for (const doc of input.documents) fd.append("documents", doc);
 
-    await api.post("/shop-owners/onboarding", fd);
+    // `upload`, not `post`: this carries a logo and up to five documents, and
+    // the client-wide 20s deadline is a guess about the applicant's uplink
+    // rather than a sign anything is wrong. A seller on a slow connection was
+    // being cut off mid-transfer — on the one form they cannot skip.
+    await api.upload("/shop-owners/onboarding", fd);
   },
 };

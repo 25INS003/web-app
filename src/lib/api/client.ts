@@ -98,8 +98,12 @@ export const api = {
     config?: AxiosRequestConfig,
   ) =>
     apiRequest<T>({
-      ...config,
+      // POST by default, but `config` may override it — a review edit sends
+      // the same images over PATCH, and it needs the same missing deadline.
+      // The method sits BEFORE the spread for that reason; everything after it
+      // is what this helper exists to guarantee.
       method: "POST",
+      ...config,
       url,
       data: body,
       timeout: 0,

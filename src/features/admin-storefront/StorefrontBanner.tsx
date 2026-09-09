@@ -39,6 +39,9 @@ export function StorefrontBanner() {
   // From the server rather than written here, so the number an admin reads
   // cannot drift from the one multer enforces.
   const [maxMb, setMaxMb] = useState<number | null>(null);
+  // null while nothing is uploading. A long transfer with no percentage is
+  // indistinguishable from a hung one.
+  const [progress, setProgress] = useState<number | null>(null);
   const [alt, setAlt] = useState("");
   const [href, setHref] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -78,8 +81,9 @@ export function StorefrontBanner() {
 
   const onUpload = async (file: File) => {
     setBusy(true);
+    setProgress(0);
     try {
-      const d = await heroApi.add(file, alt, href);
+      const d = await heroApi.add(file, alt, href, setProgress);
       setSlides(d.slides ?? []);
       setAlt("");
       setHref("");
@@ -100,6 +104,7 @@ export function StorefrontBanner() {
       );
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   };
 
@@ -198,8 +203,24 @@ export function StorefrontBanner() {
           ) : (
             <Upload className="size-4" />
           )}
-          Choose image
+          {progress === null
+            ? "Choose image"
+            : progress < 100
+              ? `Uploading ${progress}%`
+              : "Processing…"}
         </Button>
+
+        {/* A bar as well as the number. At 100% the bytes are sent and the
+            bucket is still encoding, which is why the label changes rather
+            than sitting on "Uploading 100%". */}
+        {progress !== null && (
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
         {full && (
           <p className="mt-2 text-xs text-warning">
             That is the {MAX}-image limit. Remove one to add another.

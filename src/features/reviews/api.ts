@@ -41,7 +41,10 @@ export const reviewsApi = {
   },
 
   async create(input: CreateReviewInput): Promise<void> {
-    await api.post(
+    // `upload`, not `post` — a review carries photos, and the client-wide 20s
+    // deadline measures the reviewer's uplink rather than anything being
+    // wrong. Same reasoning as the onboarding form and the banner uploader.
+    await api.upload(
       "/reviews/create",
       reviewFormData(
         {
@@ -56,12 +59,15 @@ export const reviewsApi = {
   },
 
   async update(input: UpdateReviewInput): Promise<void> {
-    await api.patch(
+    // Same images, same missing deadline as `create` — over PATCH.
+    await api.upload(
       `/reviews/update/${input.reviewId}`,
       reviewFormData(
         { rating: input.rating, comment: input.comment },
         input.images,
       ),
+      undefined,
+      { method: "PATCH" },
     );
   },
 
