@@ -99,7 +99,7 @@ export function AdminTicketThread({
           It may have been removed, or the link is wrong.
         </p>
         <Link href="/admin/support" className="mt-4 inline-block">
-          <Button variant="outline">Back to support</Button>
+          <Button variant="outline">Back to Get help</Button>
         </Link>
       </div>
     );
@@ -117,7 +117,7 @@ export function AdminTicketThread({
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
-        Support queue
+        Get help queue
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -399,7 +399,7 @@ function ParticipantsPanel({
       <div className="mt-2 flex flex-wrap gap-2">
         {participants.length === 0 ? (
           <span className="text-xs text-muted-foreground">
-            Just the customer and support.
+            Just the customer and our team.
           </span>
         ) : (
           participants.map((p) => (

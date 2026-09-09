@@ -44,7 +44,7 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     // Owners are on tickets two ways: ones they raise, and ones an admin adds
     // them to. Both need a door into the owner area — the storefront /support
     // screen wears the shopping chrome and is not linked from anywhere here.
-    { href: "/dashboard/support", label: "Support", icon: LifeBuoy },
+    { href: "/dashboard/support", label: "Get help", icon: LifeBuoy },
   ],
   admin: [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -57,7 +57,7 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     { href: "/admin/promotions", label: "Discount codes", icon: Tag },
     { href: "/admin/orders", label: "Orders", icon: ReceiptText },
     { href: "/admin/platform-fees", label: "Platform fees", icon: IndianRupee },
-    { href: "/admin/support", label: "Support", icon: LifeBuoy },
+    { href: "/admin/support", label: "Get help", icon: LifeBuoy },
     { href: "/admin/reports", label: "Reports", icon: ShieldCheck },
     { href: "/admin/settings", label: "Business details", icon: Building2 },
   ],

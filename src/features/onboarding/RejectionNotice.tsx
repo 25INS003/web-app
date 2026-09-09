@@ -69,7 +69,7 @@ export function RejectionNotice({
             // Saying so is better than an empty quote, and points them at the
             // one place they can ask.
             <p className="mt-1 text-sm text-muted-foreground">
-              No reason was recorded. Contact support and we will explain.
+              No reason was recorded. Use Get help and we will explain.
             </p>
           )}
 
@@ -92,7 +92,7 @@ export function RejectionNotice({
               : // Says plainly that the decision stands and what the one
                 // available action is. "Contact support" on its own reads as
                 // a formality; naming what to ask for makes it a step.
-                "This decision stands for now. If you would like to correct your application and send it again, ask support to reopen it."}
+                "This decision stands for now. If you would like to correct your application and send it again, use Get help to ask us to reopen it."}
           </p>
 
           <Link
@@ -106,7 +106,7 @@ export function RejectionNotice({
             }
           >
             <LifeBuoy className="size-4" />
-            {canResubmit ? "Ask support about this" : "Ask support to reopen it"}
+            {canResubmit ? "Get help with this" : "Get help to reopen it"}
           </Link>
         </div>
       </div>

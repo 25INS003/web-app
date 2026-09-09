@@ -70,7 +70,7 @@ export function SupportDetail({
           it.
         </p>
         <Button asChild className="mt-6">
-          <Link href={basePath}>Back to support</Link>
+          <Link href={basePath}>Back to Get help</Link>
         </Button>
       </div>
     );
@@ -89,7 +89,7 @@ export function SupportDetail({
         href={basePath}
         className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
       >
-        <ArrowLeft className="size-4" /> Support
+        <ArrowLeft className="size-4" /> Get help
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-3">

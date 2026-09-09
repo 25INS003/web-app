@@ -295,11 +295,11 @@ describe("a shop an admin took offline", () => {
     ).toBeInTheDocument();
   });
 
-  it("points at support, the only way to answer back", () => {
+  it("points at Get help, the only way to answer back", () => {
     shops = [seized()];
     render(<MyShopPage />);
 
-    const link = screen.getByRole("link", { name: /ask support/i });
+    const link = screen.getByRole("link", { name: /get help/i });
     expect(link).toHaveAttribute("href", "/dashboard/support");
   });
 

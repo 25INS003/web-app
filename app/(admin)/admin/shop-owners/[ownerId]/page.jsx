@@ -338,7 +338,7 @@ export default function ShopOwnerDetailPage() {
                                     {/* Reopening the form, which is a different
                                         decision from approving. A refusal
                                         stands until an admin does this, so it
-                                        is the answer to the support ticket a
+                                        is the answer to the help request a
                                         refused owner sends — and it buys them
                                         exactly one resubmission. */}
                                     {(selectedOwner.verification_status === "rejected" ||

@@ -1,7 +1,7 @@
 import { SupportList } from "@/features/support/SupportList";
 import { requireApprovedShopOwner } from "@/lib/auth/guards";
 
-export const metadata = { title: "Support · Nedyway" };
+export const metadata = { title: "Get help · Nedyway" };
 
 /**
  * The shop owner's support conversations.

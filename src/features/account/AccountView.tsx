@@ -78,7 +78,7 @@ export function AccountView({ user }: { user: User }) {
             <LifeBuoy className="size-5" />
           </span>
           <div>
-            <p className="text-sm font-semibold">Support</p>
+            <p className="text-sm font-semibold">Get help</p>
             <p className="text-xs text-muted-foreground">Help & requests</p>
           </div>
         </Link>

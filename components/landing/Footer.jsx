@@ -165,7 +165,7 @@ export const Footer = () => {
 
                     <motion.div variants={itemVariants} className="lg:col-span-2">
                         <FooterColumn 
-                            title="Support" 
+                            title="Get help" 
                             links={["Documentation", "API Reference", "System Status", "Contact"]} 
                         />
                     </motion.div>

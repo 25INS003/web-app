@@ -1,6 +1,6 @@
 import { AdminSupportQueue } from "@/features/admin-support/AdminSupportQueue";
 
-export const metadata = { title: "Support · Nedyway Admin" };
+export const metadata = { title: "Get help · Nedyway Admin" };
 
 /**
  * The support queue.

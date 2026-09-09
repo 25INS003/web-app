@@ -61,7 +61,7 @@ export function AdminSupportQueue() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight">
-            Support
+            Get help
           </h1>
           <p className="text-sm text-muted-foreground">
             Requests raised by customers and shop owners.
@@ -103,7 +103,7 @@ export function AdminSupportQueue() {
       ) : q.isError ? (
         <Empty
           title="Could not load the queue"
-          body="Something went wrong fetching support requests."
+          body="Something went wrong fetching help requests."
           action={<Button onClick={() => q.refetch()}>Try again</Button>}
         />
       ) : tickets.length === 0 ? (

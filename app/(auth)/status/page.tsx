@@ -73,7 +73,7 @@ export default async function StatusPage() {
       <p className="mt-4 text-sm text-muted-foreground">
         Waiting longer than you expected?{" "}
         <Link href="/help" className="font-medium text-primary hover:underline">
-          Contact support
+          Get help
         </Link>
         .
       </p>

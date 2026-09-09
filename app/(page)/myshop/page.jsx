@@ -460,7 +460,7 @@ const ShopCard = ({ shop, index, onEdit, onDeactivate, onActivate, onRequestDele
 
             {/* Why the shop is dark, when it was not the owner's doing. The
                 admin's own words, because the alternative is an owner watching
-                orders stop with no idea why — and support is the only way to
+                orders stop with no idea why — and Get help is the only way to
                 answer back. */}
             {takenDownByAdmin(shop) && (
                 <div className="mb-4 flex items-start gap-2 rounded-xl border border-destructive/25 bg-destructive/5 p-3">
@@ -479,7 +479,7 @@ const ShopCard = ({ shop, index, onEdit, onDeactivate, onActivate, onRequestDele
                             href="/dashboard/support"
                             className="mt-2 inline-block font-medium text-primary hover:underline"
                         >
-                            Ask support to review it
+                            Get help to have it reviewed
                         </Link>
                     </div>
                 </div>

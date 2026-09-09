@@ -54,11 +54,11 @@ const DESTINATIONS: [RegExp, string][] = [
   [/^\/orders\b/, "View order"],
   [/^\/products\b/, "View product"],
   [/^\/myshop\b/, "Go to My Shops"],
-  [/^\/dashboard\/support\b/, "Go to Support"],
+  [/^\/dashboard\/support\b/, "Go to Get help"],
   [/^\/dashboard\b/, "Go to dashboard"],
   [/^\/status\b/, "View application"],
-  [/^\/help\b/, "Go to Support"],
-  [/^\/support\b/, "Go to Support"],
+  [/^\/help\b/, "Go to Get help"],
+  [/^\/support\b/, "Go to Get help"],
 ];
 
 export function destinationLabel(actionUrl: string): string {

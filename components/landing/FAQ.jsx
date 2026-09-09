@@ -99,7 +99,7 @@ export default function FAQ() {
                         transition={{ delay: 0.2 }}
                         className="inline-block px-5 py-2.5 bg-primary/10 text-primary font-semibold rounded-full text-sm border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
                     >
-                        Contact Support
+                        Get help
                     </motion.div>
                 </div>
                 <div className="md:col-span-8">

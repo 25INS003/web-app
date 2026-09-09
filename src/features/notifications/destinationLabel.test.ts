@@ -41,12 +41,12 @@ describe("naming a notification's destination", () => {
     // `/dashboard/support` starts with `/dashboard`, so order matters — the
     // longer path has to be tested first or every support link reads "Go to
     // dashboard".
-    expect(destinationLabel("/dashboard/support")).toBe("Go to Support");
+    expect(destinationLabel("/dashboard/support")).toBe("Go to Get help");
   });
 
   it("names support on the onboarding side too", () => {
     // A seller waiting on approval gets /help; the dashboard is shut to them.
-    expect(destinationLabel("/help")).toBe("Go to Support");
+    expect(destinationLabel("/help")).toBe("Go to Get help");
   });
 
   it("ignores a query string", () => {

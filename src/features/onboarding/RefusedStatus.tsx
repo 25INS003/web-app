@@ -52,7 +52,7 @@ export function RefusedStatus({
           {/* Said here because the grant is spent on submission: they get one
               send, and finding that out afterwards would be a nasty surprise. */}
           <p className="mt-3 text-xs text-muted-foreground">
-            You can send it once. If it is refused again, ask support to reopen
+            You can send it once. If it is refused again, use Get help to reopen
             it.
           </p>
         </div>

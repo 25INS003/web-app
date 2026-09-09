@@ -47,7 +47,7 @@ export function SupportList({ basePath = "/support" }: { basePath?: string }) {
         </span>
         <h1 className="font-display text-2xl font-bold">How can we help?</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Raise a support request and our team will get back to you here.
+          Raise a request and our team will get back to you here.
         </p>
         <Button asChild className="mt-6">
           <Link href={`${basePath}/new`}>
@@ -62,7 +62,7 @@ export function SupportList({ basePath = "/support" }: { basePath?: string }) {
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-display text-2xl font-bold tracking-tight">
-          Support
+          Get help
         </h1>
         <Button asChild size="sm">
           <Link href={`${basePath}/new`}>

@@ -75,7 +75,7 @@ export function NewTicketForm({
         href={basePath}
         className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
       >
-        <ArrowLeft className="size-4" /> Support
+        <ArrowLeft className="size-4" /> Get help
       </Link>
 
       <h1 className="font-display text-2xl font-bold tracking-tight">

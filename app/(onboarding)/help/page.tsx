@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { SupportList } from "@/features/support/SupportList";
 import { requireRole } from "@/lib/auth/guards";
 
-export const metadata = { title: "Help · Nedyway" };
+export const metadata = { title: "Get help · Nedyway" };
 
 /**
  * Support for a shop owner who is not through approval yet.

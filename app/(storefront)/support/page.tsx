@@ -1,7 +1,7 @@
 import { SupportList } from "@/features/support/SupportList";
 import { requireSession } from "@/lib/auth/guards";
 
-export const metadata = { title: "Support · Nedyway" };
+export const metadata = { title: "Get help · Nedyway" };
 
 export default async function SupportPage() {
   // requireSession, not a bare getSession + redirect: it sends an invalid
