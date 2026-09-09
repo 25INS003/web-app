@@ -6,7 +6,12 @@ export type HeroSlide = {
   href?: string | null;
 };
 
-type SlidesPayload = { slides: HeroSlide[]; max?: number };
+type SlidesPayload = {
+  slides: HeroSlide[];
+  max?: number;
+  /** The upload size ceiling, in MB, as the server actually enforces it. */
+  max_file_mb?: number;
+};
 
 export const heroApi = {
   list: () => api.get<SlidesPayload>("/admin/settings/hero"),

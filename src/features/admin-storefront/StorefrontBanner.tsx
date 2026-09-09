@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ApiError } from "@/lib/api/types";
 import { heroApi, type HeroSlide } from "./api";
 
 const MAX = 15;
@@ -35,6 +36,9 @@ export function StorefrontBanner() {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  // From the server rather than written here, so the number an admin reads
+  // cannot drift from the one multer enforces.
+  const [maxMb, setMaxMb] = useState<number | null>(null);
   const [alt, setAlt] = useState("");
   const [href, setHref] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -42,7 +46,10 @@ export function StorefrontBanner() {
   useEffect(() => {
     heroApi
       .list()
-      .then((d) => setSlides(d.slides ?? []))
+      .then((d) => {
+        setSlides(d.slides ?? []);
+        setMaxMb(d.max_file_mb ?? null);
+      })
       .catch(() => toast.error("Could not load the current banner"))
       .finally(() => setLoading(false));
   }, []);
@@ -55,11 +62,15 @@ export function StorefrontBanner() {
       const d = await heroApi.replace(next);
       setSlides(d.slides ?? next);
       toast.success(message);
-    } catch {
+    } catch (err) {
       // Put it back. A reorder that failed on the server but stuck on screen
       // is worse than one that visibly did not happen.
       setSlides(previous);
-      toast.error("That did not save — nothing has changed");
+      toast.error(
+        err instanceof ApiError
+          ? err.message
+          : "That did not save — nothing has changed",
+      );
     } finally {
       setBusy(false);
     }
@@ -75,10 +86,18 @@ export function StorefrontBanner() {
       if (fileRef.current) fileRef.current.value = "";
       toast.success("Image added");
     } catch (err) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "Upload failed";
-      toast.error(message);
+      // `err.message`, not `err.response.data.message`.
+      //
+      // The api client already unwraps the envelope and rejects with an
+      // `ApiError` carrying the server's own words — there is no `response` on
+      // what arrives here, so the old reach for it was always undefined and
+      // every failure showed the same "Upload failed". That threw away
+      // messages the backend went to the trouble of writing: "That file is too
+      // large. The limit is 10 MB per file.", "We cannot take a
+      // video/quicktime.", and the fifteen-image ceiling.
+      toast.error(
+        err instanceof ApiError ? err.message : "Could not upload that image",
+      );
     } finally {
       setBusy(false);
     }
@@ -119,8 +138,8 @@ export function StorefrontBanner() {
       <div className="rounded-2xl border border-border bg-card p-5 shadow-xs">
         <h2 className="font-semibold">Add an image</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Wide images work best — around 1440 × 540. {slides.length} of {MAX}{" "}
-          used.
+          Wide images work best — around 1440 × 540
+          {maxMb ? `, up to ${maxMb} MB` : ""}. {slides.length} of {MAX} used.
         </p>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
