@@ -7,6 +7,7 @@ import {
   ArrowUp,
   GalleryHorizontal,
   Loader2,
+  Pencil,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -42,6 +43,30 @@ export function StorefrontBanner() {
   // null while nothing is uploading. A long transfer with no percentage is
   // indistinguishable from a hung one.
   const [progress, setProgress] = useState<number | null>(null);
+  /**
+   * Which row is open for editing, and the draft of it.
+   *
+   * A draft rather than editing the list in place: the description and link
+   * are the two fields somebody gets wrong, and an edit that writes on every
+   * keystroke would send half-typed values and make Cancel meaningless.
+   */
+  const [editing, setEditing] = useState<number | null>(null);
+  const [draft, setDraft] = useState({ alt: "", href: "" });
+
+  const startEdit = (i: number) => {
+    setEditing(i);
+    setDraft({ alt: slides[i].alt ?? "", href: slides[i].href ?? "" });
+  };
+
+  const commitEdit = async (i: number) => {
+    const next = slides.map((s, n) =>
+      n === i
+        ? { ...s, alt: draft.alt.trim(), href: draft.href.trim() || null }
+        : s,
+    );
+    setEditing(null);
+    await save(next, "Details updated");
+  };
   const [alt, setAlt] = useState("");
   const [href, setHref] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -110,17 +135,20 @@ export function StorefrontBanner() {
 
   const move = (from: number, to: number) => {
     if (to < 0 || to >= slides.length) return;
+    setEditing(null);
     const next = [...slides];
     const [item] = next.splice(from, 1);
     next.splice(to, 0, item);
     void save(next, "Order updated");
   };
 
-  const remove = (i: number) =>
-    void save(
+  const remove = (i: number) => {
+    setEditing(null);
+    return void save(
       slides.filter((_, n) => n !== i),
       "Image removed",
     );
+  };
 
   const full = slides.length >= MAX;
 
@@ -150,7 +178,7 @@ export function StorefrontBanner() {
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor="hero-alt" className="text-xs font-medium">
-              Description
+              Description <span className="text-destructive">*</span>
             </label>
             <Input
               id="hero-alt"
@@ -159,10 +187,13 @@ export function StorefrontBanner() {
               placeholder="e.g. Free delivery over ₹199"
               className="mt-1"
             />
-            {/* Not decoration: this is what a screen reader announces in place
-                of the banner, and what shows if the image fails to load. */}
+            {/* Required, not decoration: this is what a screen reader
+                announces in place of the banner and what shows if the image
+                fails to load, so a banner without one does not exist for part
+                of the audience. */}
             <p className="mt-1 text-xs text-muted-foreground">
-              Read aloud in place of the image, and shown if it fails to load.
+              Required. Read aloud in place of the image, and shown if it fails
+              to load.
             </p>
           </div>
           <div>
@@ -195,7 +226,7 @@ export function StorefrontBanner() {
         <Button
           type="button"
           onClick={() => fileRef.current?.click()}
-          disabled={busy || full}
+          disabled={busy || full || !alt.trim()}
           className="mt-4 rounded-xl"
         >
           {busy ? (
@@ -220,6 +251,13 @@ export function StorefrontBanner() {
               style={{ width: `${progress}%` }}
             />
           </div>
+        )}
+        {!alt.trim() && !full && (
+          // Said before the button is reached for, rather than as a rejection
+          // after a file has been chosen and uploaded.
+          <p className="mt-2 text-xs text-muted-foreground">
+            Add a description to enable the upload.
+          </p>
         )}
         {full && (
           <p className="mt-2 text-xs text-warning">
@@ -263,16 +301,88 @@ export function StorefrontBanner() {
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  {s.alt || (
-                    <span className="text-muted-foreground">No description</span>
-                  )}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {s.href || "No link"}
-                </p>
+                {editing === i ? (
+                  <div className="space-y-2">
+                    <Input
+                      aria-label={`Description for image ${i + 1}`}
+                      value={draft.alt}
+                      onChange={(e) =>
+                        setDraft((d) => ({ ...d, alt: e.target.value }))
+                      }
+                      placeholder="Description"
+                      className="h-9"
+                      autoFocus
+                    />
+                    <Input
+                      aria-label={`Link for image ${i + 1}`}
+                      value={draft.href}
+                      onChange={(e) =>
+                        setDraft((d) => ({ ...d, href: e.target.value }))
+                      }
+                      placeholder="/search — or leave blank"
+                      className="h-9"
+                      onKeyDown={(e) => {
+                        // Enter saves and Escape abandons, so the row can be
+                        // corrected without reaching for the mouse.
+                        if (e.key === "Enter" && draft.alt.trim())
+                          void commitEdit(i);
+                        if (e.key === "Escape") setEditing(null);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <p className="truncate text-sm font-medium">
+                      {s.alt || (
+                        // Stored before the description was required. Flagged
+                        // rather than left grey, because it is now the one
+                        // thing on the row that wants doing.
+                        <span className="text-warning">
+                          Needs a description
+                        </span>
+                      )}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {s.href || "No link"}
+                    </p>
+                  </>
+                )}
               </div>
               <div className="flex shrink-0 items-center gap-1">
+                {editing === i ? (
+                  <>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={busy || !draft.alt.trim()}
+                      onClick={() => void commitEdit(i)}
+                      className="rounded-lg"
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditing(null)}
+                      className="rounded-lg"
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label={`Edit image ${i + 1}`}
+                    disabled={busy}
+                    onClick={() => startEdit(i)}
+                    className="px-2"
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="ghost"
