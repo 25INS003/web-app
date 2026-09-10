@@ -19,6 +19,7 @@ import {
   Tag,
   Users,
   X,
+  Megaphone,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -61,6 +62,7 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     { href: "/admin/support", label: "Get help", icon: LifeBuoy },
     { href: "/admin/reports", label: "Reports", icon: ShieldCheck },
     { href: "/admin/storefront", label: "Storefront banner", icon: GalleryHorizontal },
+    { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
     { href: "/admin/settings", label: "Business details", icon: Building2 },
   ],
 };
