@@ -19,7 +19,8 @@ import {
     Edit,
     ShoppingBag,
     Package,
-    Clock
+    Clock,
+    Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -423,13 +424,25 @@ const ShopCard = ({ shop, index, onEdit, onDeactivate, onActivate, onRequestDele
                     </div>
                 </div>
 
-                <Button
-                    size="sm"
-                    onClick={() => onEdit(shop.id)}
-                    className="rounded-lg bg-muted text-muted-foreground hover:bg-accent"
-                >
-                    <Edit className="h-3 w-3 mr-1" /> Edit
-                </Button>
+                <div className="flex items-center gap-2">
+                    {/* Delegation lives per shop, not per account: an owner
+                        with three shops staffs them differently. */}
+                    <Link href={`/myshop/team/${shop.id}`}>
+                        <Button
+                            size="sm"
+                            className="rounded-lg bg-muted text-muted-foreground hover:bg-accent"
+                        >
+                            <Users className="h-3 w-3 mr-1" /> Team
+                        </Button>
+                    </Link>
+                    <Button
+                        size="sm"
+                        onClick={() => onEdit(shop.id)}
+                        className="rounded-lg bg-muted text-muted-foreground hover:bg-accent"
+                    >
+                        <Edit className="h-3 w-3 mr-1" /> Edit
+                    </Button>
+                </div>
             </div>
 
             {/* Details */}

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import type { Session, UserType } from "@/lib/api/schemas/auth";
-import { getSession } from "./session.server";
+import { getManagedShops, getSession } from "./session.server";
 
 /**
  * Where a guard sends someone whose session turned out to be invalid.
@@ -87,6 +87,32 @@ export async function confineToOwnArea(): Promise<void> {
 }
 
 // Shop-owner area: must be an approved owner, else routed to onboarding/status.
+/**
+ * The shop workspace, which is no longer only for owners.
+ *
+ * A shop can now delegate work to someone by role, and that someone is usually
+ * a plain customer account — requiring `shop_owner` would have kept every
+ * delegated member out of the dashboard they were given access to, however
+ * carefully the API allows them in.
+ *
+ * So: an approved owner passes as before, and anyone the backend says can work
+ * in at least one shop passes too. Which pages they can then use is the
+ * server's business, not this guard's — every shop route checks its own
+ * capability.
+ */
+export async function requireShopWorkspace(): Promise<Session> {
+  const session = await requireSession();
+
+  if (session.user.user_type === "shop_owner") {
+    return requireApprovedShopOwner();
+  }
+
+  const shops = await getManagedShops();
+  if (shops.length === 0) redirect("/unauthorized");
+
+  return session;
+}
+
 export async function requireApprovedShopOwner(): Promise<Session> {
   const session = await requireRole("shop_owner");
   const status = session.shop_owner_status;

@@ -30,3 +30,30 @@ export async function getSession(): Promise<Session | null> {
     return null;
   }
 }
+
+/**
+ * The shops this session may work in, owned or delegated.
+ *
+ * Asked of the backend rather than derived from the session, because
+ * membership is not on the user: a delegated member is a plain customer
+ * account whose standing lives in shop_members. Used by the shop-area guard,
+ * which cannot decide on user_type alone any more.
+ */
+export async function getManagedShops(): Promise<
+  { id: string; name: string; kind: "owner" | "member"; role: string | null }[]
+> {
+  const cookieStore = await cookies();
+  if (!cookieStore.get("accessToken")) return [];
+
+  try {
+    const res = await fetch(`${INTERNAL_API_URL}/shops/managed`, {
+      headers: { cookie: cookieStore.toString() },
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { data?: { shops?: [] } };
+    return body.data?.shops ?? [];
+  } catch {
+    return [];
+  }
+}
