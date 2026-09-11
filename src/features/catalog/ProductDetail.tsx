@@ -34,6 +34,28 @@ import type { ProductVariant } from "@/lib/api/schemas/catalog";
 import { cn, formatPrice } from "@/lib/utils";
 import { useDeliveryPincode, useProduct, useProductReviews } from "./hooks";
 
+/**
+ * The variant the page opens on.
+ *
+ * `default_variant_id` first, and only then the `is_default` flag. The two are
+ * normally the same variant — but when the flagged one sells out the server
+ * ranks a sellable variant ahead of it (see syncParentProduct), and the card
+ * that was clicked to get here is already showing THAT variant's price and its
+ * "Add". Opening on the flag instead would land the customer on a sold-out
+ * size, with a price that does not match the card they came from.
+ *
+ * The flag stays as the fallback for a payload that carries no resolved
+ * default — an unsynced product, or an older response shape.
+ */
+const leadVariant = (
+  variants: ProductVariant[],
+  defaultVariantId: string | null | undefined,
+) =>
+  variants.find((v) => v.id === defaultVariantId) ??
+  variants.find((v) => v.is_default) ??
+  variants[0] ??
+  null;
+
 export function ProductDetail({ productId }: { productId: string }) {
   const q = useProduct(productId);
   const reviewsQ = useProductReviews(productId);
@@ -48,12 +70,11 @@ export function ProductDetail({ productId }: { productId: string }) {
 
   // Resolved here rather than from `selected` below, because hooks cannot be
   // called after the early returns and `selected` is computed past them. The
-  // same precedence: an explicit pick, then the flagged default, then the first.
+  // same precedence: an explicit pick, then `leadVariant`.
   const variantsForWishlist = q.data?.variants ?? [];
   const selectedVariantId =
     variant?.id ??
-    variantsForWishlist.find((v) => v.is_default)?.id ??
-    variantsForWishlist[0]?.id;
+    leadVariant(variantsForWishlist, q.data?.product.default_variant_id)?.id;
 
   // The same hook the card uses, so one product reads the same in both places.
   // This button previously only ever ADDED: the heart never went red, and
@@ -64,8 +85,7 @@ export function ProductDetail({ productId }: { productId: string }) {
   if (q.isError || !q.data) return <NotFound />;
 
   const { product, variants, bulk_pricing: bulkPricing } = q.data;
-  const selected =
-    variant ?? variants.find((v) => v.is_default) ?? variants[0] ?? null;
+  const selected = variant ?? leadVariant(variants, product.default_variant_id);
   const price = selected?.price ?? product.price;
   const compare = selected?.compare_at_price ?? product.compare_at_price ?? null;
   // null means "the payload didn't tell us" — distinct from 0. The old code
