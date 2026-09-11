@@ -355,9 +355,14 @@ const ProductsListPage = () => {
                         </Select>
 
                         <div className="flex gap-2">
+                            {/* Default (primary) variant, as the Apply in OrderFilter is.
+                                It used to override the background to bg-card while leaving
+                                the variant's text-primary-foreground in place, and repair
+                                the colour under `dark:` only — so in light theme it was
+                                near-white text on a near-white card, i.e. invisible. */}
                             <Button 
                                 onClick={handleApplyFilters} 
-                                className="flex-1 rounded-xl bg-card dark:text-foreground hover:bg-muted"
+                                className="flex-1 rounded-xl"
                             >
                                 <Filter className="h-4 w-4 mr-2" /> Apply
                             </Button>
