@@ -383,7 +383,12 @@ const ProductsListPage = () => {
                 variants={itemVariants}
                 className="rounded-2xl border border-border bg-card overflow-hidden shadow-lg"
             >
-                <Table>
+                {/* Cell padding, scoped to this table. The primitive ships p-2
+                    for every cell, so the first and last columns sat 8px from
+                    the card's edge — the row read as if it were falling out of
+                    the panel. px-4 between columns, and a wider gutter at both
+                    ends so the table breathes inside its border. */}
+                <Table className="[&_th]:px-4 [&_td]:px-4 [&_th:first-child]:pl-6 [&_td:first-child]:pl-6 [&_th:last-child]:pr-6 [&_td:last-child]:pr-6">
                     <TableHeader className="bg-muted/80 dark:bg-muted/50">
                         <TableRow className="border-border">
                             <TableHead className="w-[80px] font-semibold">Image</TableHead>
