@@ -5,7 +5,12 @@ export const metadata = { title: "Shop · Nedyway" };
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    category?: string;
+    sort?: string;
+    max_price?: string;
+  }>;
 }) {
   const sp = await searchParams;
   return (
@@ -27,9 +32,11 @@ export default async function SearchPage({
           and showed unchanged results. Keying on the params remounts it, which
           is the pattern CategoryView already uses for the same reason. */}
       <CatalogBrowser
-        key={`${sp.q ?? ""}|${sp.category ?? ""}`}
+        key={`${sp.q ?? ""}|${sp.category ?? ""}|${sp.sort ?? ""}|${sp.max_price ?? ""}`}
         initialSearch={sp.q}
         initialCategory={sp.category}
+        initialSort={sp.sort}
+        initialMaxPrice={sp.max_price}
         showSearch={false}
       />
     </div>

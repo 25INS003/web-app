@@ -1,10 +1,19 @@
-import { Clock, Leaf, ShoppingBag, Truck, Wallet } from "lucide-react";
+import {
+  Clock,
+  Leaf,
+  ShoppingBag,
+  Tag,
+  TrendingUp,
+  Truck,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CategoryRow } from "@/features/catalog/CategoryRow";
 import { DeliverableSections } from "@/features/catalog/DeliverableSections";
 import { FreshPicks } from "@/features/catalog/FreshPicks";
+import { ProductRow } from "@/features/catalog/ProductRow";
 import { SuggestionRow } from "@/features/suggestions/SuggestionRow";
 import {
   HeroCarousel,
@@ -70,6 +79,14 @@ async function heroSlides(): Promise<HeroSlide[]> {
     return [];
   }
 }
+
+// The budget row's ceiling, in rupees. One constant: the heading, the query and
+// the "View all" link have to agree, and a row headed "Under ₹99" that lists a
+// ₹120 product is worse than no row.
+//
+// `max_price` is inclusive on the API side (lte), so ₹99 itself is in.
+const UNDER_PRICE = 99;
+const UNDER_PRICE_LABEL = `₹${UNDER_PRICE}`;
 
 const TRUST = [
   { icon: Truck, label: "Free delivery", sub: "on orders over ₹199" },
@@ -147,6 +164,29 @@ export default async function StorefrontHome() {
         <CategoryRow />
         {/* Renders nothing for signed-out visitors. */}
         <SuggestionRow />
+        {/* `in_stock` on both: a row the customer did not ask for should not
+            lead with something they cannot buy. Both are ranked by units sold
+            — for the budget row that is the difference between "cheap things
+            people actually buy" and a shelf of whatever happens to be cheap. */}
+        <ProductRow
+          title="Best sellers"
+          subtitle="What people around here buy most."
+          icon={<TrendingUp />}
+          query={{ sort: "total_sold", order: "desc", in_stock: true }}
+          href="/search?sort=best_selling"
+        />
+        <ProductRow
+          title={`Under ${UNDER_PRICE_LABEL}`}
+          subtitle="Everyday things that don't add up."
+          icon={<Tag />}
+          query={{
+            max_price: UNDER_PRICE,
+            sort: "total_sold",
+            order: "desc",
+            in_stock: true,
+          }}
+          href={`/search?max_price=${UNDER_PRICE}`}
+        />
         <FreshPicks />
       </DeliverableSections>
     </div>

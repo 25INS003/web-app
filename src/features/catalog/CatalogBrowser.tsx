@@ -23,6 +23,12 @@ const SORTS = [
     order: "desc",
   },
   { key: "rating", label: "Top rated", sort: "rating", order: "desc" },
+  {
+    key: "best_selling",
+    label: "Best selling",
+    sort: "total_sold",
+    order: "desc",
+  },
 ] as const;
 
 type SortKey = (typeof SORTS)[number]["key"];
@@ -30,11 +36,21 @@ type SortKey = (typeof SORTS)[number]["key"];
 export function CatalogBrowser({
   initialSearch = "",
   initialCategory,
+  initialSort,
+  initialMaxPrice,
   showSearch = true,
   searchPlaceholder = "Search for products, brands…",
 }: {
   initialSearch?: string;
   initialCategory?: string;
+  /**
+   * The sort to open on, as a SORTS key. Anything else is ignored rather than
+   * trusted — it arrives from the URL, and an unknown key would leave the
+   * select showing nothing selected.
+   */
+  initialSort?: string;
+  /** The price ceiling to open on, in rupees, as it would be typed. */
+  initialMaxPrice?: string;
   /**
    * Whether to render this component's own search box.
    *
@@ -56,10 +72,20 @@ export function CatalogBrowser({
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState<string | undefined>(initialCategory);
-  const [sortKey, setSortKey] = useState<SortKey>("newest");
+  const [sortKey, setSortKey] = useState<SortKey>(
+    SORTS.some((s) => s.key === initialSort)
+      ? (initialSort as SortKey)
+      : "newest",
+  );
   const [inStock, setInStock] = useState(false);
-  const [priceInput, setPriceInput] = useState({ min: "", max: "" });
-  const [price, setPrice] = useState({ min: "", max: "" });
+  // Seeded so the home page's "Under ₹99 · View all" lands on the same set the
+  // row was showing, with the ceiling visible in the box that produced it
+  // rather than applied invisibly.
+  const [priceInput, setPriceInput] = useState({
+    min: "",
+    max: initialMaxPrice ?? "",
+  });
+  const [price, setPrice] = useState({ min: "", max: initialMaxPrice ?? "" });
 
   // debounce the search box
   useEffect(() => {
