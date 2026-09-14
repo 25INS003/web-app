@@ -215,7 +215,9 @@ function OrderCard({
   // `item_preview` is capped server-side, so the remainder is computed from
   // the real count rather than from what happens to have been sent.
   const more = Math.max(0, count - preview.length);
-  const shop = o.shop_details_snapshot?.name ?? orderShopName(o);
+  // `orderShopName` reads the snapshot itself now — this used to reach for it
+  // by hand because the helper only looked at a populated `shop_id`.
+  const shop = orderShopName(o);
 
   return (
     <button

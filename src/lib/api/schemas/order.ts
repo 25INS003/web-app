@@ -59,6 +59,34 @@ export const orderAddressSchema = z.object({
   contact_phone: z.string().optional(),
 });
 
+/**
+ * The shop as the order records it.
+ *
+ * Two shapes, because an order names its shop in two ways and both reach the
+ * client: `shop_details_snapshot` is what was true at placement, and a
+ * populated `shop_id` is the row as it stands today. Declared once and shared
+ * by the order and its per-shop lines — they carry the same pair.
+ */
+const shopSnapshotSchema = z
+  .object({
+    shop_id: objectId.nullish(),
+    name: z.string().nullish(),
+    logo: z.string().nullish(),
+    phone: z.string().nullish(),
+    address: z.string().nullish(),
+    rating: z.number().nullish(),
+  })
+  .nullish();
+
+const shopRefSchema = z.object({
+  id: objectId.optional(),
+  name: z.string().nullish(),
+  logo_url: z.string().nullish(),
+  phone: z.string().nullish(),
+  address_line: z.string().nullish(),
+  rating: z.number().nullish(),
+});
+
 export const orderSchema = z.object({
   id: objectId,
   // The human-readable reference. DEBT-4a renamed it: `order_id` used to be
@@ -88,9 +116,7 @@ export const orderSchema = z.object({
   // The shop, as it was when the order was placed. `orderShopName` reads a
   // POPULATED `shop_id`, which the list does not send — it sends a bare uuid
   // and puts the name here — so without this the list has no shop name at all.
-  shop_details_snapshot: z
-    .object({ name: z.string().nullish(), logo: z.string().nullish() })
-    .nullish(),
+  shop_details_snapshot: shopSnapshotSchema,
   is_multi_shop: z.boolean().optional(),
 
   // A few lines from the order, so a list can say what was IN it. Capped
@@ -138,7 +164,20 @@ export const orderSchema = z.object({
         order_status: z.string().optional(),
         cancellation_reason: z.string().nullish(),
         cancelled_by: z.string().nullish(),
+        // How the shop reaches the client, in all three shapes the API sends
+        // it. The detail populates `shop_id` with the row
+        // (`findShopOrdersWithShop`), the list flattens it to `shop_name`, and
+        // every shop order also carries the snapshot taken at placement.
+        //
+        // `shop` was the only one declared, and it is the one nothing sends —
+        // so z.object stripped the rest and `so.shop?.name` was undefined on
+        // every order. That is why a cancelled order said "Cancelled by the
+        // shop" without ever naming which shop. Read it through
+        // `shopOrderName`, not by reaching for a key.
         shop: z.object({ name: z.string().optional() }).nullish(),
+        shop_id: z.union([objectId, shopRefSchema]).nullish(),
+        shop_name: z.string().nullish(),
+        shop_details_snapshot: shopSnapshotSchema,
       }),
     )
     .optional()
@@ -151,6 +190,66 @@ export const orderListSchema = z.object({ orders: z.array(orderSchema) });
 // GET /customer/orders/:orderId -> { order }
 export const orderDetailResponseSchema = z.object({ order: orderSchema });
 
+/**
+ * Who sold it.
+ *
+ * The snapshot first. `shop_id` only carries a name where the endpoint
+ * populated it, and the customer-facing order endpoints send a bare uuid — so
+ * reading it alone returned undefined for every order, and both screens
+ * rendered their `?? "Shop"` fallback as if that were a shop's name. The name
+ * was in the payload the whole time, in the snapshot taken at placement.
+ *
+ * The snapshot is also the more honest source: it is the shop AS IT WAS when
+ * the order was placed, and an order is a record of something that already
+ * happened. A shop that has since been renamed should appear on an old order
+ * under the name the customer bought from.
+ */
 export function orderShopName(o: Order): string | undefined {
-  return o.shop_id && typeof o.shop_id === "object" ? o.shop_id.name : undefined;
+  const snapshot = o.shop_details_snapshot?.name;
+  if (snapshot) return snapshot;
+
+  if (o.shop_id && typeof o.shop_id === "object" && o.shop_id.name) {
+    return o.shop_id.name;
+  }
+
+  // Last, the order's own shop-order line. An order with exactly one of them
+  // has exactly one shop, and that row names it — through `shop_name` on the
+  // list, or a populated `shop_id` on the detail.
+  //
+  // This is what an order written before the snapshot existed looks like: no
+  // name on the parent at all. Rather than print a placeholder for it, take
+  // the name from the line, which is the same shop by construction.
+  const lines = o.shop_orders ?? [];
+  return lines.length === 1 ? shopOrderName(lines[0]) : undefined;
+}
+
+/**
+ * What to print where an order names its shop.
+ *
+ * A multi-shop basket has no single shop to name — the parent's snapshot is
+ * whichever shop happened to be first in the cart (see `firstShop` in the
+ * placement controller), so printing it would attribute the whole order to one
+ * of the merchants in it. Count them instead.
+ */
+export function orderShopLabel(o: Order): string | undefined {
+  if (o.is_multi_shop) {
+    const shops = o.shop_orders?.length ?? 0;
+    return shops > 1 ? `${shops} shops` : "Several shops";
+  }
+  return orderShopName(o);
+}
+
+/** The shop on one line of a multi-shop order, in whichever shape it arrived. */
+export function shopOrderName(
+  so: Order["shop_orders"][number],
+): string | undefined {
+  return (
+    so.shop_details_snapshot?.name ??
+    so.shop_name ??
+    (so.shop_id && typeof so.shop_id === "object"
+      ? so.shop_id.name
+      : undefined) ??
+    so.shop?.name ??
+    undefined
+  );
 }

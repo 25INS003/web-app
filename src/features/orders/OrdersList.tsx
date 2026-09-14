@@ -4,7 +4,7 @@ import { ChevronRight, PackageOpen, Tag } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { orderShopName } from "@/lib/api/schemas/order";
+import { orderShopLabel } from "@/lib/api/schemas/order";
 import { formatPrice } from "@/lib/utils";
 import { useOrders } from "./hooks";
 import { STATUS_LABEL, formatDate, statusBadgeVariant } from "./status";
@@ -80,7 +80,7 @@ export function OrdersList() {
                     sends the lines themselves instead. Counting the array
                     alone reported 0 for every order here, because the list
                     has never carried one. */}
-                {orderShopName(o) ?? "Shop"} · {o.items_count ?? o.items.length}{" "}
+                {orderShopLabel(o) ?? "Shop"} · {o.items_count ?? o.items.length}{" "}
                 item{(o.items_count ?? o.items.length) === 1 ? "" : "s"}
               </p>
             </div>

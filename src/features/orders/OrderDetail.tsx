@@ -15,7 +15,7 @@ import type { Order } from "@/lib/api/schemas/order";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { orderShopName } from "@/lib/api/schemas/order";
+import { orderShopLabel, shopOrderName } from "@/lib/api/schemas/order";
 import { ordersApi } from "./api";
 import { saveBlob } from "./saveBlob";
 import { toast } from "sonner";
@@ -255,7 +255,7 @@ export function OrderDetail({ orderId }: { orderId: string }) {
       {/* items */}
       <section className="mt-4 rounded-2xl border border-border bg-card p-5 shadow-xs">
         <h2 className="font-display text-lg font-semibold">
-          Items · {orderShopName(order) ?? "Shop"}
+          Items · {orderShopLabel(order) ?? "Shop"}
         </h2>
         <div className="mt-3 divide-y divide-border">
           {order.items.map((it, i) => (
@@ -404,7 +404,7 @@ function cancellationNotes(order: Order): Array<{
   const fromShops = (order.shop_orders ?? [])
     .filter((so) => so.cancellation_reason)
     .map((so) => ({
-      shop: so.shop?.name ?? undefined,
+      shop: shopOrderName(so),
       reason: so.cancellation_reason as string,
       by: so.cancelled_by ?? undefined,
     }));
