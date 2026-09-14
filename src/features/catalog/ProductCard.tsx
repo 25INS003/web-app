@@ -49,7 +49,13 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
         </div>
 
         <div className="flex flex-1 flex-col p-3.5">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug">
+          {/* text-base, and deliberately NOT font-bold: the price below is the
+            only bold thing on the card, which is what makes it readable at a
+            glance. A second bold line two rows above it gives the eye two
+            anchors. The size carries the name instead — it has to outrank the
+            shop and brand line, which is coloured and so pulls harder than one
+            step of size on its own would. */}
+          <h3 className="line-clamp-2 text-base font-semibold leading-snug">
             {product.name}
           </h3>
           {/* Shop and brand are different things — who sells it, and whose
@@ -60,22 +66,26 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
             position. An icon alone is a guess for a sighted user, and colour
             alone is nothing at all to a screen reader.
 
+            The colours are a second, faster cue on top of that, not the
+            carrier of the meaning: the shop takes the brand orange the product
+            page already gives it, the brand takes the green. `font-medium`
+            with them, as StockLabel and the product page's shop line do —
+            these tokens are tuned for a solid fill behind white text, so at
+            12px on a white card the extra weight is what keeps them legible.
+
             Either may be absent — brand is nullable free text, and a payload
             without the populated shop resolves to undefined. */}
           {(shop || product.brand) && (
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
               {shop && (
-                <span className="inline-flex min-w-0 items-center gap-1 text-foreground/80">
-                  <Store
-                    className="size-3 shrink-0 text-muted-foreground"
-                    aria-hidden
-                  />
+                <span className="inline-flex min-w-0 items-center gap-1 font-medium text-primary">
+                  <Store className="size-3 shrink-0" aria-hidden />
                   <span className="sr-only">Sold by </span>
                   <span className="truncate">{shop}</span>
                 </span>
               )}
               {product.brand && (
-                <span className="inline-flex min-w-0 items-center gap-1 text-muted-foreground">
+                <span className="inline-flex min-w-0 items-center gap-1 font-medium text-success">
                   <Tag className="size-3 shrink-0" aria-hidden />
                   <span className="sr-only">Brand </span>
                   <span className="truncate">{product.brand}</span>
