@@ -230,7 +230,7 @@ export const BulkPricingEditor = ({ shopId, productId, unitPrice }) => {
   if (!state?.policy?.enabled) {
     return (
       <div className="rounded-2xl border border-border bg-muted/40 p-6 text-sm text-muted-foreground">
-        Bulk pricing is switched off for the platform at the moment.
+        Bulk pricing is turned off across the platform right now.
       </div>
     );
   }
@@ -246,13 +246,19 @@ export const BulkPricingEditor = ({ shopId, productId, unitPrice }) => {
             Bulk pricing
           </h3>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            A better rate for buying more of this product. The discount comes out
-            of your margin, and an admin approves it before it goes live — up to{" "}
+            Give a discount when someone buys more. You pay for it out of your
+            profit, and an admin has to approve it first.
+          </p>
+          {/* The admin's limits, as three facts rather than a clause each. An
+              owner reads these while typing numbers into the boxes below, so
+              they belong where the numbers are — not buried in a sentence. */}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Most you can give:{" "}
             <span className="font-medium text-foreground">
-              {policy.max_discount_percent}%
-            </span>
-            , at most {policy.max_slabs} rungs, starting from{" "}
-            {policy.min_quantity} units.
+              {policy.max_discount_percent}% off
+            </span>{" "}
+            · up to {policy.max_slabs} discounts · from {policy.min_quantity}{" "}
+            units upwards
           </p>
         </div>
       </div>
@@ -263,7 +269,7 @@ export const BulkPricingEditor = ({ shopId, productId, unitPrice }) => {
           {live && (
             <div className="rounded-2xl border border-success/30 bg-success/5 p-4">
               <div className="mb-3 flex items-center justify-between gap-2">
-                <span className="text-sm font-medium">Pricing orders now</span>
+                <span className="text-sm font-medium">In use now</span>
                 <StateBadge status="approved" />
               </div>
               <LadderSummary ladder={live} unitPrice={unitPrice} />
@@ -278,7 +284,7 @@ export const BulkPricingEditor = ({ shopId, productId, unitPrice }) => {
               <LadderSummary ladder={pending} unitPrice={unitPrice} />
               <p className="mt-3 text-xs text-muted-foreground">
                 {live
-                  ? "Your current pricing keeps charging customers until this is approved."
+                  ? "Customers keep paying your current prices until this is approved."
                   : "Nothing is discounted until an admin approves this."}
               </p>
               <Button
@@ -318,11 +324,46 @@ export const BulkPricingEditor = ({ shopId, productId, unitPrice }) => {
         </p>
       )}
 
+      {/* Three lines, because the reader is mid-task and the boxes are right
+          below. The open-ended one is the only rule stated: it is the one the
+          server rejects a save for, and "Add a discount" already fills in
+          quantities that cannot overlap. */}
+      <div className="rounded-2xl border border-border bg-muted/40 p-4 text-sm">
+        <p className="font-medium">How to set it up</p>
+        <ol className="mt-1.5 list-decimal space-y-1 pl-5 text-muted-foreground">
+          <li>Add a discount: how many units it starts at, and how much off.</li>
+          <li>
+            Leave <span className="font-medium text-foreground">Up to</span>{" "}
+            empty on the last one, so it covers any bigger order.
+          </li>
+          <li>
+            Send it for approval. Nothing changes for customers until an admin
+            says yes.
+          </li>
+        </ol>
+
+        {/* One worked example, with money in it.
+            
+            The steps above say what to type; they do not say what it costs,
+            and the line is discounted WHOLE — someone buying 30 gets 10% off
+            all 30, not off the six above the 25 mark. An owner who reads it
+            the other way sets a discount that takes far more than they meant
+            it to. Numbers are easier to be sure about than a sentence
+            explaining that. */}
+        <p className="mt-3 border-t border-border pt-3 text-muted-foreground">
+          <span className="font-medium text-foreground">Example</span> — rice at
+          ₹95. Set <span className="text-foreground">10 → 5% off</span> and{" "}
+          <span className="text-foreground">25 → 10% off</span>: someone buying
+          12 pays ₹90.25 each, someone buying 30 pays ₹85.50 each — on every
+          unit, not just the extra ones.
+        </p>
+      </div>
+
       {/* The editor */}
       <div className="space-y-3">
         {rows.length === 0 && (
           <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            No rungs yet. Add one to offer a better rate on larger quantities.
+            No discounts yet. Add one to give a better price on bigger orders.
           </p>
         )}
 
@@ -333,7 +374,7 @@ export const BulkPricingEditor = ({ shopId, productId, unitPrice }) => {
           >
             <label className="flex flex-col gap-1">
               <span className="text-xs font-medium text-muted-foreground">
-                From (units)
+                Buy at least
               </span>
               <input
                 type="number"
@@ -345,7 +386,7 @@ export const BulkPricingEditor = ({ shopId, productId, unitPrice }) => {
             </label>
             <label className="flex flex-col gap-1">
               <span className="text-xs font-medium text-muted-foreground">
-                Up to (blank = no limit)
+                Up to (optional)
               </span>
               <input
                 type="number"
@@ -356,7 +397,7 @@ export const BulkPricingEditor = ({ shopId, productId, unitPrice }) => {
             </label>
             <label className="flex flex-col gap-1">
               <span className="text-xs font-medium text-muted-foreground">
-                Discount %
+                % off
               </span>
               <input
                 type="number"
@@ -381,7 +422,7 @@ export const BulkPricingEditor = ({ shopId, productId, unitPrice }) => {
               type="button"
               variant="ghost"
               size="icon"
-              aria-label={`Remove rung ${i + 1}`}
+              aria-label={`Remove discount ${i + 1}`}
               onClick={() => setRows((prev) => prev.filter((_, n) => n !== i))}
               className="ml-auto rounded-lg text-destructive hover:bg-destructive/10"
             >
@@ -398,7 +439,7 @@ export const BulkPricingEditor = ({ shopId, productId, unitPrice }) => {
           className="gap-1.5 rounded-xl"
         >
           <Plus className="h-4 w-4" />
-          Add a rung
+          Add a discount
         </Button>
       </div>
 
@@ -420,11 +461,11 @@ export const BulkPricingEditor = ({ shopId, productId, unitPrice }) => {
           ) : (
             <Send className="h-4 w-4" />
           )}
-          {rows.length === 0 ? "Remove bulk pricing" : "Send for approval"}
+          {rows.length === 0 ? "Turn bulk pricing off" : "Send for approval"}
         </Button>
         {rows.length === 0 && (live || pending) && (
           <span className="text-sm text-muted-foreground">
-            Saving with no rungs switches bulk pricing off straight away.
+            Saving with none turns bulk pricing off straight away.
           </span>
         )}
       </div>
