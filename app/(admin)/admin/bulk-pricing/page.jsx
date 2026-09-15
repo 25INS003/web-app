@@ -38,9 +38,13 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.04 } },
 };
-const itemVariants = { hidden: { y: 12, opacity: 0 }, visible: { y: 0, opacity: 1 } };
+const itemVariants = {
+  hidden: { y: 12, opacity: 0 },
+  visible: { y: 0, opacity: 1 },
+};
 
-const numOrNull = (v) => (v === "" || v === null || v === undefined ? null : Number(v));
+const numOrNull = (v) =>
+  v === "" || v === null || v === undefined ? null : Number(v);
 
 /** What a rung costs the shop, per unit, at this product's base price. */
 const unitAfter = (price, percent) =>
@@ -65,7 +69,9 @@ const PolicyPanel = ({ policy, onSaved }) => {
     try {
       const res = await apiClient.put("/admin/settings", {
         bulk_pricing_enabled: Boolean(form.bulk_pricing_enabled),
-        bulk_max_discount_bps: Math.round(Number(form.max_discount_percent) * 100),
+        bulk_max_discount_bps: Math.round(
+          Number(form.max_discount_percent) * 100,
+        ),
         bulk_max_slabs: Number(form.bulk_max_slabs),
         bulk_min_quantity: Number(form.bulk_min_quantity),
       });
@@ -76,7 +82,7 @@ const PolicyPanel = ({ policy, onSaved }) => {
       toast.error(
         Array.isArray(list) && list.length
           ? list.join(" ")
-          : e.response?.data?.message || "Could not save the limits."
+          : e.response?.data?.message || "Could not save the limits.",
       );
     } finally {
       setSaving(false);
@@ -90,9 +96,8 @@ const PolicyPanel = ({ policy, onSaved }) => {
       <div>
         <h2 className="font-semibold">Limits</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          What a shop is allowed to propose. Anything outside these is refused
-          before it reaches the queue, so review stays a commercial question
-          rather than a safety check.
+          The most a shop is allowed to give. Anything bigger than this never
+          reaches you.
         </p>
       </div>
 
@@ -107,15 +112,20 @@ const PolicyPanel = ({ policy, onSaved }) => {
           Bulk pricing is available on this platform
           {!form.bulk_pricing_enabled && (
             <span className="ml-2 text-muted-foreground">
-              — while this is off, no ladder prices anything, approved or not.
+              — while this is off, nobody gets a bulk discount, approved or not.
             </span>
           )}
         </span>
       </label>
 
       <div className="flex flex-wrap gap-4">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">Maximum discount %</span>
+        {/* A line under each, because none of the three labels says what it
+            counts. "Maximum discount" is per discount, not per product;
+            "smallest quantity" is where a discount may START, which reads
+            like a minimum order until it is spelled out. The box keeps its
+            width; the label is capped so the hint wraps beneath it. */}
+        <label className="flex max-w-[15rem] flex-col gap-1">
+          <span className="text-xs font-medium">Maximum discount %</span>
           <input
             type="number"
             step="0.01"
@@ -123,34 +133,67 @@ const PolicyPanel = ({ policy, onSaved }) => {
             onChange={(e) => set("max_discount_percent", e.target.value)}
             className="h-9 w-32 rounded-lg border border-border bg-background px-2 text-sm tabular-nums"
           />
+          <span className="text-xs text-muted-foreground">
+            The biggest discount a shop can put on one quantity.
+          </span>
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">Rungs per ladder</span>
+        <label className="flex max-w-[15rem] flex-col gap-1">
+          <span className="text-xs font-medium">Discounts per product</span>
           <input
             type="number"
             value={form.bulk_max_slabs ?? ""}
             onChange={(e) => set("bulk_max_slabs", e.target.value)}
             className="h-9 w-32 rounded-lg border border-border bg-background px-2 text-sm tabular-nums"
           />
+          <span className="text-xs text-muted-foreground">
+            How many quantity steps a product can have.
+          </span>
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">Smallest bulk quantity</span>
+        <label className="flex max-w-[15rem] flex-col gap-1">
+          <span className="text-xs font-medium">Smallest quantity</span>
           <input
             type="number"
             value={form.bulk_min_quantity ?? ""}
             onChange={(e) => set("bulk_min_quantity", e.target.value)}
             className="h-9 w-40 rounded-lg border border-border bg-background px-2 text-sm tabular-nums"
           />
+          <span className="text-xs text-muted-foreground">
+            The lowest quantity a discount can start at. Not a minimum order.
+          </span>
         </label>
       </div>
 
-      <Button onClick={save} disabled={saving} variant="outline" className="gap-2 rounded-xl">
+      <Button
+        onClick={save}
+        disabled={saving}
+        variant="outline"
+        className="gap-2 rounded-xl"
+      >
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
         Save limits
       </Button>
     </div>
   );
 };
+
+/** The states a ladder can be browsed by. No window, so no "starts later". */
+const STATES = [
+  { key: "", label: "All" },
+  { key: "live", label: "Live" },
+  { key: "pending", label: "Waiting" },
+  { key: "finished", label: "Finished" },
+];
+
+/** The rungs in one line: "10+ 5% · 25+ 10%". */
+const rungSummary = (slabs = []) =>
+  slabs.length
+    ? slabs
+        .map(
+          (s) =>
+            `${s.min_qty}${s.max_qty ? `–${s.max_qty - 1}` : "+"} ${s.discount_percent}%`,
+        )
+        .join(" · ")
+    : "—";
 
 export default function BulkPricingQueuePage() {
   const [rows, setRows] = useState([]);
@@ -159,6 +202,14 @@ export default function BulkPricingQueuePage() {
   const [busyId, setBusyId] = useState(null);
   const [notes, setNotes] = useState({});
   const [edits, setEdits] = useState({});
+
+  // The browse half: every ladder a shop has, in any state.
+  const [view, setView] = useState("queue");
+  const [shops, setShops] = useState([]);
+  const [shopId, setShopId] = useState("");
+  const [stateKey, setStateKey] = useState("");
+  const [browsed, setBrowsed] = useState([]);
+  const [browsing, setBrowsing] = useState(false);
 
   const applySettings = (s) =>
     setPolicy({
@@ -182,6 +233,54 @@ export default function BulkPricingQueuePage() {
       toast.error(e.response?.data?.message || "Could not load the queue.");
     }
   };
+
+  // Shops for the picker, fetched once: the list is small and does not change
+  // while somebody reads a page of ladders.
+  useEffect(() => {
+    let cancelled = false;
+    apiClient
+      .get("/admin/shops")
+      .then((res) => {
+        if (cancelled) return;
+        const list = Array.isArray(res.data.data)
+          ? res.data.data
+          : (res.data.data?.data ?? []);
+        setShops(list.map((sh) => ({ id: sh.id, name: sh.name })));
+      })
+      .catch(() => {
+        // A missing picker is a degraded browse, not a broken page.
+        if (!cancelled) setShops([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (view !== "all") return;
+    let cancelled = false;
+    setBrowsing(true);
+    apiClient
+      .get("/admin/bulk-pricing", {
+        params: { shop_id: shopId || undefined, state: stateKey || undefined },
+      })
+      .then((res) => {
+        if (!cancelled) setBrowsed(res.data.data?.data ?? []);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          toast.error(
+            e.response?.data?.message || "Could not load the bulk pricing.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setBrowsing(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [view, shopId, stateKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -220,7 +319,9 @@ export default function BulkPricingQueuePage() {
   const patchRung = (row, i, changes) =>
     setEdits((prev) => ({
       ...prev,
-      [row.id]: rungsFor(row).map((r, n) => (n === i ? { ...r, ...changes } : r)),
+      [row.id]: rungsFor(row).map((r, n) =>
+        n === i ? { ...r, ...changes } : r,
+      ),
     }));
 
   const saveEdit = async (row) => {
@@ -233,7 +334,7 @@ export default function BulkPricingQueuePage() {
           discount_percent: Number(r.discount_percent) || 0,
         })),
       });
-      toast.success("Rungs updated");
+      toast.success("Discounts updated");
       setEdits((prev) => {
         const next = { ...prev };
         delete next[row.id];
@@ -245,7 +346,7 @@ export default function BulkPricingQueuePage() {
       toast.error(
         Array.isArray(list) && list.length
           ? list.join(" ")
-          : e.response?.data?.message || "Could not save the change."
+          : e.response?.data?.message || "Could not save the change.",
       );
     } finally {
       setBusyId(null);
@@ -294,149 +395,332 @@ export default function BulkPricingQueuePage() {
           Bulk pricing approvals
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          Quantity discounts shops have proposed. The discount comes out of the
-          shop&apos;s own margin. Nothing here prices an order until it is
-          approved, and approving replaces whatever that product is using now.
+          Shops giving a discount when a customer buys more. The shop pays for
+          it, not the platform.
+        </p>
+      </div>
+
+      {/* The flow, in three lines. Only the last step is visible from this
+          screen; where the tiers came from and what the limits below do are
+          not, and that is the whole reason the panel is here. */}
+      <div className="rounded-2xl border border-border bg-card p-5 text-sm">
+        <p className="font-medium">How it works</p>
+        <ol className="mt-1.5 list-decimal space-y-1 pl-5 text-muted-foreground">
+          <li>
+            A shop sets up discounts on a product — buy 10 or more, get 5% off —
+            and sends them here.
+          </li>
+          <li>The limits below are the most any shop can give.</li>
+          <li>
+            Approve, and customers start getting it. Reject, and the shop sees
+            your note.
+          </li>
+        </ol>
+        <p className="mt-2.5 text-xs text-muted-foreground">
+          If you change the numbers, save them first — otherwise approving uses
+          the shop&apos;s.
         </p>
       </div>
 
       {policy && <PolicyPanel policy={policy} onSaved={applySettings} />}
 
-      {rows.length === 0 && (
+      {/* Two views of one thing: the queue is work to do, oldest first; the
+          list is "what is this shop offering?", newest first. Merging them
+          would make one of the two orderings wrong. The Discounts screen is
+          built the same way, so an admin learns this once. */}
+      <div className="flex gap-2">
+        {[
+          {
+            key: "queue",
+            label: `Waiting for review${rows.length ? ` (${rows.length})` : ""}`,
+          },
+          { key: "all", label: "All bulk pricing" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setView(tab.key)}
+            className={
+              view === tab.key
+                ? "rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                : "rounded-xl border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"
+            }
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {view === "all" && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium">Shop</span>
+              <select
+                value={shopId}
+                onChange={(e) => setShopId(e.target.value)}
+                className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+              >
+                <option value="">Every shop</option>
+                {shops.map((sh) => (
+                  <option key={sh.id} value={sh.id}>
+                    {sh.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {STATES.map((st) => (
+                <button
+                  key={st.key || "all"}
+                  type="button"
+                  onClick={() => setStateKey(st.key)}
+                  className={
+                    stateKey === st.key
+                      ? "rounded-full border border-primary bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+                      : "rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+                  }
+                >
+                  {st.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {browsing ? (
+            <div className="flex h-32 items-center justify-center gap-3 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" /> Loading…
+            </div>
+          ) : browsed.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
+              No bulk pricing here.
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-border bg-card">
+              <table className="w-full text-sm [&_td]:px-4 [&_th]:px-4 [&_td:first-child]:pl-6 [&_th:first-child]:pl-6 [&_td:last-child]:pr-6 [&_th:last-child]:pr-6">
+                <thead className="bg-muted/60">
+                  <tr className="border-b border-border text-left">
+                    <th className="py-2.5 font-semibold">Product</th>
+                    <th className="py-2.5 font-semibold">Shop</th>
+                    <th className="py-2.5 font-semibold">Price</th>
+                    <th className="py-2.5 font-semibold">Discounts</th>
+                    <th className="py-2.5 font-semibold">State</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {browsed.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="border-b border-border last:border-0"
+                    >
+                      <td className="py-2.5 font-medium">
+                        {row.product?.name}
+                      </td>
+                      <td className="py-2.5 text-muted-foreground">
+                        {row.shop?.name}
+                      </td>
+                      <td className="py-2.5 tabular-nums">
+                        ₹{row.product?.price}
+                      </td>
+                      <td className="py-2.5 tabular-nums text-muted-foreground">
+                        {rungSummary(row.slabs)}
+                      </td>
+                      <td className="py-2.5">
+                        <LadderState row={row} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {view === "queue" && rows.length === 0 && (
         <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
           Nothing waiting for review.
         </div>
       )}
 
-      {rows.map((row) => {
-        const rungs = rungsFor(row);
-        const dirty = Boolean(edits[row.id]);
-        const busy = busyId === row.id;
+      {view === "queue" &&
+        rows.map((row) => {
+          const rungs = rungsFor(row);
+          const dirty = Boolean(edits[row.id]);
+          const busy = busyId === row.id;
 
-        return (
-          <motion.div
-            key={row.id}
-            variants={itemVariants}
-            className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-sm"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold">{row.product?.name}</h2>
-                <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Store className="h-3.5 w-3.5" />
-                  {row.shop?.name}
-                  <span className="text-border">·</span>
-                  {/* The base price the rungs come off. Reviewing "10% off"
+          return (
+            <motion.div
+              key={row.id}
+              variants={itemVariants}
+              className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-sm"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold">{row.product?.name}</h2>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Store className="h-3.5 w-3.5" />
+                    {row.shop?.name}
+                    <span className="text-border">·</span>
+                    {/* The base price the rungs come off. Reviewing "10% off"
                       without it is reviewing a number with no units. */}
-                  <span className="tabular-nums">₹{row.product?.price} each</span>
-                </p>
-              </div>
-              {row.edited_by_admin && (
-                <Badge variant="outline" className="gap-1.5 rounded-lg">
-                  <Pencil className="h-3 w-3" />
-                  Edited
-                </Badge>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              {rungs.map((r, i) => (
-                <div
-                  key={i}
-                  className="flex flex-wrap items-end gap-3 rounded-xl bg-muted/50 p-3"
-                >
-                  <label className="flex flex-col gap-1">
-                    <span className="text-xs text-muted-foreground">From</span>
-                    <input
-                      type="number"
-                      value={r.min_qty}
-                      onChange={(e) => patchRung(row, i, { min_qty: e.target.value })}
-                      className="h-9 w-24 rounded-lg border border-border bg-background px-2 text-sm tabular-nums"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="text-xs text-muted-foreground">Up to</span>
-                    <input
-                      type="number"
-                      value={r.max_qty ?? ""}
-                      onChange={(e) => patchRung(row, i, { max_qty: e.target.value })}
-                      className="h-9 w-24 rounded-lg border border-border bg-background px-2 text-sm tabular-nums"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="text-xs text-muted-foreground">Discount %</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={r.discount_percent}
-                      onChange={(e) =>
-                        patchRung(row, i, { discount_percent: e.target.value })
-                      }
-                      className="h-9 w-24 rounded-lg border border-border bg-background px-2 text-sm tabular-nums"
-                    />
-                  </label>
-                  <span className="pb-2 text-sm tabular-nums text-muted-foreground">
-                    {unitAfter(row.product?.price, r.discount_percent)} each
-                  </span>
+                    <span className="tabular-nums">
+                      ₹{row.product?.price} each
+                    </span>
+                  </p>
                 </div>
-              ))}
-            </div>
+                {row.edited_by_admin && (
+                  <Badge variant="outline" className="gap-1.5 rounded-lg">
+                    <Pencil className="h-3 w-3" />
+                    Edited
+                  </Badge>
+                )}
+              </div>
 
-            {dirty && (
-              <div className="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning/5 p-3">
-                <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
-                <span className="text-sm">
-                  Save your changes before approving — approving sends the
-                  shop&apos;s numbers, not yours.
-                </span>
+              <div className="space-y-2">
+                {rungs.map((r, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-wrap items-end gap-3 rounded-xl bg-muted/50 p-3"
+                  >
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground">
+                        From
+                      </span>
+                      <input
+                        type="number"
+                        value={r.min_qty}
+                        onChange={(e) =>
+                          patchRung(row, i, { min_qty: e.target.value })
+                        }
+                        className="h-9 w-24 rounded-lg border border-border bg-background px-2 text-sm tabular-nums"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground">
+                        Up to
+                      </span>
+                      <input
+                        type="number"
+                        value={r.max_qty ?? ""}
+                        onChange={(e) =>
+                          patchRung(row, i, { max_qty: e.target.value })
+                        }
+                        className="h-9 w-24 rounded-lg border border-border bg-background px-2 text-sm tabular-nums"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground">
+                        Discount %
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={r.discount_percent}
+                        onChange={(e) =>
+                          patchRung(row, i, {
+                            discount_percent: e.target.value,
+                          })
+                        }
+                        className="h-9 w-24 rounded-lg border border-border bg-background px-2 text-sm tabular-nums"
+                      />
+                    </label>
+                    <span className="pb-2 text-sm tabular-nums text-muted-foreground">
+                      {unitAfter(row.product?.price, r.discount_percent)} each
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {dirty && (
+                <div className="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning/5 p-3">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
+                  <span className="text-sm">
+                    Save your changes before approving — approving sends the
+                    shop&apos;s numbers, not yours.
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => saveEdit(row)}
+                    className="ml-auto rounded-lg"
+                  >
+                    Save changes
+                  </Button>
+                </div>
+              )}
+
+              <Textarea
+                rows={2}
+                placeholder="Why are you rejecting this? The shop sees it."
+                value={notes[row.id] ?? ""}
+                onChange={(e) =>
+                  setNotes((prev) => ({ ...prev, [row.id]: e.target.value }))
+                }
+                className="rounded-xl"
+              />
+
+              <div className="flex flex-wrap gap-3">
                 <Button
-                  size="sm"
+                  disabled={busy || dirty}
+                  onClick={() => decide(row, "approve")}
+                  className="gap-2 rounded-xl"
+                >
+                  {busy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4" />
+                  )}
+                  Approve and make live
+                </Button>
+                <Button
                   variant="outline"
                   disabled={busy}
-                  onClick={() => saveEdit(row)}
-                  className="ml-auto rounded-lg"
+                  onClick={() => decide(row, "reject")}
+                  className="gap-2 rounded-xl text-destructive"
                 >
-                  Save rungs
+                  <XCircle className="h-4 w-4" />
+                  Reject
                 </Button>
               </div>
-            )}
-
-            <Textarea
-              rows={2}
-              placeholder="Why are you rejecting this? The shop sees it."
-              value={notes[row.id] ?? ""}
-              onChange={(e) =>
-                setNotes((prev) => ({ ...prev, [row.id]: e.target.value }))
-              }
-              className="rounded-xl"
-            />
-
-            <div className="flex flex-wrap gap-3">
-              <Button
-                disabled={busy || dirty}
-                onClick={() => decide(row, "approve")}
-                className="gap-2 rounded-xl"
-              >
-                {busy ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <CheckCircle className="h-4 w-4" />
-                )}
-                Approve and make live
-              </Button>
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={() => decide(row, "reject")}
-                className="gap-2 rounded-xl text-destructive"
-              >
-                <XCircle className="h-4 w-4" />
-                Reject
-              </Button>
-            </div>
-          </motion.div>
-        );
-      })}
+            </motion.div>
+          );
+        })}
     </motion.div>
   );
 }
+
+/**
+ * What a ladder IS right now, which is not simply its status.
+ *
+ * A retired one is still "approved" in the column — it was approved, and then
+ * something replaced it. A list that printed the status would show two rows
+ * saying "approved" where only one of them is charging anybody.
+ */
+const LadderState = ({ row }) => {
+  if (row.status === "pending") {
+    return (
+      <Badge variant="outline" className="border-warning/30 text-warning">
+        Waiting
+      </Badge>
+    );
+  }
+  if (row.status === "rejected") {
+    return (
+      <Badge
+        variant="outline"
+        className="border-destructive/30 text-destructive"
+      >
+        Rejected
+      </Badge>
+    );
+  }
+  return row.retired_at ? (
+    <Badge variant="outline">Replaced</Badge>
+  ) : (
+    <Badge variant="outline" className="border-success/30 text-success">
+      Live
+    </Badge>
+  );
+};
