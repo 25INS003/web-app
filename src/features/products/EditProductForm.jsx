@@ -58,6 +58,7 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { BulkPricingEditor } from "./BulkPricingEditor";
+import { ProductDiscountEditor } from "./ProductDiscountEditor";
 
 // Animation Variants
 const containerVariants = {
@@ -1273,6 +1274,19 @@ export const EditProductForm = () => {
           <Card className="rounded-2xl border-border shadow-sm bg-card overflow-hidden">
             <CardContent className="p-6">
               <BulkPricingEditor
+                shopId={shopId}
+                productId={productId}
+                unitPrice={currentProduct?.price ?? null}
+              />
+            </CardContent>
+          </Card>
+
+          {/* The other half of the same decision. Beside bulk pricing rather
+              than somewhere else, because an owner choosing between "cheaper
+              if you buy ten" and "cheaper until Friday" is choosing once. */}
+          <Card className="rounded-2xl border-border shadow-sm bg-card overflow-hidden">
+            <CardContent className="p-6">
+              <ProductDiscountEditor
                 shopId={shopId}
                 productId={productId}
                 unitPrice={currentProduct?.price ?? null}

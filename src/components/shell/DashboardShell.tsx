@@ -20,6 +20,7 @@ import {
   Users,
   X,
   Megaphone,
+  CalendarClock,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -32,7 +33,11 @@ import { useLogout } from "@/features/auth/useAuth";
 import type { User } from "@/lib/api/schemas/auth";
 import { cn } from "@/lib/utils";
 
-type NavItem = { href: string; label: string; icon: ComponentType<{ className?: string }> };
+type NavItem = {
+  href: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+};
 
 const NAV: Record<"shop" | "admin", NavItem[]> = {
   shop: [
@@ -51,8 +56,17 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
   admin: [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/shops", label: "Shops", icon: Store },
-    { href: "/admin/products/pending", label: "Product approvals", icon: Package },
+    {
+      href: "/admin/products/pending",
+      label: "Product approvals",
+      icon: Package,
+    },
     { href: "/admin/bulk-pricing", label: "Bulk pricing", icon: Layers },
+    {
+      href: "/admin/product-discounts",
+      label: "Discounts",
+      icon: CalendarClock,
+    },
     { href: "/admin/bulk", label: "Bulk catalogue", icon: FileSpreadsheet },
     { href: "/admin/shop-owners", label: "Shop Owners", icon: Users },
     { href: "/admin/categories", label: "Categories", icon: FolderTree },
@@ -61,7 +75,11 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     { href: "/admin/platform-fees", label: "Platform fees", icon: IndianRupee },
     { href: "/admin/support", label: "Get help", icon: LifeBuoy },
     { href: "/admin/reports", label: "Reports", icon: ShieldCheck },
-    { href: "/admin/storefront", label: "Storefront banner", icon: GalleryHorizontal },
+    {
+      href: "/admin/storefront",
+      label: "Storefront banner",
+      icon: GalleryHorizontal,
+    },
     { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
     { href: "/admin/settings", label: "Business details", icon: Building2 },
   ],
