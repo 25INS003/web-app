@@ -168,7 +168,7 @@ export default async function StorefrontHome() {
           who would rather hand the job to the shop, which is what they were
           doing over the phone before this existed. Above the product rows
           because somebody who wants this does not want to scroll a shop. */}
-      <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-xs">
+      <section className="mt-10 overflow-hidden rounded-3xl border border-border bg-card shadow-xs">
         <Link
           href="/order-requests"
           className="flex flex-wrap items-center gap-4 p-5 transition hover:bg-accent/40 sm:p-6"
