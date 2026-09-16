@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Camera,
   LifeBuoy,
   Loader2,
   MapPin,
@@ -68,6 +69,20 @@ export function AccountView({ user }: { user: User }) {
           <div>
             <p className="text-sm font-semibold">Wishlist</p>
             <p className="text-xs text-muted-foreground">Saved for later</p>
+          </div>
+        </Link>
+        <Link
+          href="/order-requests"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition hover:border-primary/40"
+        >
+          <span className="grid size-10 place-items-center rounded-xl bg-muted text-muted-foreground">
+            <Camera className="size-5" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold">Order from a photo</p>
+            <p className="text-xs text-muted-foreground">
+              Send a shop your list
+            </p>
           </div>
         </Link>
         <Link

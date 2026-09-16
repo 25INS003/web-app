@@ -2,25 +2,26 @@
 
 import {
   Building2,
+  CalendarClock,
+  Camera,
   FileSpreadsheet,
-  IndianRupee,
-  ReceiptText,
   FolderTree,
   GalleryHorizontal,
+  IndianRupee,
   Layers,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
+  Megaphone,
   Menu,
   Package,
+  ReceiptText,
   ShieldCheck,
   ShoppingCart,
   Store,
   Tag,
   Users,
   X,
-  Megaphone,
-  CalendarClock,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -48,6 +49,9 @@ const NAV: Record<"shop" | "admin", NavItem[]> = {
     // shop orders live under /dashboard to avoid colliding with the customer
     // storefront's /orders (built in Phase 3)
     { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
+    // Beside Orders, because that is what these become. A photographed list is
+    // an order the shop has not keyed in yet.
+    { href: "/dashboard/order-requests", label: "Photo orders", icon: Camera },
     // Owners are on tickets two ways: ones they raise, and ones an admin adds
     // them to. Both need a door into the owner area — the storefront /support
     // screen wears the shopping chrome and is not linked from anywhere here.

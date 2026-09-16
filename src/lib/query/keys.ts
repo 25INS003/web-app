@@ -29,9 +29,20 @@ export const queryKeys = {
     all: ["orders"] as const,
     list: (shopId: string, params?: Record<string, unknown>) =>
       [...queryKeys.orders.all, shopId, "list", params ?? {}] as const,
-    stats: (shopId: string) => [...queryKeys.orders.all, shopId, "stats"] as const,
+    stats: (shopId: string) =>
+      [...queryKeys.orders.all, shopId, "stats"] as const,
     detail: (shopId: string, orderId: string) =>
       [...queryKeys.orders.all, shopId, "detail", orderId] as const,
+  },
+
+  // Photographed orders. Keyed by shop on the owner's side and not at all on
+  // the customer's — a customer has one list of their own requests, and there
+  // is nothing to scope it by.
+  orderRequests: {
+    all: ["order-requests"] as const,
+    mine: () => [...queryKeys.orderRequests.all, "mine"] as const,
+    forShop: (shopId: string, params?: Record<string, unknown>) =>
+      [...queryKeys.orderRequests.all, shopId, params ?? {}] as const,
   },
 
   support: {

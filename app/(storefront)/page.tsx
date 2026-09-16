@@ -1,4 +1,6 @@
 import {
+  Camera,
+  ChevronRight,
   Clock,
   Leaf,
   ShoppingBag,
@@ -19,7 +21,6 @@ import {
   HeroCarousel,
   type HeroSlide,
 } from "@/features/storefront/HeroCarousel";
-
 
 /**
  * The admin's banner images, or nothing.
@@ -61,8 +62,12 @@ async function heroSlides(): Promise<HeroSlide[]> {
     });
     if (!res.ok) return [];
     const body = await res.json();
-    const uploaded: Array<{ url?: string; src?: string; alt?: string; href?: string | null }> =
-      body?.data?.slides ?? [];
+    const uploaded: Array<{
+      url?: string;
+      src?: string;
+      alt?: string;
+      href?: string | null;
+    }> = body?.data?.slides ?? [];
     const mapped = uploaded
       // The API stores `url`; the carousel takes `src`. Mapped here rather
       // than renaming the column, so the stored shape stays the one the admin
@@ -103,40 +108,40 @@ export default async function StorefrontHome() {
           whose first screen is an empty rounded rectangle looks broken, and
           "no banners are set up" is not the visitor's problem. */}
       <HeroCarousel slides={slides}>
-      <section className="relative my-6 overflow-hidden rounded-3xl border border-border bg-card px-6 py-14 shadow-sm sm:px-12 sm:py-20">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10"
-          style={{
-            background:
-              "radial-gradient(60% 80% at 85% 10%, oklch(0.62 0.17 38 / 0.16), transparent 60%), radial-gradient(50% 70% at 0% 100%, oklch(0.7 0.14 150 / 0.14), transparent 60%)",
-          }}
-        />
-        <div className="max-w-2xl">
-          <Badge variant="success" className="mb-5">
-            <Leaf className="size-3" /> Now delivering near you
-          </Badge>
-          <h1 className="font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
-            Fresh groceries,
-            <br />
-            from the shops <span className="text-primary">next door.</span>
-          </h1>
-          <p className="mt-5 max-w-lg text-base text-muted-foreground sm:text-lg">
-            Browse local shops, fill your basket, and get daily essentials
-            delivered to your door — pay on delivery, no app required.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" className="gap-2" asChild>
-              <Link href="/search">
-                <ShoppingBag /> Start shopping
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/search">Browse categories</Link>
-            </Button>
+        <section className="relative my-6 overflow-hidden rounded-3xl border border-border bg-card px-6 py-14 shadow-sm sm:px-12 sm:py-20">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10"
+            style={{
+              background:
+                "radial-gradient(60% 80% at 85% 10%, oklch(0.62 0.17 38 / 0.16), transparent 60%), radial-gradient(50% 70% at 0% 100%, oklch(0.7 0.14 150 / 0.14), transparent 60%)",
+            }}
+          />
+          <div className="max-w-2xl">
+            <Badge variant="success" className="mb-5">
+              <Leaf className="size-3" /> Now delivering near you
+            </Badge>
+            <h1 className="font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
+              Fresh groceries,
+              <br />
+              from the shops <span className="text-primary">next door.</span>
+            </h1>
+            <p className="mt-5 max-w-lg text-base text-muted-foreground sm:text-lg">
+              Browse local shops, fill your basket, and get daily essentials
+              delivered to your door — pay on delivery, no app required.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button size="lg" className="gap-2" asChild>
+                <Link href="/search">
+                  <ShoppingBag /> Start shopping
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/search">Browse categories</Link>
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       </HeroCarousel>
 
       {/* Trust strip */}
@@ -155,6 +160,33 @@ export default async function StorefrontHome() {
             </div>
           </div>
         ))}
+      </section>
+
+      {/* The other way to order, said once on the front page.
+          It is the answer for a customer who has a written list and no
+          appetite for finding twenty things in a catalogue — and for anyone
+          who would rather hand the job to the shop, which is what they were
+          doing over the phone before this existed. Above the product rows
+          because somebody who wants this does not want to scroll a shop. */}
+      <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-xs">
+        <Link
+          href="/order-requests"
+          className="flex flex-wrap items-center gap-4 p-5 transition hover:bg-accent/40 sm:p-6"
+        >
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Camera className="size-6" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-lg font-bold tracking-tight">
+              Got a written list? Send a photo of it
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Photograph your list and a shop will put the order together for
+              you. Pay for it like any other order.
+            </p>
+          </div>
+          <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+        </Link>
       </section>
 
       {/* Real data, and only where we deliver — a pincode nobody serves gets

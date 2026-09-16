@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Leaf, Search, ShoppingBag, User } from "lucide-react";
+import { Camera, Heart, Leaf, Search, ShoppingBag, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -62,6 +62,23 @@ export function StorefrontHeader() {
         {/* actions */}
         <div className="ml-auto flex items-center gap-1">
           <ThemeToggle />
+          {/* Shown at every width, unlike the wishlist beside it. Photographing
+              a shopping list is the most PHONE-shaped thing in the app — it is
+              done standing in a kitchen holding a scrap of paper — so hiding it
+              on small screens would hide it from everyone who would use it.
+              The wishlist is the desktop-only one because browsing to save
+              something for later is not what anybody opens this on a phone to
+              do. */}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Order from a photo"
+            asChild
+          >
+            <Link href="/order-requests">
+              <Camera />
+            </Link>
+          </Button>
           <Button
             variant="ghost"
             size="icon"

@@ -18,6 +18,7 @@ export const PROTECTED = [
   "/verify-owner",
   "/account", // customer-gated storefront
   "/cart",
+  "/order-requests",
   "/checkout",
   "/wishlist",
 ];
@@ -94,6 +95,7 @@ export const STOREFRONT_PATHS = [
   "/cart",
   "/checkout",
   "/notifications",
+  "/order-requests",
   "/orders",
   "/p",
   "/search",
@@ -140,7 +142,13 @@ export function proxy(request: NextRequest) {
   // cycle — a Server Component cannot delete a cookie, middleware can.
   if (token && request.nextUrl.searchParams.has("stale")) {
     const res = NextResponse.next();
-    for (const name of ["accessToken", "refreshToken", "sessionId", "userRole", "approvalStatus"]) {
+    for (const name of [
+      "accessToken",
+      "refreshToken",
+      "sessionId",
+      "userRole",
+      "approvalStatus",
+    ]) {
       res.cookies.delete(name);
     }
     return res;
