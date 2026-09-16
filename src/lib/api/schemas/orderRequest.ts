@@ -51,7 +51,12 @@ export const orderRequestSchema = z.object({
     })
     .nullish(),
   order: z
-    .object({ id: objectId, order_number: z.string().nullish() })
+    .object({
+      id: objectId,
+      order_number: z.string().nullish(),
+      // Rupees, like every other amount at the edge.
+      total_amount: z.number().nullish(),
+    })
     .nullish(),
   created_at: isoDate,
   handled_at: isoDate.nullish(),

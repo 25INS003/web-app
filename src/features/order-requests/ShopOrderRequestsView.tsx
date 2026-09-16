@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Search,
   Trash2,
+  Wallet,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -492,11 +493,21 @@ function Till({
           )}
 
           {lines.length > 0 && (
-            <div className="mt-3 flex items-baseline justify-between rounded-lg bg-muted px-3 py-2">
-              <span className="text-sm text-muted-foreground">
-                Goods, before discounts and delivery
-              </span>
-              <span className="font-semibold">{formatPrice(estimate)}</span>
+            <div className="mt-3 rounded-lg bg-muted px-3 py-2">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Goods, before discounts and delivery
+                </span>
+                <span className="font-semibold">{formatPrice(estimate)}</span>
+              </div>
+              {/* So the shopkeeper knows what to collect. Cash on delivery is
+                  the only method the platform has, and an order placed from a
+                  photograph is no different from one a customer placed
+                  themselves. */}
+              <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Wallet className="size-3.5 shrink-0" />
+                Cash on delivery — collect the final total at the door.
+              </p>
             </div>
           )}
 

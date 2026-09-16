@@ -123,6 +123,14 @@ describe("sending a list", () => {
     ).toBeInTheDocument();
   });
 
+  // The platform is cash-on-delivery only, and saying so before they send is
+  // the point: a customer handing a list to a shop should not have to guess how
+  // they will be asked to pay for something that has no price yet.
+  it("says how they will pay, before they send anything", () => {
+    wrap(<PhotoOrderView />);
+    expect(screen.getByText(/pay cash when it arrives/i)).toBeInTheDocument();
+  });
+
   it("will not send without a photo, an address and a shop", async () => {
     wrap(<PhotoOrderView />);
     const button = screen.getByRole("button", { name: /send to the shop/i });
@@ -276,7 +284,7 @@ describe("what they have sent", () => {
         delivery_address: null,
         shop: { id: "s1", name: "Crust & Co" },
         customer: null,
-        order: { id: "o1", order_number: "ORD9" },
+        order: { id: "o1", order_number: "ORD9", total_amount: 340 },
         created_at: new Date().toISOString(),
         handled_at: null,
       },
@@ -287,6 +295,30 @@ describe("what they have sent", () => {
       "href",
       "/orders/o1",
     );
+  });
+
+  // The customer never priced this list — they handed it over. "Your order is
+  // in" with no number is the one update they cannot act on without opening it.
+  it("puts the total on the card, not one tap away", () => {
+    requests = [
+      {
+        id: "r1",
+        status: "fulfilled",
+        images: [],
+        note: null,
+        decline_note: null,
+        delivery_address: null,
+        shop: { id: "s1", name: "Crust & Co" },
+        customer: null,
+        order: { id: "o1", order_number: "ORD9", total_amount: 340 },
+        created_at: new Date().toISOString(),
+        handled_at: null,
+      },
+    ];
+    wrap(<PhotoOrderView />);
+
+    expect(screen.getByText("₹340")).toBeInTheDocument();
+    expect(screen.getByText(/cash on delivery/i)).toBeInTheDocument();
   });
 
   it("offers to withdraw only while nobody has acted", () => {

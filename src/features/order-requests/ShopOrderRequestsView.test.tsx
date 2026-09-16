@@ -178,6 +178,14 @@ describe("the shop's photo-order queue", () => {
     ).toBeInTheDocument();
   });
 
+  it("tells the shopkeeper what to collect at the door", async () => {
+    wrap(<ShopOrderRequestsView />);
+    await openTill();
+    fireEvent.click(screen.getByRole("button", { name: /Atta/ }));
+
+    expect(screen.getByText(/cash on delivery/i)).toBeInTheDocument();
+  });
+
   it("insists on a reason before declining", async () => {
     wrap(<ShopOrderRequestsView />);
     await openTill();

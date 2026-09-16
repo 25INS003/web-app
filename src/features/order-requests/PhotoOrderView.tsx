@@ -8,10 +8,12 @@ import {
   Loader2,
   Store,
   Trash2,
+  Wallet,
   X,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -277,8 +279,18 @@ function SendForm() {
         />
       </div>
 
+      {/* Said before they send, not after a shop has priced it. The platform is
+          cash-on-delivery only — the ordinary checkout states the same thing in
+          the same words — and a customer handing their list to a shop should
+          not have to guess how they will be asked to pay for it. */}
+      <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
+        <Wallet className="size-4 shrink-0" />
+        Pay cash when it arrives. The shop will price your list and you can see
+        the total before it is delivered.
+      </p>
+
       <Button
-        className="mt-5 w-full sm:w-auto"
+        className="mt-4 w-full sm:w-auto"
         disabled={!ready || send.isPending}
         onClick={submit}
       >
@@ -365,14 +377,30 @@ function SentList() {
                 )}
 
                 {r.status === "fulfilled" && r.order && (
-                  <Link
-                    href={`/orders/${r.order.id}`}
-                    className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                  >
-                    <Check className="size-3.5" />
-                    Order #{r.order.order_number}
-                    <ChevronRight className="size-3.5" />
-                  </Link>
+                  <div className="mt-2">
+                    {/* The amount first. This customer never priced the list
+                        themselves — they handed it over and were told an order
+                        exists — so "how much?" is the question the card has to
+                        answer on its own. The breakdown is a tap away. */}
+                    {typeof r.order.total_amount === "number" && (
+                      <p className="text-sm">
+                        <span className="font-semibold">
+                          {formatPrice(r.order.total_amount)}
+                        </span>{" "}
+                        <span className="text-muted-foreground">
+                          · cash on delivery
+                        </span>
+                      </p>
+                    )}
+                    <Link
+                      href={`/orders/${r.order.id}`}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                    >
+                      <Check className="size-3.5" />
+                      Order #{r.order.order_number} — see the breakdown
+                      <ChevronRight className="size-3.5" />
+                    </Link>
+                  </div>
                 )}
               </div>
 
