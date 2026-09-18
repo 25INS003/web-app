@@ -1,14 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Loader2, ShieldCheck, UserPlus, Users, X } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ApiError } from "@/lib/api/types";
-import { teamApi, type RoleOption, type ShopMember, type ShopRole } from "./api";
+import { type ShopRole } from "./api";
+import {
+  isForbidden,
+  useAddMember,
+  useRevokeMember,
+  useSetMemberRole,
+  useTeam,
+} from "./hooks";
 
 /** What each role means, in the words an owner would use. */
 const ROLE_COPY: Record<ShopRole, { label: string; detail: string }> = {
@@ -39,78 +44,25 @@ const ROLE_COPY: Record<ShopRole, { label: string; detail: string }> = {
  * the guard cannot disagree about what exists.
  */
 export function TeamPanel({ shopId }: { shopId: string }) {
-  const [members, setMembers] = useState<ShopMember[]>([]);
-  const [roles, setRoles] = useState<RoleOption[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [denied, setDenied] = useState(false);
-  const [busy, setBusy] = useState<string | null>(null);
+  const team = useTeam(shopId);
+  const addMember = useAddMember(shopId);
+  const setMemberRole = useSetMemberRole(shopId);
+  const revokeMember = useRevokeMember(shopId);
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<ShopRole>("orders");
 
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await teamApi.list(shopId);
-      setMembers(data.members);
-      setRoles(data.roles);
-      setDenied(false);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 403) setDenied(true);
-      else toast.error("Could not load the team");
-    } finally {
-      setLoading(false);
-    }
-  }, [shopId]);
+  // Which row is mid-change, so only that row goes inert. A role change and a
+  // revoke are the two things that can be in flight against a single member.
+  const busyMemberId = setMemberRole.isPending
+    ? setMemberRole.variables.memberId
+    : revokeMember.isPending
+      ? revokeMember.variables.id
+      : null;
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  async function add() {
-    setBusy("add");
-    try {
-      await teamApi.add(shopId, email.trim(), role);
-      setEmail("");
-      await load();
-      toast.success("Added to the shop");
-    } catch (err) {
-      // The "no such account" case is the common one and its message is
-      // already the instruction, so it is shown as-is.
-      toast.error(
-        err instanceof ApiError ? err.message : "Could not add that person",
-      );
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function change(member: ShopMember, next: ShopRole) {
-    setBusy(member.id);
-    try {
-      await teamApi.setRole(shopId, member.id, next);
-      await load();
-    } catch {
-      toast.error("Could not change that role");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function revoke(member: ShopMember) {
-    setBusy(member.id);
-    try {
-      await teamApi.revoke(shopId, member.id);
-      await load();
-      toast.success(`${member.user.email} no longer has access`);
-    } catch {
-      toast.error("Could not revoke that access");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  if (loading) {
+  // Only the first load blanks the panel. The refetch after a change is a
+  // background one, so the list stays on screen and in place while it lands.
+  if (team.isPending) {
     return (
       <div className="grid place-items-center py-20">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -118,7 +70,7 @@ export function TeamPanel({ shopId }: { shopId: string }) {
     );
   }
 
-  if (denied) {
+  if (isForbidden(team.error)) {
     return (
       <div className="mx-auto max-w-lg rounded-2xl border border-border bg-card p-6 text-center">
         <ShieldCheck className="mx-auto size-6 text-muted-foreground" />
@@ -133,8 +85,35 @@ export function TeamPanel({ shopId }: { shopId: string }) {
     );
   }
 
+  // Anything that is not a 403 is a real failure, and it gets said out loud —
+  // an empty team and a team that could not be fetched look identical
+  // otherwise, and the difference decides whether you go looking for somebody.
+  if (team.isError) {
+    return (
+      <div className="mx-auto max-w-lg rounded-2xl border border-border bg-card p-6 text-center">
+        <h2 className="font-display text-lg font-semibold">
+          Could not load the team
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Something went wrong fetching who works in this shop.
+        </p>
+        <Button className="mt-4" onClick={() => team.refetch()}>
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
+  const { members, roles } = team.data;
   const active = members.filter(m => m.status === "active");
   const revoked = members.filter(m => m.status !== "active");
+
+  function add() {
+    addMember.mutate(
+      { email: email.trim(), role },
+      { onSuccess: () => setEmail("") },
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -186,10 +165,10 @@ export function TeamPanel({ shopId }: { shopId: string }) {
 
           <Button
             onClick={add}
-            disabled={!email.trim() || busy === "add"}
+            disabled={!email.trim() || addMember.isPending}
             className="sm:mb-0"
           >
-            {busy === "add" ? (
+            {addMember.isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <UserPlus className="size-4" />
@@ -229,8 +208,13 @@ export function TeamPanel({ shopId }: { shopId: string }) {
 
               <select
                 value={m.role}
-                disabled={busy === m.id}
-                onChange={e => change(m, e.target.value as ShopRole)}
+                disabled={busyMemberId === m.id}
+                onChange={e =>
+                  setMemberRole.mutate({
+                    memberId: m.id,
+                    role: e.target.value as ShopRole,
+                  })
+                }
                 className="h-9 rounded-xl border border-border bg-card px-2 text-sm outline-none transition focus:border-ring"
               >
                 {roles.map(r => (
@@ -243,8 +227,8 @@ export function TeamPanel({ shopId }: { shopId: string }) {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={busy === m.id}
-                onClick={() => revoke(m)}
+                disabled={busyMemberId === m.id}
+                onClick={() => revokeMember.mutate(m)}
               >
                 <X className="size-4" />
                 Revoke

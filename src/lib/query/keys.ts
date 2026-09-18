@@ -10,6 +10,7 @@ export const queryKeys = {
       [...queryKeys.shops.all, "detail", shopId] as const,
     analytics: (shopId: string) =>
       [...queryKeys.shops.all, "analytics", shopId] as const,
+    team: (shopId: string) => [...queryKeys.shops.all, "team", shopId] as const,
   },
 
   products: {
