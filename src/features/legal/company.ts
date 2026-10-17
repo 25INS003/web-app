@@ -11,31 +11,31 @@
  * Fill these in before the pages are relied on.
  */
 export const COMPANY = {
-  legalName: { value: null, label: "[COMPANY LEGAL NAME]" },
-  registeredAddress: { value: null, label: "[REGISTERED OFFICE ADDRESS]" },
-  supportEmail: { value: null, label: "[SUPPORT EMAIL]" },
-  supportPhone: { value: null, label: "[SUPPORT PHONE]" },
+  legalName: { value: "Nagi Traders", label: "[COMPANY LEGAL NAME]" },
+  registeredAddress: { value: "H.No. 201/3 Ext., Vasant Vihar, Trikuta Nagar, Jammu, Jammu and Kashmir", label: "[REGISTERED OFFICE ADDRESS]" },
+  supportEmail: { value: "storenedyway@gmail.com", label: "[SUPPORT EMAIL]" },
+  supportPhone: { value: "+91 90860 80040", label: "[SUPPORT PHONE]" },
   supportHours: {
-    value: null,
+    value: "9am–5pm IST",
     label: "[SUPPORT HOURS, e.g. 9am–9pm IST, all days]",
   },
-  grievanceOfficerName: { value: null, label: "[GRIEVANCE OFFICER NAME]" },
-  grievanceOfficerEmail: { value: null, label: "[GRIEVANCE OFFICER EMAIL]" },
-  jurisdictionCity: { value: null, label: "[CITY FOR COURTS' JURISDICTION]" },
+  grievanceOfficerName: { value: "Navjot Singh", label: "[GRIEVANCE OFFICER NAME]" },
+  grievanceOfficerEmail: { value: "storenedyway@gmail.com", label: "[GRIEVANCE OFFICER EMAIL]" },
+  jurisdictionCity: { value: "Jammu", label: "[CITY FOR COURTS' JURISDICTION]" },
   issueReportWindow: {
-    value: null,
+    value: "48 hours of delivery",
     label: "[TIME TO REPORT A PROBLEM, e.g. 48 hours of delivery]",
   },
   refundMethod: {
-    value: null,
+    value: "UPI or bank transfer",
     label: "[HOW CASH-ON-DELIVERY REFUNDS ARE PAID, e.g. UPI or bank transfer]",
   },
   refundTimeline: {
-    value: null,
+    value: "5–7 business days",
     label: "[REFUND TIMELINE, e.g. 5–7 business days]",
   },
   deletionTimeline: {
-    value: null,
+    value: "within 30 days",
     label: "[DELETION TIMELINE, e.g. within 30 days]",
   },
 } satisfies Record<string, { value: string | null; label: string }>;
