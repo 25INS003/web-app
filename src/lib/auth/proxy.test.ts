@@ -16,7 +16,8 @@ const req = (url: string, cookie?: string) =>
   new NextRequest(new URL(url), cookie ? { headers: { cookie } } : undefined);
 
 // What a browser still holds after the backend has disowned the token.
-const DEAD = "accessToken=dead.jwt; userRole=shop_owner; approvalStatus=approved";
+const DEAD =
+  "accessToken=dead.jwt; userRole=shop_owner; approvalStatus=approved";
 
 const setCookie = (res: Response) => res.headers.get("set-cookie") ?? "";
 const cleared = (res: Response, name: string) =>
@@ -31,7 +32,13 @@ describe("proxy — stale session marker", () => {
 
   it("clears the dead cookies so the next request starts honest", () => {
     const res = proxy(req("http://localhost/login?stale=1", DEAD));
-    for (const name of ["accessToken", "refreshToken", "userRole", "approvalStatus", "sessionId"]) {
+    for (const name of [
+      "accessToken",
+      "refreshToken",
+      "userRole",
+      "approvalStatus",
+      "sessionId",
+    ]) {
       expect(cleared(res, name), `${name} should be cleared`).toBe(true);
     }
   });
@@ -64,7 +71,9 @@ describe("proxy — unchanged behaviour", () => {
 
   it("leaves the public storefront alone", () => {
     expect(proxy(req("http://localhost/")).headers.get("location")).toBeNull();
-    expect(proxy(req("http://localhost/search")).headers.get("location")).toBeNull();
+    expect(
+      proxy(req("http://localhost/search")).headers.get("location"),
+    ).toBeNull();
   });
 });
 
@@ -120,7 +129,20 @@ describe("proxy — an unapproved shop owner", () => {
     // is NOT among them — see the next test; that is the reported bug.
     for (const open of ["/status", "/help"]) {
       const res = proxy(req(`http://localhost${open}`, UNAPPROVED));
-      expect(res.headers.get("location"), `${open} should be reachable`).toBeNull();
+      expect(
+        res.headers.get("location"),
+        `${open} should be reachable`,
+      ).toBeNull();
+    }
+  });
+
+  it("lets them read the policies they are applying under", () => {
+    for (const open of ["/privacy", "/terms", "/refund", "/delete-account"]) {
+      const res = proxy(req(`http://localhost${open}`, UNAPPROVED));
+      expect(
+        res.headers.get("location"),
+        `${open} should be reachable`,
+      ).toBeNull();
     }
   });
 
@@ -151,7 +173,8 @@ describe("proxy — an unapproved shop owner", () => {
 
   it("sends a draft applicant to onboarding rather than to status", () => {
     // The one state where the form IS the page they want.
-    const draft = "accessToken=live.jwt; userRole=shop_owner; approvalStatus=draft";
+    const draft =
+      "accessToken=live.jwt; userRole=shop_owner; approvalStatus=draft";
     const res = proxy(req("http://localhost/", draft));
     expect(res.headers.get("location")).toMatch(/\/onboarding/);
   });
@@ -183,9 +206,16 @@ describe("proxy — an unapproved shop owner", () => {
 
   it("allows the real sub-paths of the pages they do have", () => {
     // A ticket they opened, and the form to open one.
-    for (const path of ["/help/some-ticket-id", "/help/new", "/t/some-ticket"]) {
+    for (const path of [
+      "/help/some-ticket-id",
+      "/help/new",
+      "/t/some-ticket",
+    ]) {
       const res = proxy(req(`http://localhost${path}`, UNAPPROVED));
-      expect(res.headers.get("location"), `${path} should be reachable`).toBeNull();
+      expect(
+        res.headers.get("location"),
+        `${path} should be reachable`,
+      ).toBeNull();
     }
   });
 
@@ -195,18 +225,21 @@ describe("proxy — an unapproved shop owner", () => {
     // reopened, the button through to it are.
     const rejected =
       "accessToken=live.jwt; userRole=shop_owner; approvalStatus=rejected";
-    expect(proxy(req("http://localhost/login", rejected)).headers.get("location"))
-      .toMatch(/\/status/);
-    expect(proxy(req("http://localhost/", rejected)).headers.get("location"))
-      .toMatch(/\/status/);
+    expect(
+      proxy(req("http://localhost/login", rejected)).headers.get("location"),
+    ).toMatch(/\/status/);
+    expect(
+      proxy(req("http://localhost/", rejected)).headers.get("location"),
+    ).toMatch(/\/status/);
   });
 
   it("still lands a first-time applicant on the form", () => {
     // Nothing has been decided about them, so there is nothing to read first.
     const draft =
       "accessToken=live.jwt; userRole=shop_owner; approvalStatus=draft";
-    expect(proxy(req("http://localhost/login", draft)).headers.get("location"))
-      .toMatch(/\/onboarding/);
+    expect(
+      proxy(req("http://localhost/login", draft)).headers.get("location"),
+    ).toMatch(/\/onboarding/);
   });
 
   it("leaves /onboarding reachable for a refused owner, for the page to judge", () => {
@@ -216,7 +249,9 @@ describe("proxy — an unapproved shop owner", () => {
     const rejected =
       "accessToken=live.jwt; userRole=shop_owner; approvalStatus=rejected";
     expect(
-      proxy(req("http://localhost/onboarding", rejected)).headers.get("location"),
+      proxy(req("http://localhost/onboarding", rejected)).headers.get(
+        "location",
+      ),
     ).toBeNull();
   });
 
@@ -228,7 +263,8 @@ describe("proxy — an unapproved shop owner", () => {
   });
 
   it("still offers the form to someone who has not submitted one", () => {
-    const draft = "accessToken=live.jwt; userRole=shop_owner; approvalStatus=draft";
+    const draft =
+      "accessToken=live.jwt; userRole=shop_owner; approvalStatus=draft";
     const res = proxy(req("http://localhost/onboarding", draft));
     expect(res.headers.get("location")).toBeNull();
   });
@@ -269,8 +305,7 @@ describe("proxy — an unapproved shop owner", () => {
   it("leaves the storefront public for everyone who is not an applicant", () => {
     // The confinement must not turn the shop into a login wall. A signed-out
     // visitor and a customer both keep browsing.
-    const customer =
-      "accessToken=live.jwt; userRole=customer; approvalStatus=";
+    const customer = "accessToken=live.jwt; userRole=customer; approvalStatus=";
     for (const cookie of [undefined, customer]) {
       for (const path of ["/", "/search", "/p/x"]) {
         const res = proxy(req(`http://localhost${path}`, cookie));
