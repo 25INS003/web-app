@@ -61,6 +61,10 @@ export const OWNER_GATED = ["/dashboard", "/products", "/variants", "/myshop"];
  *                 applicant is /help/:id. Leaving it out would bounce the link
  *                 to /status and lose the ticket they were sent to read.
  *
+ *  - /privacy, /terms, /refund, /delete-account
+ *                 the policies. An applicant is entitled to read the terms and
+ *                 privacy policy they are applying under.
+ *
  * `/unauthorized` is deliberately NOT here. It was, until the confinement
  * moved above the admin check — an applicant who types /admin is now told
  * where they actually are instead of being shown an access-denied screen that
@@ -72,6 +76,10 @@ export const UNAPPROVED_OWNER_ALLOWED = [
   "/onboarding",
   "/help",
   "/t",
+  "/privacy",
+  "/terms",
+  "/refund",
+  "/delete-account",
 ];
 
 /**
