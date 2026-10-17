@@ -12,16 +12,29 @@
  */
 export const COMPANY = {
   legalName: { value: "Nagi Traders", label: "[COMPANY LEGAL NAME]" },
-  registeredAddress: { value: "H.No. 201/3 Ext., Vasant Vihar, Trikuta Nagar, Jammu, Jammu and Kashmir", label: "[REGISTERED OFFICE ADDRESS]" },
+  registeredAddress: {
+    value:
+      "H.No. 201/3 Ext., Vasant Vihar, Trikuta Nagar, Jammu, Jammu and Kashmir",
+    label: "[REGISTERED OFFICE ADDRESS]",
+  },
   supportEmail: { value: "storenedyway@gmail.com", label: "[SUPPORT EMAIL]" },
   supportPhone: { value: "+91 90860 80040", label: "[SUPPORT PHONE]" },
   supportHours: {
     value: "9am–5pm IST",
     label: "[SUPPORT HOURS, e.g. 9am–9pm IST, all days]",
   },
-  grievanceOfficerName: { value: "Navjot Singh", label: "[GRIEVANCE OFFICER NAME]" },
-  grievanceOfficerEmail: { value: "storenedyway@gmail.com", label: "[GRIEVANCE OFFICER EMAIL]" },
-  jurisdictionCity: { value: "Jammu", label: "[CITY FOR COURTS' JURISDICTION]" },
+  grievanceOfficerName: {
+    value: "Navjot Singh",
+    label: "[GRIEVANCE OFFICER NAME]",
+  },
+  grievanceOfficerEmail: {
+    value: "storenedyway@gmail.com",
+    label: "[GRIEVANCE OFFICER EMAIL]",
+  },
+  jurisdictionCity: {
+    value: "Jammu",
+    label: "[CITY FOR COURTS' JURISDICTION]",
+  },
   issueReportWindow: {
     value: "48 hours of delivery",
     label: "[TIME TO REPORT A PROBLEM, e.g. 48 hours of delivery]",
